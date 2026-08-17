@@ -123,7 +123,6 @@ Confirm `ops_lazy.o` and the application binary timestamps moved. Relink `*_mpi_
 | `-OPS_DIAGS=3` (or `>2`) | `Created tiling plan for N loops`, tile size, **tile skew**, **unblocked loops**, **biggest tiles vs nominal**, and **WAW cause** (proc 0) |
 | `OPS_MDIM_SKIP_WAW=1` | Skip Sweep-2 WAW on dats with `dim>1`. Hypothesis test only; does not change SENGA2's 1179-loop plan. |
 | `OPS_SWEEP3_NO_CASCADE=1` | Only the geometric last tile may become Sweep-3 dead. **Unsafe** on SENGA2 (halo-depth crash). |
-| `OPS_LASTLIVE_EXPAND=1` | Restore the old Sweep-1 / leftover full-range shortcut when the next tile is Sweep-3 dead. Default **off**: only the geometric last tile may take that shortcut; Sweep 3 still merges halo `read_deps` into the previous tile. |
 | `SENGA_TILING_SPLIT=N` | SENGA2 only: insert `ops_execute` after named call sites (see the split experiment below). |
 | `-OPS_DIAGS=4` | `Executing tiling plan for N loops` — the plan sequence, one line per flush |
 | `-OPS_DIAGS=5` | Per-tile exec ranges after read/write deps, empty tiles, dataset deps |
@@ -188,7 +187,7 @@ A healthy interior tile is close to the nominal chunk plus a small stencil. A ra
 - Clipping `read_deps` to `natural + this_stencil` (halo send/recv diverge).
 - Marking WAW-emptied tiles `dead_tiles` (previous tile expands to full owned).
 - `OPS_SWEEP3_NO_CASCADE=1` (halo depths explode on SENGA2; MPI packing asks for a 197-deep `DRHS` halo).
-- Restoring `OPS_LASTLIVE_EXPAND=1` (Sweep 1 / leftover treat a Sweep-3-dead neighbour as geometric last and fill to the owned end; that is the leftover cascade).
+- Turning off last-live Sweep-1 / leftover expand entirely, or limiting it to the geometric last tile only (CloverLeaf then asks for an 11-deep `xarea` halo; SENGA2 asks for 69–197-deep `DRHS`).
 
 ## Validation
 
@@ -339,7 +338,7 @@ So:
 3. **Most of `rhscal` is the same shape.** Split 6 only saves the 35 temper loops. 980 later loops stay unblocked, and 1-step `total_ttime` stays ~59 s for every split. An `ops_execute` after `temper` is the right way to keep `eqA` blocked; it is not enough to make tiling pay.
 4. **Do not turn off the Sweep-3 dead-tile cascade.** Empty last-live tiles have to be marked dead so halo work attaches to the previous tile. Stopping the cascade (`OPS_SWEEP3_NO_CASCADE=1`) leaves those deps on empty tiles and the MPI packing asks for a 197-deep halo. Same class of failure as clipping `read_deps`.
 
-The remaining analysis bug was leftover filling a tile to the full owned end when the *next* tile is Sweep-3 dead, and Sweep 3 then marking the previous empty tile dead too, until tile 0 is last live. **Default now:** only the geometric last tile may take that full-range shortcut (`OPS_LASTLIVE_EXPAND=1` restores the old behaviour). Sweep 3 still marks empty last-live tiles dead and merges their halo `read_deps`. Any change still needs the CloverLeaf 7680² `PASSED` canary and the SENGA2 tiled-vs-untiled dump comparison.
+The remaining analysis bug was leftover staying empty on a last-live tile when `begin >= natural_end` (WAW already covered that chunk). Sweep 3 then marked that tile dead too, until tile 0 was last live and Sweep 1 assigned the full owned range. **Default now:** last-live leftover still fills to the owned end (needed so a later `OPS_WRITE` can clear stacked halo `read_deps`); interior leftover tiles still stay empty when WAW already covers the natural chunk. Do not disable last-live expand: CloverLeaf then asks for an 11-deep halo and SENGA2 for 197-deep `DRHS`. Any further change still needs the CloverLeaf 7680² `PASSED` canary and the SENGA2 tiled-vs-untiled dump comparison.
 
 To rerun the 1-step matrix: `apps/fortran/SENGA2/senga_tiling_split.sh` (restores `input/cont.dat`). Rebuild `ops/fortran` after editing `ops_lazy.cpp`. `SENGA_TILING_SPLIT` and `OPS_MDIM_SKIP_WAW` default off.
 
@@ -352,7 +351,7 @@ To rerun the 1-step matrix: `apps/fortran/SENGA2/senga_tiling_split.sh` (restore
 | Location | Role |
 |---|---|
 | `makefiles/Makefile.gnu` | `CXXFLAGS`; `-ffloat-store` costs ~1.7x on tiled runs |
-| `ops/c/src/core/ops_lazy.cpp` — `ops_construct_tile_plan` | Sweeps 1–3, leftover, terminal reads, tile skew / WAW-cause print, `OPS_MDIM_SKIP_WAW`, `OPS_SWEEP3_NO_CASCADE`, `OPS_LASTLIVE_EXPAND` |
+| `ops/c/src/core/ops_lazy.cpp` — `ops_construct_tile_plan` | Sweeps 1–3, leftover, terminal reads, tile skew / WAW-cause print, `OPS_MDIM_SKIP_WAW`, `OPS_SWEEP3_NO_CASCADE` |
 | `ops/c/src/core/ops_lazy.cpp` — `ops_compute_mpi_dependencies` | `data_read_deps_edge` |
 | `ops/c/src/mpi/ops_mpi_rt_support.cpp` — `ops_halo_exchanges_datlist` | Pack/unpack using plan depths |
 | `apps/c/CloverLeaf` | Performance canary (many fused loops, small stencils) |
