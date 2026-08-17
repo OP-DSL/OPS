@@ -325,6 +325,7 @@ SENGA does **not** have streaming stores. The eviction is the unblocked loops th
 | last-live expand off / geom-last only | (crashes) | — | — | CloverLeaf 11-deep `xarea`; SENGA 197-deep `DRHS` |
 | flush every 20 loops | 0 unblocked until crash | — | — | FPE (signal 8): too short, splits a snapshot/mutate chain |
 | flush every 50/100/200 loops | 0 unblocked | yes, but blunt | 53.6–54.4 s | rejected: not a SENGA-specific map |
+| **`senga_tiling_flush` map** | **0** on every plan (no 1179-loop chain) | **yes**, 35-loop `eqA` plan, 15 live, overlap 0.58 | **52.3 s** | species chunks ~42 loops / 10–15 live; remaining JUMPs are mild intra-plan skew (2–3x, still multi-tile) |
 
 So:
 
@@ -337,7 +338,7 @@ So:
    - RK stages in `senga2`: after `boundt`, `parfer`, `rhscal`, `rhsvel`, `bounds`
    - `rhscal`: after `temper`; immediately before `eqT` (internal-energy convert); after E convection; before species/`chrate`; after the Y=`Y/ρ` convert loop; after each species body in both species loops; before the second (Y-diffusive) species loop
    - `rhsvel`: before momentum convection; before viscous terms; before continuity
-   Keep snapshot/mutate pairs together (do not flush between a convert and the later overwrite of the same dat). Subsequent performance work should sweep `OPS_CACHE_SIZE` from about 0.25 to 4, not explicit `OPS_TILESIZE_*`.
+   Keep snapshot/mutate pairs together (do not flush between a convert and the later overwrite of the same dat). A 1-step 256³ / 32-rank run with this map has **0 unblocked loops**, no 1179-loop plan, and `eqA` on 15 live tiles. Subsequent performance work should sweep `OPS_CACHE_SIZE` from about 0.25 to 4, not explicit `OPS_TILESIZE_*`.
 
 To dump JUMPs on a 1-step run: `apps/fortran/SENGA2/senga_tiling_split.sh` (restores `input/cont.dat`). Rebuild `ops/fortran` after editing `ops_lazy.cpp`.
 
