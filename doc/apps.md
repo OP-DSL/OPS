@@ -51,7 +51,7 @@ This directory contains a suite of scientific mini-applications and benchmarks p
 - **ops-lbm**: Lattice Boltzmann Method (LBM) fluid dynamics solver.
 - **random**: Random number generation and usage in OPS.
 - **shsgc**: Scientific kernel or benchmark (details TBD).
-- **tiling_fix**: Demonstrates tiling and performance tuning in OPS.
+- **tiling_fix**: Mini WAW chain (write / wide stencil read / overwrite) used to debug tile-major tiling. See [tiling.md](tiling.md).
 - **tti**: Tilted Transverse Isotropy (TTI) wave equation solver.
 - **wave_test**: Wave equation solver.
 
@@ -63,6 +63,7 @@ This directory contains a suite of scientific mini-applications and benchmarks p
 - **multiDim / multiDim3D**: Multi-dimensional reduction and stencil operations.
 - **poisson**: Poisson equation solver (also in C).
 - **random**: Random number generation in Fortran with OPS.
+- **SENGA2**: Compressible reacting DNS (`apps/fortran/SENGA2`). Tiled vs untiled HDF5 validation; see [tiling.md](tiling.md).
 - **shsgc**: Scientific kernel or benchmark (details TBD).
 - **mathtest**: Mathematical function and operation tests (details TBD).
 

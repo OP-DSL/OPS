@@ -287,7 +287,9 @@ E.g.
 ```bash
 OMP_NUM_THREADS=20 numactl --cpunodebind=0 ./laplace2d_tiled -OPS_DIAGS=3 OPS_TILING OPS_CACHE_SIZE=5
 ```
-Over MPI, you will have to set `OPS_TILING_MAX_DEPTH` to extend halo regions.
+Over MPI, you will have to set `OPS_TILING_MAXDEPTH` to extend halo regions.
+
+For write-after-write / stencil skew bugs (tiles collapsing to the full domain, or tiled SENGA2 disagreeing with untiled), see [Tiling: WAW / RAW issues, debugging, and validation](tiling.md).
 
 To manually specify tile sizes (in number of grid points), use the `OPS_TILESIZE_X`, `OPS_TILESIZE_Y`, and `OPS_TILESIZE_Z` runtime arguments. E.g.
 ```bash

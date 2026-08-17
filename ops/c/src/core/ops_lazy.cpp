@@ -646,7 +646,21 @@ int ops_construct_tile_plan(OPS_instance *instance) {
   // Seed a terminal read dependency to cover the union of writes across the
   // tiling plan. Without this, if the last loops only touch boundaries, prior
   // full writes could be reduced to boundary-only execution.
+  //
+  // This is equivalent to a phantom consumer of every produced field on the
+  // full owned range.  Backward analysis then RAW-connects the entire fused
+  // chain to that consumer, so stencil width accumulates on every tile.
+  // CloverLeaf was already valid without it: leftover tiles execute writes
+  // that have no later consumer, and edge OPS_WRITE no longer clears interior
+  // deps (full_overlap).  Disable with OPS_TERMINAL_READ=0.
+  const char *terminal_read_env = getenv("OPS_TERMINAL_READ");
+  const bool seed_terminal_read =
+      terminal_read_env == NULL || atoi(terminal_read_env) != 0;
+  if (instance->OPS_diags > 2 && ops_get_proc() == 0)
+    printf2(instance, "Terminal read seeding: %s\n",
+            seed_terminal_read ? "on" : "off");
   for (int datidx = 0; datidx < instance->OPS_dat_index; datidx++) {
+    if (!seed_terminal_read) break;
     if (!dataset_written[datidx]) continue;
     for (int d = 0; d < dims; d++) {
       for (int tile = 0; tile < total_tiles; tile++) {
@@ -827,41 +841,34 @@ int ops_construct_tile_plan(OPS_instance *instance) {
                 tile + tiles_prod[d] < total_tiles && 
                 dead_tiles[(tile + tiles_prod[d]) * OPS_MAX_DIM + d] != -1))) {
 
-            // Look at write dependencies of datasets being accessed
+            // WAW: later write of a dat this loop accesses (read or write).
+            // A snapshot that only *reads* U must still extend when a later
+            // mutate writes U (SENGA).  Grow only to this tile's later write
+            // plus this access's stencil — that is the true dependency.
+            // Do not absorb a neighbour's leftover range (that cascaded
+            // until one tile owned the rank).  If the true extent fully
+            // covers later tiles, empty them without taking their ends.
             for (int arg = 0; arg < ops_kernel_list[loop]->nargs; arg++) {
               if (LOOPARG.argtype == OPS_ARG_DAT &&
                   LOOPARG.opt == 1 &&
                   data_write_deps[LOOPARG.dat->index]
                                   [tile * OPS_MAX_DIM * 2 + 2 * d + 1] != INT_MIN ) {
-                int d_m_min = INT_MAX;  // Find biggest positive/negative direction
-                                  // stencil point for this dimension
-                int d_p_max = INT_MIN;
+                int d_m_min = 0;
                 for (int p = 0;
                       p < LOOPARG.stencil->points; p++) {
                   d_m_min = MIN(d_m_min,
                       LOOPARG.stencil->stencil
                           [LOOPARG.stencil->dims * p + d]);
-                  d_p_max = MAX(d_p_max,
-                      LOOPARG.stencil->stencil
-                          [LOOPARG.stencil->dims * p + d]);
                 }
-                // End index is the greatest across all of the dependencies, but
-                // no greater than the loop range
                 int intersect_begin = 0;
-                //Take intersection of execution range with tile start index and write data dependency + stencil width
                 int intersect_len = intersection(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
                                                   data_write_deps[LOOPARG.dat->index][tile * OPS_MAX_DIM * 2 + 2 * d + 1]-d_m_min,
                                                   LOOPRANGE[2 * d + 0], LOOPRANGE[2 * d + 1], &intersect_begin);
                 if (intersect_len > 0) {
                   int &tile_end =
                       tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1];
-                  tile_end = MAX(tile_end, intersect_begin + intersect_len);
-
-                  // WAW skew may push this tile past the next tile's end.  Capping
-                  // at the neighbour (old behaviour) emptied only that neighbour and
-                  // left further tiles live, splitting producer/snapshot/mutate
-                  // chains across tile-major execution.  Instead absorb every
-                  // following tile we overlap and empty them.
+                  int waw_end = intersect_begin + intersect_len;
+                  tile_end = MAX(tile_end, waw_end);
                   for (int t = tile + tiles_prod[d];
                        t < total_tiles &&
                        (t / tiles_prod[d]) % ntiles[d] >
@@ -873,8 +880,12 @@ int ops_construct_tile_plan(OPS_instance *instance) {
                         tiled_ranges[loop][OPS_MAX_DIM * 2 * t + 2 * d + 1];
                     if (tile_end <= tb)
                       break;
-                    tile_end = MAX(tile_end, te);
-                    tb = te = tile_end; // empty absorbed tile
+                    if (tile_end >= te) {
+                      tb = te = tile_end;
+                    } else {
+                      tb = tile_end;
+                      break;
+                    }
                   }
                 }
               }
@@ -893,20 +904,26 @@ int ops_construct_tile_plan(OPS_instance *instance) {
               tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] &&
               dead_tiles[tile * OPS_MAX_DIM + d] == -1) { // and this tile is not dead
 
-            //if no tiling in this dimension, this is the last, or 
-            // if next tile is dead, set end index to end of loop range
-            if (tile_sizes[d] <= 0 || (tile / tiles_prod[d]) % ntiles[d] == ntiles[d] - 1 ||
-              (tile + tiles_prod[d] < total_tiles && 
-              dead_tiles[(tile + tiles_prod[d]) * OPS_MAX_DIM + d] != -1))
-              tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] = 
-                MAX(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0], end[d]);
+            int tile_idx = (tile / tiles_prod[d]) % ntiles[d];
+            int nat_end = (tile_sizes[d] <= 0)
+                              ? end[d]
+                              : MIN(end[d], biggest_range[2 * d + 0] +
+                                                (tile_idx + 1) * tile_sizes[d]);
+            int &tb = tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0];
+            int &te = tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1];
+
+            // Previous tile's true WAW already covers this natural chunk:
+            // stay empty.  Filling here resurrected the neighbour range and
+            // re-fed the absorb cascade.
+            if (tb >= nat_end) {
+              ;
+            } else if (tile_sizes[d] <= 0 || tile_idx == ntiles[d] - 1 ||
+                       (tile + tiles_prod[d] < total_tiles &&
+                        dead_tiles[(tile + tiles_prod[d]) * OPS_MAX_DIM + d] !=
+                            -1))
+              te = MAX(tb, end[d]);
             else
-              tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] = 
-                MAX(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
-                      MIN(end[d],
-                          biggest_range[2 * d + 0] +
-                              ((tile / tiles_prod[d]) % ntiles[d] + 1) *
-                                  tile_sizes[d]));
+              te = MAX(tb, nat_end);
           }
 
           if (instance->OPS_diags > 5 && tile_sizes[d] != -1) {
@@ -1017,16 +1034,15 @@ int ops_construct_tile_plan(OPS_instance *instance) {
 
             // Find biggest positive/negative direction stencil
             // point for this dimension
-            int d_m_min = INT_MAX;
-            int d_p_max = INT_MIN;
+            int d_m_min = 0;
+            int d_p_max = 0;
             for (int p = 0; p < LOOPARG.stencil->points; p++) {
               d_m_min = MIN(d_m_min,
                   LOOPARG.stencil->stencil[LOOPARG.stencil->dims * p + d]);
               d_p_max = MAX(d_p_max,
                   LOOPARG.stencil->stencil[LOOPARG.stencil->dims * p + d]);
             }
-          
-            // Extend dependency range with stencil
+
             data_read_deps[LOOPARG.dat->index]
                 [tile * OPS_MAX_DIM * 2 + 2 * d + 0] = MIN(
                     data_read_deps[LOOPARG.dat->index]
@@ -1194,6 +1210,54 @@ int ops_construct_tile_plan(OPS_instance *instance) {
   ops_timers_core(&c2, &t2);
   if (instance->OPS_diags > 2)
     printf2(instance,"Created tiling plan for %d loops in %g seconds, with tile size: %dx%dx%d\n", int(ops_kernel_list.size()), t2 - t1, tile_sizes[0], tile_sizes[1], tile_sizes[2]);
+  if (instance->OPS_diags > 2 && ops_get_proc() == 0) {
+    int max_w[OPS_MAX_DIM] = {0};
+    const char *max_w_name[OPS_MAX_DIM] = {NULL};
+    long long live_cells = 0;
+    long long nominal_cells = 0;
+    int live_tiles_max = 0;
+    for (unsigned int loop = 0; loop < ops_kernel_list.size(); loop++) {
+      int live_tiles = 0;
+      for (int tile = 0; tile < total_tiles; tile++) {
+        int vol = 1;
+        int nom = 1;
+        bool live = true;
+        for (int d = 0; d < dims; d++) {
+          int w = tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] -
+                  tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0];
+          if (w <= 0) {
+            live = false;
+            vol = 0;
+            break;
+          }
+          if (w > max_w[d]) {
+            max_w[d] = w;
+            max_w_name[d] = ops_kernel_list[loop]->name;
+          }
+          vol *= w;
+          int tw = tile_sizes[d] > 0 ? tile_sizes[d]
+                                     : (biggest_range[2 * d + 1] - biggest_range[2 * d]);
+          nom *= MAX(1, tw);
+        }
+        if (live) {
+          live_tiles++;
+          live_cells += vol;
+          nominal_cells += nom;
+        }
+      }
+      live_tiles_max = MAX(live_tiles_max, live_tiles);
+    }
+    printf2(instance,
+            "Proc %d tile skew: nominal %dx%dx%d, max live %dx%dx%d "
+            "(loops %s / %s / %s), live tiles %d/%d, overlap factor %.3f\n",
+            ops_get_proc(), tile_sizes[0], tile_sizes[1], tile_sizes[2],
+            max_w[0], max_w[1], max_w[2],
+            max_w_name[0] ? max_w_name[0] : "-",
+            max_w_name[1] ? max_w_name[1] : "-",
+            max_w_name[2] ? max_w_name[2] : "-",
+            live_tiles_max, total_tiles,
+            nominal_cells > 0 ? (double)live_cells / (double)nominal_cells : 0.0);
+  }
 
   // free local storage
   free(store_left_neighbour_end);   store_left_neighbour_end = nullptr;
