@@ -339,7 +339,7 @@ So:
 3. **Most of `rhscal` is the same shape.** Split 6 only saves the 35 temper loops. 980 later loops stay unblocked, and 1-step `total_ttime` stays ~59 s for every split. An `ops_execute` after `temper` is the right way to keep `eqA` blocked; it is not enough to make tiling pay.
 4. **Do not turn off the Sweep-3 dead-tile cascade.** Empty last-live tiles have to be marked dead so halo work attaches to the previous tile. Stopping the cascade (`OPS_SWEEP3_NO_CASCADE=1`) leaves those deps on empty tiles and the MPI packing asks for a 197-deep halo. Same class of failure as clipping `read_deps`.
 
-The remaining analysis bug is: leftover fills a tile to the full owned end when the *next* tile is Sweep-3 dead, and Sweep 3 will mark the previous empty tile dead too, until tile 0 is last live. Restricting that without re-breaking halo depths is still open. Any change needs the CloverLeaf 7680² `PASSED` canary and the SENGA2 tiled-vs-untiled dump comparison.
+The remaining analysis bug was leftover filling a tile to the full owned end when the *next* tile is Sweep-3 dead, and Sweep 3 then marking the previous empty tile dead too, until tile 0 is last live. **Default now:** only the geometric last tile may take that full-range shortcut (`OPS_LASTLIVE_EXPAND=1` restores the old behaviour). Sweep 3 still marks empty last-live tiles dead and merges their halo `read_deps`. Any change still needs the CloverLeaf 7680² `PASSED` canary and the SENGA2 tiled-vs-untiled dump comparison.
 
 To rerun the 1-step matrix: `apps/fortran/SENGA2/senga_tiling_split.sh` (restores `input/cont.dat`). Rebuild `ops/fortran` after editing `ops_lazy.cpp`. `SENGA_TILING_SPLIT` and `OPS_MDIM_SKIP_WAW` default off.
 
