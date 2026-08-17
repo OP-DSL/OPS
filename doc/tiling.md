@@ -40,7 +40,7 @@ Analysis walks the fused loops **backwards**. For each dimension:
 
 MPI halo **send** sizes come from `data_read_deps_edge`. **Recv** sizes come from the first tile’s `data_read_deps` begin (left) and the max last-tile `data_read_deps` end (right). Those two analyses must agree or you get `MPI_ERR_TRUNCATE` or a `Waitall` hang.
 
-`OPS_TILING_MAXDEPTH=N` both enables tiling (the runtime looks for the substring `OPS_TILING`) and extends halo depth so several fused loops can share one exchange.
+`OPS_TILING_MAXDEPTH=N` both enables tiling (the runtime looks for the substring `OPS_TILING`) and extends halo depth so several fused loops can share one exchange. `OPS_CACHE_SIZE` only sizes tiles (MB, `atof` into a `double`, so `0.25` is valid); it does **not** enable tiling on its own. On MPI always pass `OPS_TILING_MAXDEPTH` together with `OPS_CACHE_SIZE`. `OPS_CACHE_SIZE=1` is not the auto-detected default: on SENGA2 256³ / 32 ranks the default (MAXDEPTH only) prints ~`69x18x17`, while `CACHE_SIZE=1` is much smaller.
 
 ## The two failure modes
 
@@ -338,7 +338,7 @@ So:
    - RK stages in `senga2`: after `boundt`, `parfer`, `rhscal`, `rhsvel`, `bounds`
    - `rhscal`: after `temper`; immediately before `eqT` (internal-energy convert); after E convection; before species/`chrate`; after the Y=`Y/ρ` convert loop; after each species body in both species loops; before the second (Y-diffusive) species loop
    - `rhsvel`: before momentum convection; before viscous terms; before continuity
-   Keep snapshot/mutate pairs together (do not flush between a convert and the later overwrite of the same dat). A 1-step 256³ / 32-rank run with this map has **0 unblocked loops**, no 1179-loop plan, and `eqA` on 15 live tiles. Subsequent performance work should sweep `OPS_CACHE_SIZE` from about 0.25 to 4, not explicit `OPS_TILESIZE_*`.
+   Keep snapshot/mutate pairs together (do not flush between a convert and the later overwrite of the same dat). A 1-step 256³ / 32-rank run with this map has **0 unblocked loops**, no 1179-loop plan, and `eqA` on 15 live tiles. Subsequent performance work should sweep `OPS_CACHE_SIZE` from about 0.25 to 4, not explicit `OPS_TILESIZE_*`, and must always include `OPS_TILING_MAXDEPTH=6` (CACHE_SIZE alone does not turn tiling on).
 
 To dump JUMPs on a 1-step run: `apps/fortran/SENGA2/senga_tiling_split.sh` (restores `input/cont.dat`). Rebuild `ops/fortran` after editing `ops_lazy.cpp`.
 
