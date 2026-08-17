@@ -280,20 +280,20 @@ print("n", np.count_nonzero(ad > 1e-10), "abs max", ad.max(),
       "rel max", np.nanmax(ad / np.maximum(np.abs(ref), 1e-30)))
 ```
 
-### SENGA2 performance: an open case
+### SENGA2 performance
 
-SENGA2 is correct under tiling but barely gains from it. Same 256³ / 10-step / 32-rank `-O3` runs, timed by SENGA’s own `total_ttime`:
+SENGA2 is correct under tiling but barely gains from it **until the fused chain is shortened**. Same 256³ / 10-step / 32-rank `-O3` runs, timed by SENGA’s own `total_ttime`:
 
 | configuration | time |
 |---|---|
 | untiled | 458.9 s |
 | large tiles (one tile per rank) | 488.6 s |
-| default | 452.4 s |
+| default (1179-loop plans) | 452.4 s |
 | fine X (`TILESIZE_X=25`) | 554.2 s |
 
 One tile per rank is the cost of the tiled code path with none of its benefit: 6.5% over untiled. Default tiling recovers that and 1.4% more, so the cache blocking is worth only about 8% against the same code path — far less than the 2.1x CloverLeaf gets, on a rank whose 64x64x128 block with 30-plus multi-component fields is nowhere near cache-resident.
 
-The footprint line points at why. In the two large plans (1179 and 1180 loops):
+The footprint line points at why. In the two large plans (1179 and 1180 loops), **before** `OPS_FUSION_MAXLOOPS`:
 
 ```text
 Proc 0 tile skew: nominal 69x18x17, max live 74x74x138 (loops temper_kernel_eqA / ...), live tiles 32/32, overlap factor 5.362
@@ -308,9 +308,12 @@ SENGA does **not** have streaming stores. The eviction is the unblocked loops th
 
 ### Structured split experiment
 
-`ops_execute` breaks a fused plan. `SENGA_TILING_SPLIT` (env var, `apps/fortran/SENGA2/senga_tiling_split.F90`) inserts it without a rebuild:
+`ops_execute` breaks a fused plan. Two ways, both without a rebuild:
 
-| value | flush after |
+- `SENGA_TILING_SPLIT` (env var, `apps/fortran/SENGA2/senga_tiling_split.F90`) inserts it at named call sites.
+- `OPS_FUSION_MAXLOOPS=N` flushes the queue every N loops in `ops_enqueue_kernel`.
+
+| `SENGA_TILING_SPLIT` | flush after |
 |---|---|
 | 0 | none (baseline) |
 | 3 | `rhscal` |
@@ -323,23 +326,28 @@ SENGA does **not** have streaming stores. The eviction is the unblocked loops th
 
 1-step, 256³, 32 ranks, `OPS_TILING_MAXDEPTH=6` (the default tile size that prints `69x18x17`, not `OPS_CACHE_SIZE=1`):
 
-| config | big-plan unblocked | eqA blocked? | notes |
-|---|---|---|---|
-| split 0 (fused) | 1015/1179 | no, 35.8x | overlap 5.36; 0 Sweep-2 WAW; 0 dim>1 WAW |
-| split 6 (after `temper`) | 0/35 in the temper plan | **yes** (overlap 0.58) | remaining rhscal plan 980/1144 unblocked (`maths_kernel_eqT`) |
-| split 3 (after `rhscal`) | 808/988 | no | unblocking writer is still inside `rhscal` |
-| split 7 / 9 (mdim copies) | 1015/1179 | no | identical to baseline |
-| `OPS_MDIM_SKIP_WAW=1` | 1015/1179 | no | identical to baseline |
-| `OPS_SWEEP3_NO_CASCADE=1` | (crashes) | — | halo depths 69–197 on `DRHS` vs depth 6; tiles `74x266x266` |
+| config | big-plan unblocked | eqA blocked? | 1-step `total_ttime` | notes |
+|---|---|---|---|---|
+| split 0 (fused) | 724/1179 after leftover last-live fill; was 1015/1179 | no, 35.8x (`74x74x138`, 1 live) | 59.0 s | overlap 4.38; 0 Sweep-2 WAW; 0 dim>1 WAW |
+| split 6 (after `temper`) | 0/35 in the temper plan | **yes** | 58.2 s | remaining rhscal plan still mostly unblocked |
+| split 3 (after `rhscal`) | still unblocked inside `rhscal` | no | 59.7 s | unblocking writer is still inside `rhscal` |
+| split 7 / 9 (mdim copies) | same as baseline | no | ~59 s | identical to baseline |
+| `OPS_MDIM_SKIP_WAW=1` | same as baseline | no | ~59 s | identical to baseline |
+| `OPS_SWEEP3_NO_CASCADE=1` | (crashes) | — | — | halo depths 69–197 on `DRHS` vs depth 6; tiles `74x266x266` |
+| last-live expand off / geom-last only | (crashes) | — | — | CloverLeaf 11-deep `xarea`; SENGA 197-deep `DRHS` |
+| `OPS_FUSION_MAXLOOPS=20` | 0 unblocked until crash | — | — | FPE (signal 8): too short, splits a snapshot/mutate chain |
+| `OPS_FUSION_MAXLOOPS=50` | **0** on every plan | **yes**, 1.5x (`69x41x35`, 10 live) | **53.6 s** | overlap 0.89 on the eqA plan |
+| `OPS_FUSION_MAXLOOPS=100` | **0** | **yes**, 2.7x (`74x41x41`, 15 live) | 54.0 s | some later plans still 7–8x skewed, but multi-tile |
+| `OPS_FUSION_MAXLOOPS=200` | **0** | **yes**, 2.7x (`74x41x41`, 15 live) | 54.4 s | eqT plan 13.4x / 3 live — chain still long enough to fatten |
 
 So:
 
-1. **False multi-species WAW is not the skew.** Skipping it changes nothing. Isolating the copy loops changes nothing. `eqA` does not even touch `YRHS-MDIM`; it reads `DRHS/URHS/VRHS/WRHS/ERHS` and writes `TCOEFF`.
+1. **False multi-species WAW is not the skew.** Skipping it changes nothing. Isolating the copy loops changes nothing. `eqA` does not even touch `YRHS-MDIM`; it reads `DRHS/URHS/VRHS/WRHS/ERHS` and writes `TCOEFF`. The API limitation is real; it is not this bug.
 2. **`eqA` is unblocked by later loops after `temper`.** Flushing after `temper` restores a 35-loop plan with every loop blocked. The first loop of the leftover plan is `maths_kernel_eqT` (`ERHS = ERHS/DRHS` in `rhscal.F90`), which **writes `ERHS`** that `eqA` only reads — a true snapshot/mutate WAW on a scalar dat. Fuse them and `eqA` must cover `eqT`'s range; if `eqT` itself is unblocked, `eqA` follows.
-3. **Most of `rhscal` is the same shape.** Split 6 only saves the 35 temper loops. 980 later loops stay unblocked, and 1-step `total_ttime` stays ~59 s for every split. An `ops_execute` after `temper` is the right way to keep `eqA` blocked; it is not enough to make tiling pay.
-4. **Do not turn off the Sweep-3 dead-tile cascade.** Empty last-live tiles have to be marked dead so halo work attaches to the previous tile. Stopping the cascade (`OPS_SWEEP3_NO_CASCADE=1`) leaves those deps on empty tiles and the MPI packing asks for a 197-deep halo. Same class of failure as clipping `read_deps`.
-
-The remaining analysis bug was leftover staying empty on a last-live tile when `begin >= natural_end` (WAW already covered that chunk). Sweep 3 then marked that tile dead too, until tile 0 was last live and Sweep 1 assigned the full owned range. **Default now:** last-live leftover still fills to the owned end (needed so a later `OPS_WRITE` can clear stacked halo `read_deps`); interior leftover tiles still stay empty when WAW already covers the natural chunk. Do not disable last-live expand: CloverLeaf then asks for an 11-deep halo and SENGA2 for 197-deep `DRHS`. Any further change still needs the CloverLeaf 7680² `PASSED` canary and the SENGA2 tiled-vs-untiled dump comparison.
+3. **Most of `rhscal` is the same shape.** A single `ops_execute` after `temper` only saves the 35 temper loops. The 1179-loop chain has to be broken **throughout**, not at one named site.
+4. **Do not turn off the Sweep-3 dead-tile cascade, and do not disable last-live Sweep-1 / leftover expand.** Empty last-live tiles have to be marked dead so halo work attaches to the previous tile, and that previous tile has to execute the remaining owned+halo range so a later `OPS_WRITE` can clear stacked `read_deps`. Stopping either explodes halo depths (11-deep `xarea` on CloverLeaf, 197-deep `DRHS` on SENGA2). Same class of failure as clipping `read_deps`.
+5. **Last-live leftover now fills even when `begin >= natural_end`.** Interior leftover tiles still stay empty when WAW already covers the natural chunk (CloverLeaf absorb). That cut unblocked loops 1015 → 724 and does not change CloverLeaf (7680² / 50 steps `PASSED` at 29.5 s, 392/392 live, overlap 0.89). Tile 0 is still last-live for 724 loops; analysis alone cannot finish the job.
+6. **`OPS_FUSION_MAXLOOPS=50` (or 100) is the resolution.** Every plan has 0 unblocked loops; `eqA` runs on 10–15 live tiles near nominal. 1-step `total_ttime` drops 59.0 s → 53.6 s (~9%). `N=20` is too short (FPE). `N=200` still fattens some kernels to 13x / 3 live tiles. Leave the default unlimited so CloverLeaf’s 156-loop hydro plan stays one flush. For SENGA2 run with `OPS_FUSION_MAXLOOPS=50`.
 
 To rerun the 1-step matrix: `apps/fortran/SENGA2/senga_tiling_split.sh` (restores `input/cont.dat`). Rebuild `ops/fortran` after editing `ops_lazy.cpp`. `SENGA_TILING_SPLIT`, `OPS_MDIM_SKIP_WAW`, and `OPS_FUSION_MAXLOOPS` default off.
 
