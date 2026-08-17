@@ -120,7 +120,10 @@ Confirm `ops_lazy.o` and the application binary timestamps moved. Relink `*_mpi_
 | Flag | What to look at |
 |---|---|
 | `-OPS_DIAGS=2` | `Tiling enabled`, kernel times and counts, `Total Wall time`, `Total tiled halo` |
-| `-OPS_DIAGS=3` (or `>2`) | `Created tiling plan for N loops`, tile size, **tile skew** and **biggest tiles vs nominal** (proc 0) |
+| `-OPS_DIAGS=3` (or `>2`) | `Created tiling plan for N loops`, tile size, **tile skew**, **unblocked loops**, **biggest tiles vs nominal**, and **WAW cause** (proc 0) |
+| `OPS_MDIM_SKIP_WAW=1` | Skip Sweep-2 WAW on dats with `dim>1`. Hypothesis test only; does not change SENGA2's 1179-loop plan. |
+| `OPS_SWEEP3_NO_CASCADE=1` | Only the geometric last tile may become Sweep-3 dead. **Unsafe** on SENGA2 (halo-depth crash). |
+| `SENGA_TILING_SPLIT=N` | SENGA2 only: insert `ops_execute` after named call sites (see the split experiment below). |
 | `-OPS_DIAGS=4` | `Executing tiling plan for N loops` — the plan sequence, one line per flush |
 | `-OPS_DIAGS=5` | Per-tile exec ranges after read/write deps, empty tiles, dataset deps |
 | (always) | `dead tile … resurrected` — leftover/WAW filled a Sweep-3 dead tile |
@@ -291,14 +294,51 @@ The footprint line points at why. In the two large plans (1179 and 1180 loops):
 
 ```text
 Proc 0 tile skew: nominal 69x18x17, max live 74x74x138 (loops temper_kernel_eqA / ...), live tiles 32/32, overlap factor 5.362
+Proc 0 unblocked loops: 1015/1179 (1 live tile, >1.5x nominal); WAW growth via dim>1 dats: 0 loop-dims
 Proc 0 biggest tiles vs nominal: temper_kernel_eqA 35.8x (74x74x138, 1 live tiles); set_zero_kernel_MD5 35.8x (74x74x138, 1 live tiles); set_zero_kernel 35.8x (74x74x138, 1 live tiles);
+Proc 0 WAW cause for biggest tiles: temper_kernel_eqA (no Sweep-2 WAW recorded); ...
 ```
 
-Those three are consecutive loops at the top of `temper.F90`, and all are point-wise `OPS_WRITE` with `s3d_000` stencils — `d_tcoeff` (6 components), `d_tderiv` (5 components), `d_store7`. They are the easiest loops in the plan to block, and they are the ones that are not blocked: each runs the whole owned-plus-halo block on tile 0 while the other 31 tiles are empty. Writing tens of megabytes of multi-component fields in one pass evicts whatever the surrounding tiles are trying to keep resident.
+It is not three kernels. **1015 of the 1179 loops** in that plan run as one full-domain tile. `temper_kernel_eqA` is only the first name on the list because it sits at the top of `temper.F90`. There is also no Sweep-2 WAW on those worst loops: tile 0 is expanded by leftover / Sweep 1 once Sweep 3 has marked later tiles dead, so tile 0 looks like the last live tile and is filled to the owned-plus-halo range (`74x74x138`).
 
-The `1 live tiles` shape says leftover did not do it — leftover only fills the *last* tile in a dimension to `end[d]`, and tile 0 is not last in y or z, so it would have been clamped to `nat_end`. Sweep 2 did it: a later write dependency on tile 0 reached the full range, `tile_end` grew to match, and the loop over later tiles emptied all of them. That later writer must itself have been filled to the full range, so this is the leftover-to-owned-end rule feeding the WAW rule one loop at a time — the same shape as the absorb cascade, but arriving through a write dependency that looks legitimate at each individual step.
+SENGA does **not** have streaming stores. The eviction is the unblocked loops themselves writing the whole rank on tile 0.
 
-What is *not* yet known is which loop starts the chain. Finding it needs the per-tile ranges for one of those dats (`-OPS_DIAGS=5`, which for a 1179-loop plan is a very large log — grep a single dat name), and the fix has to avoid the clamps in “What not to try” above, all of which were tried and break either CloverLeaf coverage or the SENGA2 chain. Do not attempt it without re-running the full SENGA2 comparison: the current analysis is correct, and that is the property most easily lost here.
+### Structured split experiment
+
+`ops_execute` breaks a fused plan. `SENGA_TILING_SPLIT` (env var, `apps/fortran/SENGA2/senga_tiling_split.F90`) inserts it without a rebuild:
+
+| value | flush after |
+|---|---|
+| 0 | none (baseline) |
+| 3 | `rhscal` |
+| 6 | `temper` (inside `rhscal`) |
+| 7 | around the `YRHS-MDIM` species-copy groups |
+| 9 | after each species copy into `YRHS-MDIM` |
+| 8 | all of 1–7 |
+
+`OPS_MDIM_SKIP_WAW=1` skips Sweep-2 WAW on dats with `dim>1`. That tests the hypothesis that a multi-species dat cannot express “I only write component *k*”, so a later write of any component looks like a WAW on the whole dat. `copy_kernel_sdim_to_mdim` really does write one component of a 9-component dat (`OPS_ACC_MD1(ispec,0,0,0)`); the generated code declares `OPS_WRITE` on all 9, the source declares `OPS_RW`. The API cannot name the component. That is real, and it is **not** what unblocks `temper`.
+
+1-step, 256³, 32 ranks, `OPS_TILING_MAXDEPTH=6` (the default tile size that prints `69x18x17`, not `OPS_CACHE_SIZE=1`):
+
+| config | big-plan unblocked | eqA blocked? | notes |
+|---|---|---|---|
+| split 0 (fused) | 1015/1179 | no, 35.8x | overlap 5.36; 0 Sweep-2 WAW; 0 dim>1 WAW |
+| split 6 (after `temper`) | 0/35 in the temper plan | **yes** (overlap 0.58) | remaining rhscal plan 980/1144 unblocked (`maths_kernel_eqT`) |
+| split 3 (after `rhscal`) | 808/988 | no | unblocking writer is still inside `rhscal` |
+| split 7 / 9 (mdim copies) | 1015/1179 | no | identical to baseline |
+| `OPS_MDIM_SKIP_WAW=1` | 1015/1179 | no | identical to baseline |
+| `OPS_SWEEP3_NO_CASCADE=1` | (crashes) | — | halo depths 69–197 on `DRHS` vs depth 6; tiles `74x266x266` |
+
+So:
+
+1. **False multi-species WAW is not the skew.** Skipping it changes nothing. Isolating the copy loops changes nothing. `eqA` does not even touch `YRHS-MDIM`; it reads `DRHS/URHS/VRHS/WRHS/ERHS` and writes `TCOEFF`.
+2. **`eqA` is unblocked by later loops after `temper`.** Flushing after `temper` restores a 35-loop plan with every loop blocked. The first loop of the leftover plan is `maths_kernel_eqT` (`ERHS = ERHS/DRHS` in `rhscal.F90`), which **writes `ERHS`** that `eqA` only reads — a true snapshot/mutate WAW on a scalar dat. Fuse them and `eqA` must cover `eqT`'s range; if `eqT` itself is unblocked, `eqA` follows.
+3. **Most of `rhscal` is the same shape.** Split 6 only saves the 35 temper loops. 980 later loops stay unblocked, and 1-step `total_ttime` stays ~59 s for every split. An `ops_execute` after `temper` is the right way to keep `eqA` blocked; it is not enough to make tiling pay.
+4. **Do not turn off the Sweep-3 dead-tile cascade.** Empty last-live tiles have to be marked dead so halo work attaches to the previous tile. Stopping the cascade (`OPS_SWEEP3_NO_CASCADE=1`) leaves those deps on empty tiles and the MPI packing asks for a 197-deep halo. Same class of failure as clipping `read_deps`.
+
+The remaining analysis bug is: leftover fills a tile to the full owned end when the *next* tile is Sweep-3 dead, and Sweep 3 will mark the previous empty tile dead too, until tile 0 is last live. Restricting that without re-breaking halo depths is still open. Any change needs the CloverLeaf 7680² `PASSED` canary and the SENGA2 tiled-vs-untiled dump comparison.
+
+To rerun the 1-step matrix: `apps/fortran/SENGA2/senga_tiling_split.sh` (restores `input/cont.dat`). Rebuild `ops/fortran` after editing `ops_lazy.cpp`. `SENGA_TILING_SPLIT` and `OPS_MDIM_SKIP_WAW` default off.
 
 ### Mini WAW app
 
@@ -309,7 +349,7 @@ What is *not* yet known is which loop starts the chain. Finding it needs the per
 | Location | Role |
 |---|---|
 | `makefiles/Makefile.gnu` | `CXXFLAGS`; `-ffloat-store` costs ~1.7x on tiled runs |
-| `ops/c/src/core/ops_lazy.cpp` — `ops_construct_tile_plan` | Sweeps 1–3, leftover, terminal reads, tile skew print |
+| `ops/c/src/core/ops_lazy.cpp` — `ops_construct_tile_plan` | Sweeps 1–3, leftover, terminal reads, tile skew / WAW-cause print, `OPS_MDIM_SKIP_WAW`, `OPS_SWEEP3_NO_CASCADE` |
 | `ops/c/src/core/ops_lazy.cpp` — `ops_compute_mpi_dependencies` | `data_read_deps_edge` |
 | `ops/c/src/mpi/ops_mpi_rt_support.cpp` — `ops_halo_exchanges_datlist` | Pack/unpack using plan depths |
 | `apps/c/CloverLeaf` | Performance canary (many fused loops, small stencils) |
