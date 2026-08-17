@@ -659,15 +659,24 @@ int ops_construct_tile_plan(OPS_instance *instance) {
   // Sweep 3 marks an empty last-live tile dead so halo work attaches to the
   // previous tile. If the next tile is already dead, the previous empty tile
   // becomes "last live" and is marked dead too — that cascade continues until
-  // tile 0 is last, Sweep 1 then assigns the full loop range, and the loop is
-  // unblocked. OPS_SWEEP3_NO_CASCADE=1 only allows the geometric last tile
-  // (tile_idx == ntiles-1) to become dead.
+  // tile 0 is last. The old last-live shortcut then assigned the full loop /
+  // owned end (Sweep 1 and leftover), which unblocks the loop. Halo attachment
+  // does not need that: Sweep 3 already merges the dead tile's read_deps into
+  // the previous tile, and Sweep 1 grows from those deps.
+  // OPS_SWEEP3_NO_CASCADE=1 only allows the geometric last tile
+  // (tile_idx == ntiles-1) to become dead (unsafe: halo depths explode).
+  // OPS_LASTLIVE_EXPAND=1 restores the old full-range shortcut when the next
+  // tile is dead. Default off: only the geometric last tile may take it.
   const char *sweep3_env = getenv("OPS_SWEEP3_NO_CASCADE");
   const bool sweep3_no_cascade =
       sweep3_env != NULL && atoi(sweep3_env) != 0;
+  const char *lastlive_env = getenv("OPS_LASTLIVE_EXPAND");
+  const bool lastlive_expand =
+      lastlive_env != NULL && atoi(lastlive_env) != 0;
   if (instance->OPS_diags > 2 && ops_get_proc() == 0)
-    printf2(instance, "Sweep3 dead-tile cascade: %s\n",
-            sweep3_no_cascade ? "off" : "on");
+    printf2(instance, "Sweep3 dead-tile cascade: %s; last-live full-range expand: %s\n",
+            sweep3_no_cascade ? "off" : "on",
+            lastlive_expand ? "on (old)" : "off");
 
   const int nloops_plan = (int)ops_kernel_list.size();
   std::vector<int> waw_cause_loop(nloops_plan * OPS_MAX_DIM, -1);
@@ -809,19 +818,23 @@ int ops_construct_tile_plan(OPS_instance *instance) {
                 tiled_ranges[loop][OPS_MAX_DIM * 2 * (tile - tiles_prod[d]) + 2 * d + 1];
           }
 
-          // End index, if last tile in the dimension that is not dead and if
-          // this is the rightmost process involved in the loop
+          // End index, if last tile in the dimension and this is the
+          // rightmost process involved in the loop. A Sweep-3-dead neighbour
+          // does not make this tile geometric last: taking the full loop
+          // range here is what unblocked SENGA2's 1179-loop plans. Sweep 3
+          // already merged the dead tile's read_deps; the else branch grows
+          // from those. OPS_LASTLIVE_EXPAND=1 restores the old shortcut.
+          bool geom_last =
+              (tile / tiles_prod[d]) % ntiles[d] == ntiles[d] - 1;
+          bool next_dead_lastlive =
+              tile + tiles_prod[d] < total_tiles &&
+              dead_tiles[(tile + tiles_prod[d]) * OPS_MAX_DIM + d] != -1 &&
+              dead_tiles[tile * OPS_MAX_DIM + d] == -1;
           if (LOOPRANGE[2 * d + 1] == end[d] &&
-          (((tile / tiles_prod[d]) % ntiles[d] == ntiles[d] - 1 ) || 
-              (tile + tiles_prod[d] < total_tiles && dead_tiles[(tile + tiles_prod[d]) * OPS_MAX_DIM + d] != -1 &&
-              dead_tiles[tile * OPS_MAX_DIM + d] == -1))) {
+              (geom_last || (lastlive_expand && next_dead_lastlive))) {
               tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] =
                   LOOPRANGE[2 * d + 1];
-              bool next_dead =
-                  tile + tiles_prod[d] < total_tiles &&
-                  dead_tiles[(tile + tiles_prod[d]) * OPS_MAX_DIM + d] != -1 &&
-                  (tile / tiles_prod[d]) % ntiles[d] != ntiles[d] - 1;
-              if (next_dead) {
+              if (!geom_last && next_dead_lastlive) {
                 int key = loop * OPS_MAX_DIM + d;
                 int tile_begin =
                     tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0];
@@ -890,10 +903,16 @@ int ops_construct_tile_plan(OPS_instance *instance) {
           if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] > tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1])
             tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] = tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0];
           
-          //If this is NOT the last non-dead tile, we need to check write-after-write dependencies too
-          if (!((tile / tiles_prod[d]) % ntiles[d] == ntiles[d] - 1 || ( 
-                tile + tiles_prod[d] < total_tiles && 
-                dead_tiles[(tile + tiles_prod[d]) * OPS_MAX_DIM + d] != -1))) {
+          //If this is NOT the last non-dead tile, we need to check write-after-write dependencies too.
+          // Last-live used to skip WAW because Sweep 1 had already assigned the
+          // full loop range. With lastlive_expand off, a Sweep-3-dead neighbour
+          // no longer triggers that shortcut, so WAW still applies.
+          bool geom_last_waw =
+              (tile / tiles_prod[d]) % ntiles[d] == ntiles[d] - 1;
+          bool next_dead_waw =
+              tile + tiles_prod[d] < total_tiles &&
+              dead_tiles[(tile + tiles_prod[d]) * OPS_MAX_DIM + d] != -1;
+          if (!(geom_last_waw || (lastlive_expand && next_dead_waw))) {
 
             // WAW: later write of a dat this loop accesses (read or write).
             // A snapshot that only *reads* U must still extend when a later
@@ -974,8 +993,11 @@ int ops_construct_tile_plan(OPS_instance *instance) {
                 tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
                 tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1]);
 
-          // Leftover tiles: If no prior dependencies, end index is leftmost range + (tile index
-          // + 1) * tile size, or end index if not tiled in this dimension
+          // Leftover tiles: If no prior dependencies, end index is this tile's
+          // natural end. The geometric last tile (or a non-tiled dim) fills to
+          // the owned end. A Sweep-3-dead neighbour must not: that is the
+          // leftover half of the last-live cascade. OPS_LASTLIVE_EXPAND=1
+          // restores filling to the owned end when the next tile is dead.
           if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] ==
               tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] &&
               dead_tiles[tile * OPS_MAX_DIM + d] == -1) { // and this tile is not dead
@@ -994,7 +1016,7 @@ int ops_construct_tile_plan(OPS_instance *instance) {
             if (tb >= nat_end) {
               ;
             } else if (tile_sizes[d] <= 0 || tile_idx == ntiles[d] - 1 ||
-                       (tile + tiles_prod[d] < total_tiles &&
+                       (lastlive_expand && tile + tiles_prod[d] < total_tiles &&
                         dead_tiles[(tile + tiles_prod[d]) * OPS_MAX_DIM + d] !=
                             -1)) {
               int old_te = te;
