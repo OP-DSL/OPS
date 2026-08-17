@@ -60,8 +60,6 @@ inline int omp_get_max_threads() {
 #include <vector>
 using namespace std;
 
-int ops_loop_count = 0;
-
 /////////////////////////////////////////////////////////////////////////
 // Data structures
 /////////////////////////////////////////////////////////////////////////
@@ -104,8 +102,6 @@ public:
 
   // dimensionality of blocks used throughout
   int ops_dims_tiling_internal;
-
-  int executing = 0;
 
 };
 #define TILE4D -1
@@ -276,8 +272,6 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
     desc->orig_range = nullptr;
     ops_free(desc);
     desc = nullptr;
-
-    ops_loop_count++;
   }
 }
 
@@ -626,13 +620,9 @@ int ops_construct_tile_plan(OPS_instance *instance) {
   data_read_deps.resize(instance->OPS_dat_index);
   data_write_deps.resize(instance->OPS_dat_index);
   data_read_deps_edge.resize(instance->OPS_dat_index);
-  // Which loop last extended write_deps end, per dat/tile/dim. Used to
-  // name the later writer when Sweep 2 unblocks a loop.
-  std::vector<std::vector<int> > data_write_src(instance->OPS_dat_index);
   for (int i = 0; i < instance->OPS_dat_index; i++) {
     data_read_deps[i].resize(total_tiles * OPS_MAX_DIM * 2);
     data_write_deps[i].resize(total_tiles * OPS_MAX_DIM * 2);
-    data_write_src[i].assign(total_tiles * OPS_MAX_DIM, -1);
     data_read_deps_edge[i].resize(OPS_MAX_DIM * 2);
     for (int d = 0; d < total_tiles * OPS_MAX_DIM; d++) {
       data_read_deps[i][2 * d + 0] = INT_MAX;   // Anything will be less
@@ -646,60 +636,19 @@ int ops_construct_tile_plan(OPS_instance *instance) {
     }
   }
 
-  // Diagnostic: skip Sweep-2 WAW on dats with more than one component.
-  // OPS cannot name which field of a multi-species dat a loop touches, so a
-  // later write of any component looks like a WAW on the whole dat. Default
-  // off — this is a hypothesis test, not a correctness-preserving fix.
-  const char *mdim_skip_env = getenv("OPS_MDIM_SKIP_WAW");
-  const bool skip_mdim_waw =
-      mdim_skip_env != NULL && atoi(mdim_skip_env) != 0;
-  if (instance->OPS_diags > 2 && ops_get_proc() == 0)
-    printf2(instance, "MDIM WAW: %s\n", skip_mdim_waw ? "skipped (dim>1)" : "on");
-
   // Sweep 3 marks an empty last-live tile dead so halo work attaches to the
   // previous tile. If the next tile is already dead, Sweep 1 / leftover treat
   // this tile as last and assign the remaining owned range — required so a
   // later OPS_WRITE can clear stacked halo read_deps. The leftover
   // "tb >= nat_end → stay empty" skip must NOT apply to that last-live tile:
   // staying empty lets Sweep 3 mark it dead too, and the cascade walks left
-  // until tile 0 is last live (SENGA2 1179-loop plans). Interior leftover
-  // tiles still stay empty when WAW already covers the natural chunk.
-  // OPS_SWEEP3_NO_CASCADE=1 only allows the geometric last tile
-  // (tile_idx == ntiles-1) to become dead (unsafe: halo depths explode).
-  const char *sweep3_env = getenv("OPS_SWEEP3_NO_CASCADE");
-  const bool sweep3_no_cascade =
-      sweep3_env != NULL && atoi(sweep3_env) != 0;
-  if (instance->OPS_diags > 2 && ops_get_proc() == 0)
-    printf2(instance, "Sweep3 dead-tile cascade: %s\n",
-            sweep3_no_cascade ? "off" : "on");
-
-  const int nloops_plan = (int)ops_kernel_list.size();
-  std::vector<int> waw_cause_loop(nloops_plan * OPS_MAX_DIM, -1);
-  std::vector<const char *> waw_cause_dat(nloops_plan * OPS_MAX_DIM, nullptr);
-  std::vector<int> waw_cause_datdim(nloops_plan * OPS_MAX_DIM, 0);
-  std::vector<int> waw_cause_old(nloops_plan * OPS_MAX_DIM, 0);
-  std::vector<int> waw_cause_new(nloops_plan * OPS_MAX_DIM, 0);
-  std::vector<int> waw_cause_emptied(nloops_plan * OPS_MAX_DIM, 0);
-
+  // until tile 0 is last live. Interior leftover tiles still stay empty when
+  // WAW already covers the natural chunk.
 
   // Seed a terminal read dependency to cover the union of writes across the
   // tiling plan. Without this, if the last loops only touch boundaries, prior
   // full writes could be reduced to boundary-only execution.
-  //
-  // This is equivalent to a phantom consumer of every produced field on the
-  // full owned range.  Backward analysis then RAW-connects the entire fused
-  // chain to that consumer, so stencil width accumulates on every tile.
-  // CloverLeaf was already valid without it: leftover tiles execute writes
-  // that have no later consumer, and edge OPS_WRITE no longer clears interior
-  // deps (full_overlap).  Disable with OPS_TERMINAL_READ=0.
-  const char *terminal_read_env = getenv("OPS_TERMINAL_READ");
-  const bool seed_terminal_read =
-      terminal_read_env == NULL || atoi(terminal_read_env) != 0;
-  if (instance->OPS_diags > 2 && ops_get_proc() == 0)
-    printf2(instance, "Terminal read seeding: %s\n",
-            seed_terminal_read ? "on" : "off");
   for (int datidx = 0; datidx < instance->OPS_dat_index; datidx++) {
-    if (!seed_terminal_read) break;
     if (!dataset_written[datidx]) continue;
     for (int d = 0; d < dims; d++) {
       for (int tile = 0; tile < total_tiles; tile++) {
@@ -821,25 +770,6 @@ int ops_construct_tile_plan(OPS_instance *instance) {
               dead_tiles[tile * OPS_MAX_DIM + d] == -1))) {
               tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] =
                   LOOPRANGE[2 * d + 1];
-              bool next_dead =
-                  tile + tiles_prod[d] < total_tiles &&
-                  dead_tiles[(tile + tiles_prod[d]) * OPS_MAX_DIM + d] != -1 &&
-                  (tile / tiles_prod[d]) % ntiles[d] != ntiles[d] - 1;
-              if (next_dead) {
-                int key = loop * OPS_MAX_DIM + d;
-                int tile_begin =
-                    tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0];
-                int new_end = LOOPRANGE[2 * d + 1];
-                if (new_end - tile_begin >=
-                    waw_cause_new[key] - waw_cause_old[key]) {
-                  waw_cause_loop[key] = -2;
-                  waw_cause_dat[key] = "Sweep3-dead-cascade";
-                  waw_cause_datdim[key] = 0;
-                  waw_cause_old[key] = tile_begin;
-                  waw_cause_new[key] = new_end;
-                  waw_cause_emptied[key] = 0;
-                }
-              }
           }
           // Otherwise it depends on data dependencies
           else {
@@ -911,8 +841,6 @@ int ops_construct_tile_plan(OPS_instance *instance) {
                   LOOPARG.opt == 1 &&
                   data_write_deps[LOOPARG.dat->index]
                                   [tile * OPS_MAX_DIM * 2 + 2 * d + 1] != INT_MIN ) {
-                if (skip_mdim_waw && LOOPARG.dat->dim > 1)
-                  continue;
                 int d_m_min = 0;
                 for (int p = 0;
                       p < LOOPARG.stencil->points; p++) {
@@ -928,9 +856,7 @@ int ops_construct_tile_plan(OPS_instance *instance) {
                   int &tile_end =
                       tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1];
                   int waw_end = intersect_begin + intersect_len;
-                  int old_end = tile_end;
                   tile_end = MAX(tile_end, waw_end);
-                  int emptied = 0;
                   for (int t = tile + tiles_prod[d];
                        t < total_tiles &&
                        (t / tiles_prod[d]) % ntiles[d] >
@@ -944,27 +870,9 @@ int ops_construct_tile_plan(OPS_instance *instance) {
                       break;
                     if (tile_end >= te) {
                       tb = te = tile_end;
-                      emptied++;
                     } else {
                       tb = tile_end;
                       break;
-                    }
-                  }
-                  int tile_w = tile_end - tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0];
-                  int nom_w = tile_sizes[d] > 0 ? tile_sizes[d] : 1;
-                  if (tile_end > old_end &&
-                      (emptied > 0 || tile_w > 2 * nom_w)) {
-                    int key = loop * OPS_MAX_DIM + d;
-                    if (tile_end - old_end >=
-                        waw_cause_new[key] - waw_cause_old[key]) {
-                      waw_cause_loop[key] =
-                          data_write_src[LOOPARG.dat->index]
-                                        [tile * OPS_MAX_DIM + d];
-                      waw_cause_dat[key] = LOOPARG.dat->name;
-                      waw_cause_datdim[key] = LOOPARG.dat->dim;
-                      waw_cause_old[key] = old_end;
-                      waw_cause_new[key] = tile_end;
-                      waw_cause_emptied[key] = emptied;
                     }
                   }
                 }
@@ -1005,20 +913,7 @@ int ops_construct_tile_plan(OPS_instance *instance) {
             if (tb >= nat_end && !last_live) {
               ;
             } else if (tile_sizes[d] <= 0 || last_live) {
-              int old_te = te;
               te = MAX(tb, end[d]);
-              if (next_dead && tile_idx != ntiles[d] - 1 && te > old_te) {
-                int key = loop * OPS_MAX_DIM + d;
-                if (te - old_te >=
-                    waw_cause_new[key] - waw_cause_old[key]) {
-                  waw_cause_loop[key] = -2;
-                  waw_cause_dat[key] = "Sweep3-dead-cascade";
-                  waw_cause_datdim[key] = 0;
-                  waw_cause_old[key] = old_te;
-                  waw_cause_new[key] = te;
-                  waw_cause_emptied[key] = 0;
-                }
-              }
             } else
               te = MAX(tb, nat_end);
           }
@@ -1061,7 +956,7 @@ int ops_construct_tile_plan(OPS_instance *instance) {
               (tile / tiles_prod[d]) % ntiles[d] == ntiles[d] - 1;
           bool is_last_live_tile =
               (is_geom_last ||
-               (!sweep3_no_cascade && tile + tiles_prod[d] < total_tiles &&
+               (tile + tiles_prod[d] < total_tiles &&
                 dead_tiles[(tile + tiles_prod[d]) * OPS_MAX_DIM + d] !=
                     -1)) &&
               dead_tiles[tile * OPS_MAX_DIM + d] == -1;
@@ -1213,13 +1108,11 @@ int ops_construct_tile_plan(OPS_instance *instance) {
                     data_write_deps[LOOPARG.dat->index]
                                    [tile * OPS_MAX_DIM * 2 + 2 * d + 0],
                     tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0]);
-            int woff = tile * OPS_MAX_DIM * 2 + 2 * d + 1;
-            int new_write_end =
-                tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1];
-            if (new_write_end > data_write_deps[LOOPARG.dat->index][woff]) {
-              data_write_deps[LOOPARG.dat->index][woff] = new_write_end;
-              data_write_src[LOOPARG.dat->index][tile * OPS_MAX_DIM + d] = loop;
-            }
+            data_write_deps[LOOPARG.dat->index]
+                [tile * OPS_MAX_DIM * 2 + 2 * d + 1] = MAX(
+                    data_write_deps[LOOPARG.dat->index]
+                                   [tile * OPS_MAX_DIM * 2 + 2 * d + 1],
+                    tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1]);
 
             if (instance->OPS_diags > 5 && tile_sizes[d] != -1)
               printf2(instance,
@@ -1320,8 +1213,8 @@ int ops_construct_tile_plan(OPS_instance *instance) {
     long long nominal_cells = 0;
     int live_tiles_max = 0;
     // Worst offenders by footprint: the largest single tile a loop executes,
-    // against the nominal tile. A loop that is not blocked at all - one tile
-    // covering its whole range - shows up here with a large ratio and a low
+    // against the nominal tile. A loop that is not blocked at all — one tile
+    // covering its whole range — shows up here with a large ratio and a low
     // live tile count, and streams its dats through the cache once per plan.
     long long nominal_tile_vol = 1;
     for (int d = 0; d < dims; d++) {
@@ -1334,15 +1227,7 @@ int ops_construct_tile_plan(OPS_instance *instance) {
     const char *worst_name[nworst] = {NULL};
     int worst_tiles[nworst] = {0};
     int worst_w[nworst][OPS_MAX_DIM] = {{0}};
-    int worst_loop[nworst] = {-1, -1, -1};
     int n_unblocked = 0;
-    int n_mdim_cause = 0;
-    std::vector<double> loop_ratio;
-    std::vector<int> loop_live;
-    std::vector<const char *> loop_name;
-    loop_ratio.reserve(ops_kernel_list.size());
-    loop_live.reserve(ops_kernel_list.size());
-    loop_name.reserve(ops_kernel_list.size());
     for (unsigned int loop = 0; loop < ops_kernel_list.size(); loop++) {
       int live_tiles = 0;
       long long biggest_tile_vol = 0;
@@ -1385,30 +1270,20 @@ int ops_construct_tile_plan(OPS_instance *instance) {
       double ratio = nominal_tile_vol > 0
                          ? (double)biggest_tile_vol / (double)nominal_tile_vol
                          : 0.0;
-      loop_ratio.push_back(ratio);
-      loop_live.push_back(live_tiles);
-      loop_name.push_back(ops_kernel_list[loop]->name);
       if (live_tiles == 1 && ratio > 1.5)
         n_unblocked++;
-      for (int d = 0; d < dims; d++) {
-        int key = (int)loop * OPS_MAX_DIM + d;
-        if (waw_cause_dat[key] && waw_cause_datdim[key] > 1)
-          n_mdim_cause++;
-      }
       for (int i = 0; i < nworst; i++) {
         if (ratio > worst_ratio[i]) {
           for (int j = nworst - 1; j > i; j--) {
             worst_ratio[j] = worst_ratio[j - 1];
             worst_name[j] = worst_name[j - 1];
             worst_tiles[j] = worst_tiles[j - 1];
-            worst_loop[j] = worst_loop[j - 1];
             for (int d = 0; d < OPS_MAX_DIM; d++)
               worst_w[j][d] = worst_w[j - 1][d];
           }
           worst_ratio[i] = ratio;
           worst_name[i] = ops_kernel_list[loop]->name;
           worst_tiles[i] = live_tiles;
-          worst_loop[i] = (int)loop;
           for (int d = 0; d < OPS_MAX_DIM; d++) worst_w[i][d] = biggest_tile_w[d];
           break;
         }
@@ -1425,10 +1300,8 @@ int ops_construct_tile_plan(OPS_instance *instance) {
             live_tiles_max, total_tiles,
             nominal_cells > 0 ? (double)live_cells / (double)nominal_cells : 0.0);
     printf2(instance,
-            "Proc %d unblocked loops: %d/%d (1 live tile, >1.5x nominal); "
-            "WAW growth via dim>1 dats: %d loop-dims\n",
-            ops_get_proc(), n_unblocked, (int)ops_kernel_list.size(),
-            n_mdim_cause);
+            "Proc %d unblocked loops: %d/%d (1 live tile, >1.5x nominal)\n",
+            ops_get_proc(), n_unblocked, (int)ops_kernel_list.size());
     if (worst_ratio[0] > 1.5) {
       printf2(instance, "Proc %d biggest tiles vs nominal:", ops_get_proc());
       for (int i = 0; i < nworst; i++)
@@ -1437,98 +1310,8 @@ int ops_construct_tile_plan(OPS_instance *instance) {
                   worst_name[i], worst_ratio[i], worst_w[i][0], worst_w[i][1],
                   worst_w[i][2], worst_tiles[i]);
       printf2(instance, "\n");
-      printf2(instance, "Proc %d WAW cause for biggest tiles:", ops_get_proc());
-      for (int i = 0; i < nworst; i++) {
-        if (worst_loop[i] < 0)
-          continue;
-        int best_d = -1;
-        int best_grow = 0;
-        for (int d = 0; d < dims; d++) {
-          int key = worst_loop[i] * OPS_MAX_DIM + d;
-          int grow = waw_cause_new[key] - waw_cause_old[key];
-          if (waw_cause_dat[key] && grow >= best_grow) {
-            best_grow = grow;
-            best_d = d;
-          }
-        }
-        if (best_d < 0) {
-          printf2(instance, " %s (no Sweep-2 WAW recorded);", worst_name[i]);
-          continue;
-        }
-        int key = worst_loop[i] * OPS_MAX_DIM + best_d;
-        int src = waw_cause_loop[key];
-        const char *src_name =
-            (src >= 0 && src < (int)ops_kernel_list.size())
-                ? ops_kernel_list[src]->name
-                : "?";
-        printf2(instance,
-                " %s dim%d via %s(dim=%d) from %s (%d->%d, emptied %d)",
-                worst_name[i], best_d, waw_cause_dat[key],
-                waw_cause_datdim[key], src_name, waw_cause_old[key],
-                waw_cause_new[key], waw_cause_emptied[key]);
-        // One hop: if the later writer was itself unblocked by WAW, name it.
-        if (src >= 0) {
-          int hop_d = -1, hop_grow = 0;
-          for (int d = 0; d < dims; d++) {
-            int hk = src * OPS_MAX_DIM + d;
-            int grow = waw_cause_new[hk] - waw_cause_old[hk];
-            if (waw_cause_dat[hk] && grow >= hop_grow) {
-              hop_grow = grow;
-              hop_d = d;
-            }
-          }
-          if (hop_d >= 0) {
-            int hk = src * OPS_MAX_DIM + hop_d;
-            int src2 = waw_cause_loop[hk];
-            const char *src2_name =
-                (src2 >= 0 && src2 < (int)ops_kernel_list.size())
-                    ? ops_kernel_list[src2]->name
-                    : "?";
-            printf2(instance, " <- %s via %s from %s", src_name,
-                    waw_cause_dat[hk], src2_name);
-          }
-        }
-        printf2(instance, ";");
-      }
-      printf2(instance, "\n");
     }
-      /* Run-length encode consecutive loops with similar skew / live-tile
-         count. A JUMP is a later loop whose live-tile count rises or whose
-         skew falls — insert ops_execute immediately before that kernel so
-         the earlier high-skew prefix is not fused with it. */
-      if (n_unblocked > 0 || worst_ratio[0] > 1.5) {
-        printf2(instance,
-                "Proc %d loop-skew runs (insert ops_execute immediately before JUMP kernels):\n",
-                ops_get_proc());
-        int nloops = (int)loop_ratio.size();
-        int run_start = 0;
-        for (int i = 1; i <= nloops; i++) {
-          bool cont = false;
-          if (i < nloops && loop_live[i] == loop_live[run_start]) {
-            double ra = MAX(0.1, loop_ratio[run_start]);
-            double rb = MAX(0.1, loop_ratio[i]);
-            if (ra / rb < 1.8 && rb / ra < 1.8)
-              cont = true;
-          }
-          if (cont)
-            continue;
-          printf2(instance, "  [%d-%d] %.1fx %dlive %s", run_start, i - 1,
-                  loop_ratio[run_start], loop_live[run_start],
-                  loop_name[run_start] ? loop_name[run_start] : "-");
-          if (i - 1 != run_start)
-            printf2(instance, " .. %s",
-                    loop_name[i - 1] ? loop_name[i - 1] : "-");
-          printf2(instance, "\n");
-          if (i < nloops &&
-              (loop_live[i] > loop_live[run_start] ||
-               loop_ratio[run_start] > 2.0 * MAX(0.1, loop_ratio[i])))
-            printf2(instance, "  JUMP before loop %d %s (%.1fx %dlive)\n", i,
-                    loop_name[i] ? loop_name[i] : "-", loop_ratio[i],
-                    loop_live[i]);
-          run_start = i;
-        }
-      }
-    }
+  }
 
   // free local storage
   free(store_left_neighbour_end);   store_left_neighbour_end = nullptr;
@@ -1607,10 +1390,8 @@ void ops_execute(OPS_instance *instance) {
   if (!instance->ops_enable_tiling) return;
   if (instance->tiling_instance == NULL)
     instance->tiling_instance = new OPS_instance_tiling();
-  if (ops_kernel_list.size() == 0 || instance->tiling_instance->executing == 1)
+  if (ops_kernel_list.size() == 0)
     return;
-
-  instance->tiling_instance->executing = 1;
 
   // Try to find an existing tiling plan for this sequence of loops which is
   // 
@@ -1755,11 +1536,7 @@ void ops_execute(OPS_instance *instance) {
     ops_kernel_list[i] = nullptr;
   }
 
-  ops_loop_count+=ops_kernel_list.size();
-
   ops_kernel_list.clear();
-
-  instance->tiling_instance->executing = 0;
 }
 
 void create_kerneldesc_and_enque(char const* kernel_name, ops_arg *args, int nargs, int index, int dim, int isdevice, int *range, ops_block block, void (*func)(struct ops_kernel_descriptor *desc))

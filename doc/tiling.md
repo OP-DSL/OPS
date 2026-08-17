@@ -88,7 +88,7 @@ Capping Sweep 1 execution at `natural + max_stencil`, or clipping per-tile `read
 
 Do not clip halo `read_deps` / `read_deps_edge` to “fix” tile sizes. MPI depths must stay stacked because the **neighbouring rank** will not rerun this chain.
 
-Terminal-read seeding (phantom consumer of every written dat on the owned range) also RAW-connects the whole plan. Disable with `OPS_TERMINAL_READ=0` only as a diagnostic: CloverLeaf interiors can stay valid via leftover, but halo tiles often get worse (`dead tile resurrected` / leftover refill).
+Terminal-read seeding (phantom consumer of every written dat on the owned range) also RAW-connects the whole plan. It is always on.
 
 ## Generalized extra-growth rule
 
@@ -120,9 +120,7 @@ Confirm `ops_lazy.o` and the application binary timestamps moved. Relink `*_mpi_
 | Flag | What to look at |
 |---|---|
 | `-OPS_DIAGS=2` | `Tiling enabled`, kernel times and counts, `Total Wall time`, `Total tiled halo` |
-| `-OPS_DIAGS=3` (or `>2`) | `Created tiling plan for N loops`, tile size, **tile skew**, **unblocked loops**, **biggest tiles vs nominal**, **WAW cause**, and **loop-skew runs / JUMP** (proc 0) |
-| `OPS_MDIM_SKIP_WAW=1` | Skip Sweep-2 WAW on dats with `dim>1`. Hypothesis test only; does not change SENGA2's 1179-loop plan. |
-| `OPS_SWEEP3_NO_CASCADE=1` | Only the geometric last tile may become Sweep-3 dead. **Unsafe** on SENGA2 (halo-depth crash). |
+| `-OPS_DIAGS=3` (or `>2`) | `Created tiling plan for N loops`, tile size, **tile skew**, **unblocked loops**, **biggest tiles vs nominal** (proc 0) |
 | `-OPS_DIAGS=4` | `Executing tiling plan for N loops` — the plan sequence, one line per flush |
 | `-OPS_DIAGS=5` | Per-tile exec ranges after read/write deps, empty tiles, dataset deps |
 | (always) | `dead tile … resurrected` — leftover/WAW filled a Sweep-3 dead tile |
@@ -150,8 +148,6 @@ This is the line to read when tiling does not pay off. It is a real tile footpri
 - **`1 live tiles` with a large ratio**, as above — the loop is not blocked at all. It executes its whole range in one go, streaming its dats through the cache once per plan and evicting everything the neighbouring tiles just built. No redundant arithmetic, but the fused chain around it is broken.
 
 Absence of the line means every loop is within 1.5x of nominal. CloverLeaf never prints it.
-
-When any loop is unblocked (or >1.5x), proc 0 also prints **loop-skew runs**: consecutive loops with the same live-tile count and similar ratio, collapsed to `[first-last] ratio live kernel .. kernel`. A **JUMP** is the first later loop whose live-tile count rises or whose skew falls. Insert `ops_execute` immediately before that kernel so the high-skew prefix is not fused with it. Peeling the blocked tail leaves the unblocked prefix as its own plan; dump again and repeat at the next JUMP. Do not cap fused-chain length with a global loop count: a one-size-fits-all flush splits snapshot/mutate pairs (`N=20` FPE) and ignores the semantic jumps.
 
 Kernel **invocation counts** (`-OPS_DIAGS=2` profiler): `advec_cell_kernel4_xdir` should be about `(tiles per rank) × (steps)`, not `~steps`. One count per step means one tile per rank for that kernel.
 
@@ -187,7 +183,7 @@ A healthy interior tile is close to the nominal chunk plus a small stencil. A ra
 - `true_waw = live_read && rd_e > nat_e` (true on every RAW stack).
 - Clipping `read_deps` to `natural + this_stencil` (halo send/recv diverge).
 - Marking WAW-emptied tiles `dead_tiles` (previous tile expands to full owned).
-- `OPS_SWEEP3_NO_CASCADE=1` (halo depths explode on SENGA2; MPI packing asks for a 197-deep `DRHS` halo).
+- Disabling the Sweep-3 dead-tile cascade (halo depths explode on SENGA2; MPI packing asks for a 197-deep `DRHS` halo).
 - Turning off last-live Sweep-1 / leftover expand entirely, or limiting it to the geometric last tile only (CloverLeaf then asks for an 11-deep `xarea` halo; SENGA2 asks for 69–197-deep `DRHS`).
 
 ## Validation
@@ -308,9 +304,9 @@ SENGA does **not** have streaming stores. The eviction is the unblocked loops th
 
 ### Structured split experiment
 
-`ops_execute` breaks a fused plan. A global loop-count cap (`OPS_FUSION_MAXLOOPS`) was tried and **rejected**: `N=20` FPE-crashes by splitting a snapshot/mutate pair; `N=50/100` happens to block every plan but is one-size-fits-all and would also split CloverLeaf’s 156-loop hydro plan if it were the default. The supported approach is explicit `ops_execute` in SENGA at the **JUMP** in the skewing factor — immediately before the later writer that leftover-cascades earlier loops.
+`ops_execute` breaks a fused plan. A global loop-count cap was tried and **rejected**: flushing every 20 loops FPE-crashes by splitting a snapshot/mutate pair; every 50/100 happens to block every plan but is one-size-fits-all and would also split CloverLeaf’s 156-loop hydro plan if it were the default. The supported approach is explicit `ops_execute` in SENGA immediately before the later writer that leftover-cascades earlier loops.
 
-`OPS_MDIM_SKIP_WAW=1` skips Sweep-2 WAW on dats with `dim>1`. That tests the hypothesis that a multi-species dat cannot express “I only write component *k*”, so a later write of any component looks like a WAW on the whole dat. `copy_kernel_sdim_to_mdim` really does write one component of a 9-component dat (`OPS_ACC_MD1(ispec,0,0,0)`); the generated code declares `OPS_WRITE` on all 9, the source declares `OPS_RW`. The API cannot name the component. That is real, and it is **not** what unblocks `temper`.
+Skipping Sweep-2 WAW on `dim>1` dats was also tried. `copy_kernel_sdim_to_mdim` really does write one component of a 9-component dat (`OPS_ACC_MD1(ispec,0,0,0)`); the generated code declares `OPS_WRITE` on all 9, the source declares `OPS_RW`. The API cannot name the component. That is real, and it is **not** what unblocks `temper`.
 
 1-step, 256³, 32 ranks, `OPS_TILING_MAXDEPTH=6` (the default tile size that prints `69x18x17`, not `OPS_CACHE_SIZE=1`):
 
@@ -320,12 +316,11 @@ SENGA does **not** have streaming stores. The eviction is the unblocked loops th
 | after `temper` only | 0/35 in the temper plan | **yes** | 58.2 s | leftover rhscal starts at `maths_kernel_eqT`; still mostly unblocked |
 | after `rhscal` only | still unblocked inside `rhscal` | no | 59.7 s | unblocking writer is still inside `rhscal` |
 | around `YRHS-MDIM` copies | same as baseline | no | ~59 s | identical to baseline |
-| `OPS_MDIM_SKIP_WAW=1` | same as baseline | no | ~59 s | identical to baseline |
-| `OPS_SWEEP3_NO_CASCADE=1` | (crashes) | — | — | halo depths 69–197 on `DRHS` vs depth 6; tiles `74x266x266` |
-| last-live expand off / geom-last only | (crashes) | — | — | CloverLeaf 11-deep `xarea`; SENGA 197-deep `DRHS` |
+| skip Sweep-2 WAW on `dim>1` | same as baseline | no | ~59 s | identical to baseline |
+| Sweep-3 cascade off / last-live expand off | (crashes) | — | — | halo depths 69–197 on `DRHS`; CloverLeaf 11-deep `xarea` |
 | flush every 20 loops | 0 unblocked until crash | — | — | FPE (signal 8): too short, splits a snapshot/mutate chain |
 | flush every 50/100/200 loops | 0 unblocked | yes, but blunt | 53.6–54.4 s | rejected: not a SENGA-specific map |
-| **`senga_tiling_flush` map** | **0** on every plan (no 1179-loop chain) | **yes**, 35-loop `eqA` plan, 15 live, overlap 0.58 | **52.3 s** | species chunks ~42 loops / 10–15 live; remaining JUMPs are mild intra-plan skew (2–3x, still multi-tile) |
+| **`ops_execute` map** | **0** on every plan (no 1179-loop chain) | **yes**, 35-loop `eqA` plan, 15 live, overlap 0.58 | **52.3 s** | species chunks ~42 loops / 10–15 live |
 
 So:
 
@@ -334,7 +329,7 @@ So:
 3. **Most of `rhscal` is the same shape.** A single `ops_execute` after `temper` only saves the 35 temper loops. The 1179-loop chain has to be broken **throughout**, at each JUMP, not at one named site and not with a loop-count cap.
 4. **Do not turn off the Sweep-3 dead-tile cascade, and do not disable last-live Sweep-1 / leftover expand.** Empty last-live tiles have to be marked dead so halo work attaches to the previous tile, and that previous tile has to execute the remaining owned+halo range so a later `OPS_WRITE` can clear stacked `read_deps`. Stopping either explodes halo depths (11-deep `xarea` on CloverLeaf, 197-deep `DRHS` on SENGA2). Same class of failure as clipping `read_deps`.
 5. **Last-live leftover now fills even when `begin >= natural_end`.** Interior leftover tiles still stay empty when WAW already covers the natural chunk (CloverLeaf absorb). That cut unblocked loops 1015 → 724 and does not change CloverLeaf (7680² / 50 steps `PASSED` at 29.5 s, 392/392 live, overlap 0.89). Tile 0 is still last-live for 724 loops; analysis alone cannot finish the job.
-6. **Resolution: `senga_tiling_flush()` (`ops_execute`) at SENGA section boundaries that sit on those JUMPs.** Unconditional, in both the hand sources and the generated `*_ops.F90`. Sites:
+6. **Resolution: `ops_execute` at SENGA section boundaries** that sit on those leftover-cascade jumps. Unconditional, in both the hand sources and the generated `*_ops.F90`. Sites:
    - RK stages in `senga2`: after `boundt`, `parfer`, `rhscal`, `rhsvel`, `bounds`
    - `rhscal`: after `temper`; immediately before `eqT` (internal-energy convert); after E convection; before species/`chrate`; after the Y=`Y/ρ` convert loop; after each species body in both species loops; before the second (Y-diffusive) species loop
    - `rhsvel`: before momentum convection; before viscous terms; before continuity
@@ -356,7 +351,7 @@ Always pass `OPS_TILING_MAXDEPTH=6` together with `OPS_CACHE_SIZE`. CACHE_SIZE o
 
 The auto-detected default (MAXDEPTH only) is the right size for the old 1179-loop plan (~`69x16x15` on the 612-loop leftover; `eqA` itself becomes `69x33x32` because that 35-loop plan touches less data per point). Once the chain is flushed, those tiles are too fat: default is 382 s, while 1–2 MB is the sweet spot at ~315 s. `CACHE_SIZE=0.25` is too fine (`16x4x3`, 810 `eqA` tiles, 0.59 s just to build the 612-loop plan). Pre-map default was 452.4 s, so the execute map alone is ~1.20x and the map plus `CACHE_SIZE=2` is ~1.45x versus untiled.
 
-To dump JUMPs on a 1-step run: `apps/fortran/SENGA2/senga_tiling_split.sh` (restores `input/cont.dat`). Rebuild `ops/fortran` after editing `ops_lazy.cpp`.
+Rebuild `ops/fortran` after editing `ops_lazy.cpp`.
 
 ### Mini WAW app
 
@@ -367,9 +362,9 @@ To dump JUMPs on a 1-step run: `apps/fortran/SENGA2/senga_tiling_split.sh` (rest
 | Location | Role |
 |---|---|
 | `makefiles/Makefile.gnu` | `CXXFLAGS`; `-ffloat-store` costs ~1.7x on tiled runs |
-| `ops/c/src/core/ops_lazy.cpp` — `ops_construct_tile_plan` | Sweeps 1–3, leftover, terminal reads, tile skew / WAW-cause / loop-skew JUMP print, `OPS_MDIM_SKIP_WAW`, `OPS_SWEEP3_NO_CASCADE` |
+| `ops/c/src/core/ops_lazy.cpp` — `ops_construct_tile_plan` | Sweeps 1–3, leftover, terminal reads, tile skew / unblocked / biggest-tile print |
 | `ops/c/src/core/ops_lazy.cpp` — `ops_compute_mpi_dependencies` | `data_read_deps_edge` |
 | `ops/c/src/mpi/ops_mpi_rt_support.cpp` — `ops_halo_exchanges_datlist` | Pack/unpack using plan depths |
 | `apps/c/CloverLeaf` | Performance canary (many fused loops, small stencils) |
-| `apps/fortran/SENGA2` | Correctness canary (wide stencil, snapshot/mutate); `senga_tiling_flush()` at skew JUMPs |
+| `apps/fortran/SENGA2` | Correctness canary (wide stencil, snapshot/mutate); `ops_execute` at skew jumps |
 | `apps/c/tiling_fix` | Minimal WAW chain |
