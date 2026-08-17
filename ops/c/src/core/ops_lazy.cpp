@@ -216,17 +216,6 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
 
   if (instance->ops_enable_tiling && !lowdim_treatment) {
     ops_kernel_list.push_back(desc);
-    // Cap fused-chain length. SENGA2's 1179-loop plans let Sweep 3 walk
-    // left until tile 0 is last live; ops_execute every N loops is the
-    // supported way to break that chain. 0 / unset = unlimited.
-    static int fusion_maxloops = -1;
-    if (fusion_maxloops < 0) {
-      const char *e = getenv("OPS_FUSION_MAXLOOPS");
-      fusion_maxloops = (e != NULL && atoi(e) > 0) ? atoi(e) : 0;
-    }
-    if (fusion_maxloops > 0 &&
-        (int)ops_kernel_list.size() >= fusion_maxloops)
-      ops_execute(instance);
   } else {
     //Prepare the local execution ranges
     int start[OPS_MAX_DIM]={0}, end[OPS_MAX_DIM]={1}, arg_idx[OPS_MAX_DIM];
@@ -1348,6 +1337,12 @@ int ops_construct_tile_plan(OPS_instance *instance) {
     int worst_loop[nworst] = {-1, -1, -1};
     int n_unblocked = 0;
     int n_mdim_cause = 0;
+    std::vector<double> loop_ratio;
+    std::vector<int> loop_live;
+    std::vector<const char *> loop_name;
+    loop_ratio.reserve(ops_kernel_list.size());
+    loop_live.reserve(ops_kernel_list.size());
+    loop_name.reserve(ops_kernel_list.size());
     for (unsigned int loop = 0; loop < ops_kernel_list.size(); loop++) {
       int live_tiles = 0;
       long long biggest_tile_vol = 0;
@@ -1390,6 +1385,9 @@ int ops_construct_tile_plan(OPS_instance *instance) {
       double ratio = nominal_tile_vol > 0
                          ? (double)biggest_tile_vol / (double)nominal_tile_vol
                          : 0.0;
+      loop_ratio.push_back(ratio);
+      loop_live.push_back(live_tiles);
+      loop_name.push_back(ops_kernel_list[loop]->name);
       if (live_tiles == 1 && ratio > 1.5)
         n_unblocked++;
       for (int d = 0; d < dims; d++) {
@@ -1494,7 +1492,43 @@ int ops_construct_tile_plan(OPS_instance *instance) {
       }
       printf2(instance, "\n");
     }
-  }
+      /* Run-length encode consecutive loops with similar skew / live-tile
+         count. A JUMP is a later loop whose live-tile count rises or whose
+         skew falls — insert ops_execute immediately before that kernel so
+         the earlier high-skew prefix is not fused with it. */
+      if (n_unblocked > 0 || worst_ratio[0] > 1.5) {
+        printf2(instance,
+                "Proc %d loop-skew runs (insert ops_execute immediately before JUMP kernels):\n",
+                ops_get_proc());
+        int nloops = (int)loop_ratio.size();
+        int run_start = 0;
+        for (int i = 1; i <= nloops; i++) {
+          bool cont = false;
+          if (i < nloops && loop_live[i] == loop_live[run_start]) {
+            double ra = MAX(0.1, loop_ratio[run_start]);
+            double rb = MAX(0.1, loop_ratio[i]);
+            if (ra / rb < 1.8 && rb / ra < 1.8)
+              cont = true;
+          }
+          if (cont)
+            continue;
+          printf2(instance, "  [%d-%d] %.1fx %dlive %s", run_start, i - 1,
+                  loop_ratio[run_start], loop_live[run_start],
+                  loop_name[run_start] ? loop_name[run_start] : "-");
+          if (i - 1 != run_start)
+            printf2(instance, " .. %s",
+                    loop_name[i - 1] ? loop_name[i - 1] : "-");
+          printf2(instance, "\n");
+          if (i < nloops &&
+              (loop_live[i] > loop_live[run_start] ||
+               loop_ratio[run_start] > 2.0 * MAX(0.1, loop_ratio[i])))
+            printf2(instance, "  JUMP before loop %d %s (%.1fx %dlive)\n", i,
+                    loop_name[i] ? loop_name[i] : "-", loop_ratio[i],
+                    loop_live[i]);
+          run_start = i;
+        }
+      }
+    }
 
   // free local storage
   free(store_left_neighbour_end);   store_left_neighbour_end = nullptr;
