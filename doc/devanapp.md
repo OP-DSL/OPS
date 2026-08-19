@@ -270,8 +270,7 @@ The automatic code generation framework that enables F90-to-CUDA/HIP translation
 
 ## Optimizations - general
 Try the following performance tuning options:
-* `laplace2d_cuda`: you can set the `OPS_BLOCK_SIZE_X` and `OPS_BLOCK_SIZE_Y` runtime arguments to control thread block or work group sizes
-* `laplace2d_mpi_cuda`: add the `-gpudirect` runtime flag to enable GPU Direct communications
+* `laplace2d_cuda`: you can set the `OPS_BLOCK_SIZE_X`, `OPS_BLOCK_SIZE_Y`, and `OPS_BLOCK_SIZE_Z` runtime arguments to control thread block or work group sizes
 
 ## Optimizations - tiling
 
@@ -289,6 +288,15 @@ E.g.
 OMP_NUM_THREADS=20 numactl --cpunodebind=0 ./laplace2d_tiled -OPS_DIAGS=3 OPS_TILING OPS_CACHE_SIZE=5
 ```
 Over MPI, you will have to set `OPS_TILING_MAX_DEPTH` to extend halo regions.
+
+To manually specify tile sizes (in number of grid points), use the `OPS_TILESIZE_X`, `OPS_TILESIZE_Y`, and `OPS_TILESIZE_Z` runtime arguments. E.g.
+```bash
+OMP_NUM_THREADS=20 numactl --cpunodebind=0 ./cloverleaf_tiled OPS_TILING OPS_TILESIZE_X=600 OPS_TILESIZE_Y=200
+```
+
+## Optimizations - GPU Direct
+
+GPU Direct support for MPI+CUDA can be enabled by adding `-gpudirect` when running the executable. You may also need to set certain environment variables depending on the MPI distribution in use.
 
 ## Performance measurement and profiling
 

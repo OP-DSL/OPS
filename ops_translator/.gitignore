@@ -1,0 +1,12 @@
+# Generated Python virtual environment (created by 'make python')
+.python/
+
+# Downloaded wheel cache and bundled Python binaries (not tracked in repo)
+python_source/
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Generated venv from setup_venv.sh / setup_venv_cmake.sh
+ops_venv/

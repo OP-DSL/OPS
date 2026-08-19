@@ -63,10 +63,15 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
     size_t bytes = size * type_size;
 
     // Compute    padding x-dim for vectorization
-    int x_pad = (1+((dat->size[0]-1)/SIMD_VEC))*SIMD_VEC - dat->size[0];
-    dat->size[0] += x_pad;
-    dat->d_p[0] += x_pad;
-    dat->x_pad = x_pad;
+    if (dat->size[0] == 1) {
+      dat->x_pad = 0;
+    }
+    else {
+      int x_pad = (1+((dat->size[0]-1)/SIMD_VEC))*SIMD_VEC - dat->size[0];
+      dat->size[0] += x_pad;
+      dat->d_p[0] += x_pad;
+      dat->x_pad = x_pad;
+    }
     // printf("\nPadded size is %d total size =%d \n",x_pad,dat->size[0]);
 
     for (int i = 0; i < block->dims; i++)

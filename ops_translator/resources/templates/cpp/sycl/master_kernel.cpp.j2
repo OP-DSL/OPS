@@ -3,12 +3,16 @@
 {% block ops_headers %}
 {{super()}}
 
+#include "ops_sycl_rt_support.h"
+#include "ops_sycl_reduction.h"
+
+{% endblock %}
+
+{% block ops_user_types %}
 {% if user_types %}
 #include "user_types.h"
 {% endif %}
 
-#include "ops_sycl_rt_support.h"
-#include "ops_sycl_reduction.h"
 {% endblock %}
 
 {% block const_decls %}

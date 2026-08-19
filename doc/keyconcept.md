@@ -1,4 +1,4 @@
-# Key concepts and structure
+# Key Concepts and Structure
 
 An OPS application can generally be divided into two key parts:
 initialisation and parallel execution. During the initialisation phase,
@@ -95,8 +95,8 @@ returning some data, operations in the queue are executed, and the
 result is returned. This allows OPS to analyse and optimise operations
 in the queue together. This mechanism is fully automated by OPS, and is
 used with the various \_tiled executables. For more information on how
-to use this mechanism for improving CPU performance, see Section
-[\[sec:tiling\]](#sec:tiling){reference-type="ref"
-reference="sec:tiling"}. Some API calls triggering the execution of
+to use this mechanism for improving CPU performance, see the
+[Optimizations - tiling](devanapp.md#optimizations---tiling) section.
+Some API calls triggering the execution of
 queued operations include ops_reduction_result, and the functions in the
 data access API.

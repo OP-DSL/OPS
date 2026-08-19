@@ -199,7 +199,7 @@ int main(int argc, char ** argv) {
                     ops_arg_dat(d_workArray, 9, S2D_00, "double", OPS_READ));
 
         ops_par_loop(timeloop_eqL, "equation_L", lb_block, 2, interior_range,
-                    ops_arg_dat(d_N, 9, S2D_00, "double", OPS_WRITE),
+                    ops_arg_dat(d_N, 9, S2D_00, "double", OPS_RW),
                     ops_arg_dat(d_N_SOLID, 9, S2D_00, "double", OPS_READ),
                     ops_arg_dat(d_SOLID, 1, S2D_00, "int", OPS_READ));
 
@@ -213,7 +213,7 @@ int main(int argc, char ** argv) {
         ops_reduction_result(h_energy, &energy);
 
         if (t%100==0) 
-            ops_printf(" %d  %10.5e \n", t, energy);            
+            ops_printf(" %d  %10.8e \n", t, energy);            
         if (t==3999 && NX == 128 && NY == 128) {
           double diff = fabs(((energy - 0.0000111849)/0.0000111849));
           if (diff < 0.00001) {

@@ -1,0 +1,70 @@
+#!/bin/bash
+#A rough example of environmental variables for compiling with Intel compilers
+#unset and set defaults
+
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
+unset LD_LIBRARY_PATH
+module purge
+. ~/.bashrc
+export PATH=/rr-home/gihan/numawrap:$PATH
+
+#module load llvm-14.0.6/llvm-14.0.6
+#export LIBCLANG_PATH=/opt/llvm/14.0.6/lib/libclang.so
+
+module load python/3.9.7
+# The code-gen venv is built from this system Python via 'make python' in ops_translator/.
+# To rebuild the venv (e.g. after a clean): cd $OPS_INSTALL_PATH/../ops_translator && make clean && make python
+
+#CUDA and NVIDIA OpenCL
+module load cuda/12.5
+#module load nvhpc/23.9
+export NV_ARCH=Hopper
+#export NV_ARCH=Volta
+
+echo "GPU architecture" $NV_ARCH
+
+unset CUDA_INSTALL_PATH
+export CUDA_INSTALL_PATH=/opt/cuda/12.5
+export CUDA_MATH_LIBS=/opt/cuda/12.5/lib64
+
+#export CUDA_INSTALL_PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/23.9/compilers/
+#export CUDA_MATH_LIBS=/opt/nvidia/hpc_sdk/Linux_x86_64/23.9/compilers/lib/
+
+
+export LD_LIBRARY_PATH=$CUDA_MATH_LIBS:$LD_LIBRARY_PATH
+
+#OPS specifics
+export OPS_COMPILER=icx
+export OPS_INSTALL_PATH=/rr-home/gihan/OPS/ops
+
+source /ext-home/asl/install/oneapi/installation/setvars.sh --force
+
+#Intel MPI and Compilers - oneapi
+
+unset SYCL_INSTALL_PATH
+export SYCL_INSTALL_PATH=/ext-home/asl/install/oneapi/installation/compiler/2025.2
+export MPI_INSTALL_PATH=/ext-home/asl/install/oneapi/installation/mpi/2021.16
+export LD_LIBRARY_PATH=$MPI_INSTALL_PATH/lib:$LD_LIBRARY_PATH
+#export MPICPP=$MPI_INSTALL_PATH/bin/mpicxx
+
+export MPICC=mpiicx
+export MPICPP=mpiicx
+export MPICXX=mpiicpx
+export MPIFC=mpiifx
+export MPIF90=mpiifx
+
+#HDF5
+unset HDF5_INSTALL_PATH
+export PATH=/rr-home/gihan/HDF5/build_hdf5/intel/bin:$PATH
+export HDF5_INSTALL_PATH=/home/gihan/HDF5/hdf5-1.14-3-Install
+export LD_LIBRARY_PATH=/home/gihan/HDF5/hdf5-1.14-3-Install/lib:$LD_LIBRARY_PATH
+export PATH=/home/gihan/HDF5/hdf5-1.14-3-Install/bin:$PATH
+
+#Tridiagonal LIB
+export TDMA_INSTALL_PATH=~/tridsolver/scalar/libtrid
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$TDMA_INSTALL_PATH/lib/
+#unset TDMA_INSTALL_PATH
+
+#OpenSBLI -- for testing app TGV only
+export OPENSBLI_INSTALL_PATH=/rr-home/gihan/OpenSBLI/OpenSBLI_OPS_TESTING/opensbli/
+

@@ -42,15 +42,15 @@
 #include <ops_mpi_core.h>
 #include <ops_exceptions.h>
 
-extern int ops_buffer_size;
+extern size_t ops_buffer_size;
 extern char *ops_buffer_send_1;
 extern char *ops_buffer_recv_1;
 extern char *ops_buffer_send_2;
 extern char *ops_buffer_recv_2;
-extern int ops_buffer_send_1_size;
-extern int ops_buffer_recv_1_size;
-extern int ops_buffer_send_2_size;
-extern int ops_buffer_recv_2_size;
+extern size_t ops_buffer_send_1_size;
+extern size_t ops_buffer_recv_1_size;
+extern size_t ops_buffer_send_2_size;
+extern size_t ops_buffer_recv_2_size;
 extern int *mpi_neigh_size;
 extern char *OPS_checkpointing_dup_buffer;
 
@@ -291,8 +291,19 @@ void ops_decomp(ops_block block, int num_proc, int *processes, int *proc_disps,
   MPI_Comm_group(OPS_MPI_GLOBAL, &global);
   MPI_Group_incl(global, num_proc, processes, &(sb->grp));
   MPI_Comm_create(OPS_MPI_GLOBAL, sb->grp, &(sb->comm1));
-  if (sb->owned)
+  if (sb->owned) {
     MPI_Cart_create(sb->comm1, ndim, pdims, periodic, 0, &(sb->comm));
+    
+    int remain_dims[ndim];
+    for (int i = 0; i < ndim; i++) {      
+        for (int j = 0; j < ndim; j++) {
+            remain_dims[j] = 0;
+        }
+        remain_dims[i] = 1;
+        // Create the pencil communicator
+        MPI_Cart_sub(sb->comm, remain_dims, &sb->pencils[i]);
+    }
+  }
 
   // Store number of procs in each dimension for latter use
   sb->pdims = (int *)ops_malloc(ndim * sizeof(int));
@@ -900,7 +911,7 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps,
         (mpi_group->num_neighbors_send + mpi_group->num_neighbors_recv) ,
         sizeof(MPI_Status));
 
-    int total_size = 0;
+    size_t total_size = 0;
     int k = 0;
     for (int j = 0; j < ops_comm_global_size; ++j) {
       if (neighbor_array_send[j] > 0) {
@@ -910,10 +921,11 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps,
         k++;
       }
     }
-    if (ops_buffer_send_1_size < total_size)
+    if (ops_buffer_send_1_size < total_size) {
       ops_buffer_send_1 = OPS_realloc_fast(ops_buffer_send_1,
-                       ops_buffer_send_1_size,
-		       total_size * sizeof(char));
+                                           ops_buffer_send_1_size,
+                                           total_size * sizeof(char));
+    }
 
     k = 0;
     total_size = 0;
@@ -925,10 +937,11 @@ void ops_partition_halos(int *processes, int *proc_offsets, int *proc_disps,
         k++;
       }
     }
-    if (ops_buffer_recv_1_size < total_size)
+    if (ops_buffer_recv_1_size < total_size) {
       ops_buffer_recv_1 = OPS_realloc_fast(ops_buffer_recv_1,
-                       ops_buffer_recv_1_size,
-		       total_size * sizeof(char));
+                                           ops_buffer_recv_1_size,
+                                           total_size * sizeof(char));
+    }
   }
   mpi_neigh_size = (int *)ops_malloc(max_neigh * sizeof(int));
   ops_free(neighbor_array_recv);
@@ -990,6 +1003,9 @@ void _ops_partition(OPS_instance *instance, const char *routine, std::map<std::s
   int size_depth = OPS_instance::getOPSInstance()->ops_tiling_mpidepth>0 ? OPS_instance::getOPSInstance()->ops_tiling_mpidepth : 5;
   ops_buffer_size = 8 * 8 * size_depth *
                     pow(2 * size_depth + max_block_dim, max_block_dims - 1);
+
+  std::cout<<"size_depth: "<<size_depth<<"  ops_buffer_size: "<<ops_buffer_size<<std::endl;
+
   ops_buffer_send_1=OPS_realloc_fast(ops_buffer_send_1, 0, ops_buffer_size * sizeof(char));
   ops_buffer_recv_1=OPS_realloc_fast(ops_buffer_recv_1, 0, ops_buffer_size * sizeof(char));
   ops_buffer_send_2=OPS_realloc_fast(ops_buffer_send_2, 0, ops_buffer_size * sizeof(char));
@@ -999,12 +1015,16 @@ void _ops_partition(OPS_instance *instance, const char *routine, std::map<std::s
   ops_buffer_send_2_size = ops_buffer_size;
   ops_buffer_recv_2_size = ops_buffer_size;
 
+  ops_printf("Allocated send and recv buffers\n");
+
   OPS_mpi_halo_list =
       (ops_mpi_halo *)ops_calloc(OPS_instance::getOPSInstance()->OPS_halo_index , sizeof(ops_mpi_halo));
   OPS_mpi_halo_group_list = (ops_mpi_halo_group *)ops_calloc(
       OPS_instance::getOPSInstance()->OPS_halo_group_index , sizeof(ops_mpi_halo_group));
   ops_partition_halos(processes, proc_offsets, proc_disps, proc_sizes,
                       proc_dimsplit);
+
+  ops_printf("Allocated OPS MPI Halos\n");
 
   ops_free(processes);
   ops_free(proc_offsets);
@@ -1137,14 +1157,16 @@ int compute_ranges(ops_arg* args, int nargs, ops_block block, int* range, int* s
   if (!sb->owned) return -1;
 
   for ( int n=0; n < block->dims; n++ ){
-    int starti = sd->decomp_disp[n];
+    int starti;
     int length = intersection2(range[2*n], range[2*n+1], sd->decomp_disp[n], sd->decomp_disp[n]+sd->decomp_size[n], &starti);
     arg_idx[n] = starti;
     if (sb->id_m[n]!=MPI_PROC_NULL)
       starti -= sd->decomp_disp[n];
     if (sd->gbl_size[n] == 1) {
-      starti = sb->decomp_disp[n];
       length = intersection2(range[2*n], range[2*n+1], sb->decomp_disp[n], sb->decomp_disp[n]+sb->decomp_size[n], &starti);
+      arg_idx[n] = starti;
+      if (sb->id_m[n]!=MPI_PROC_NULL)
+            starti -= sb->decomp_disp[n];
     }
     start[n] = starti;
     end[n] = starti + length;

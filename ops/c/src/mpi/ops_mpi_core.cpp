@@ -162,25 +162,25 @@ void ops_fprintf(FILE *stream, const char *format, ...) {
 }
 
 void printf2(OPS_instance *instance, const char *format, ...) {
-  if (ops_my_global_rank == MPI_ROOT) {
+  // if (ops_my_global_rank == MPI_ROOT) {
     char buf[1000];
     va_list argptr;
     va_start(argptr, format);
     vsprintf(buf,format, argptr);
     va_end(argptr);
     instance->ostream() << buf;
-  }
+  // }
 }
 
 void ops_printf2(OPS_instance *instance, const char *format, ...) {
-  if (ops_my_global_rank == MPI_ROOT) {
+  // if (ops_my_global_rank == MPI_ROOT) {
     char buf[1000];
     va_list argptr;
     va_start(argptr, format);
     vsprintf(buf,format, argptr);
     va_end(argptr);
     instance->ostream() << buf;
-  }
+  // }
 }
 
 
@@ -408,13 +408,14 @@ void ops_get_dat_full_range(ops_dat dat, int **full_range) {
   *full_range = OPS_sub_dat_list[dat->index]->gbl_size;
 }
 
-bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, int *disp) {
+bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, int *disp, int *size) {
   sub_block_list sb = OPS_sub_block_list[block->index];
   if (!sb->owned) {
     for (int n = 0; n < block->dims; n++) {
       start[n] = 0;
       end[n] = 0;
       disp[n] = 0;
+      size[n] = 0;
     }
     return false;
   }
@@ -431,6 +432,7 @@ bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, 
       end[n] = range[2 * n + 1];
 
     disp[n] = sb->decomp_disp[n];
+    size[n] = sb->decomp_size[n];
   }
   return true;
 }
@@ -589,7 +591,6 @@ ops_dat ops_dat_copy_mpi_core(ops_dat orig_dat) {
       OPS_sub_dat_list, OPS_instance::getOPSInstance()->OPS_dat_index * sizeof(sub_dat_list));
 
   sub_dat_list sd = (sub_dat_list)ops_calloc(1, sizeof(sub_dat));
-  sd->dirtybit = 1;
   sd->dirty_dir_send =
       (int *)ops_malloc(sizeof(int) * 2 * dat->block->dims * MAX_DEPTH);
   sd->dirty_dir_recv =

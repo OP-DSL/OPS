@@ -163,7 +163,6 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
   // store away product array prod[] and MPI_Types for this ops_dat
   sub_dat_list sd = (sub_dat_list)ops_calloc(1, sizeof(sub_dat));
   sd->dat = dat;
-  sd->dirtybit = 1;
   sd->dirty_dir_send =
       (int *)ops_malloc(sizeof(int) * 2 * block->dims * MAX_DEPTH);
   for (int i = 0; i < 2 * block->dims * MAX_DEPTH; i++)
@@ -182,6 +181,7 @@ ops_dat ops_decl_dat_char(ops_block block, int size, int *dat_size, int *base,
 }
 
 void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name) {
+  ops_check_lowdim_update(dat);
   if (OPS_sub_block_list[dat->block->index]->owned == 1) {
     ops_get_data(dat);
     ops_print_dat_to_txtfile_core(dat, file_name);
@@ -189,6 +189,7 @@ void ops_print_dat_to_txtfile(ops_dat dat, const char *file_name) {
 }
 
 void ops_NaNcheck(ops_dat dat) {
+  ops_check_lowdim_update(dat);
   if (OPS_sub_block_list[dat->block->index]->owned == 1) {
     ops_get_data(dat);
     char buffer[30];

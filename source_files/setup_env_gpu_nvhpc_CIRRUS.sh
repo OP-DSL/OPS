@@ -12,7 +12,6 @@ module load epcc/setup-env
 
 # Python
 module load python/3.9.13
-source $OPS_INSTALL_PATH/../ops_translator/ops_venv/bin/activate
 
 # Compiler
 module rm --force openmpi/4.1.6 gcc/10.2.0

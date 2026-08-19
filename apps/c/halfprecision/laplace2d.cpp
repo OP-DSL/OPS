@@ -128,6 +128,7 @@ int main(int argc, const char** argv)
 
   ops_fetch_block_hdf5_file(block, "data.h5");
   ops_fetch_dat_hdf5_file(d_A, "data.h5");
+  ops_NaNcheck(d_A);
 
   //Finalising the OPS library
   ops_exit();

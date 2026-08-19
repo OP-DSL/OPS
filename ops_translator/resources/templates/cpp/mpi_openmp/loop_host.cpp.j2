@@ -350,7 +350,7 @@
 #ifndef OPS_LAZY
     ops_set_dirtybit_host(args, {{lh.args|length}});
     {% for arg in lh.args %}
-        {% if arg is ops_dat and (arg is ops_write or arg is ops_rw or arg is ops_inc) %}
+        {% if arg is ops_dat and (arg is ops_write or arg is ops_rw or arg is ops_inc or arg is ops_max or arg is ops_min) %}
     ops_set_halo_dirtybit3(&args[{{arg.id}}], range);
         {% endif %}
     {% endfor %}
@@ -374,5 +374,5 @@
 {% endblock %}
 
 {% block kernel_descriptor_lazy_call %}
-    create_kerneldesc_and_enque("{{lh.kernel}}", args, {{lh.args|length}}, {{kernel_idx}}, dim, 0, range, block, ops_par_loop_{{lh.kernel}}_execute);
+    create_kerneldesc_and_enque(name, args, {{lh.args|length}}, {{kernel_idx}}, dim, 0, range, block, ops_par_loop_{{lh.kernel}}_execute);
 {% endblock %}

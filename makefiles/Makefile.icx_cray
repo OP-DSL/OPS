@@ -92,7 +92,7 @@ GPU_VENDOR := $(shell \
     fi)
 
 ifeq ($(GPU_VENDOR), NVIDIA)
-SYCL_FLAGS := -fsycl -fsycl-targets=nvptx64-nvidia-cuda
+SYCL_FLAGS := -fsycl -fsycl-targets=nvptx64-nvidia-cuda,spir64_x86_64
 endif
 
 ifeq ($(GPU_VENDOR), AMD)

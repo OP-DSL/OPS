@@ -537,6 +537,52 @@ stencil specification. The strided stencil will handle both multigrid
 (with a stride of 2 for example) and the boundary condition and reduced
 dimension applications (with a stride of 0 for the relevant dimensions).
 
+### Low-dimensional reductions with strided datasets
+
+OPS supports reducing higher-dimensional datasets onto lower-dimensional
+datasets (planes or lines) by combining strided stencils with reduction
+access modes (`OPS_MAX`, `OPS_MIN`, `OPS_INC`) on `ops_arg_dat`. This allows
+parallel loops to compute per-face or per-line extrema and sums efficiently.
+
+To perform a low-dimensional reduction:
+
+1. Declare the target dataset on the same block, with size 1 in every
+   collapsed dimension (e.g., `dat2D_XY` sized `{Nx, Ny, 1}` or `dat1D_X`
+   sized `{Nx, 1, 1}`) and the usual halo depths for the remaining active
+   dimensions.
+2. Declare strided stencils whose stride is zero in the collapsed
+   dimensions and one elsewhere (e.g., `{1, 1, 0}` to reduce along *z*, or
+   `{1, 0, 0}` to reduce along *y* and *z*). The stencil dimensionality
+   matches the driving loop dimensionality.
+3. Invoke `ops_par_loop` over the full source iteration range, passing the
+   source dataset with `OPS_READ` and the lower-dimensional dataset(s) with
+   the desired reduction access (`OPS_MAX`, `OPS_MIN`, or `OPS_INC`). OPS
+   accumulates contributions from all iterations that share the same
+   strided index into the lower-dimensional element.
+4. Multiple parallel loops may reduce into the same lower dimensional dataset
+   but only with the same reduction access mode.The first time a reduction 
+   access mode is used on a lower dimensional dataset, it is initialized 
+   appropriately (zero, +/- inf).
+5. A read (or write to file) on a lower dimensional dataset will trigger the
+   broadcast/global reduction of the data. Any subsequent reduction into the
+   same lower dimensional dataset will reinitialize the data to zero, +/- inf, etc.
+4. The reduced datasets can then be read back in subsequent loops using
+   the same strided stencils and `OPS_READ`, effectively broadcasting the
+   plane/line results into the higher-dimensional computation.
+5. Reduced datasets can also be written to a file using e.g. `ops_fetch_dat_hdf5_file`
+
+An end-to-end example is provided in `apps/c/lowdim_test/lowdim.cpp`, which
+for example reduces a 3D dataset onto three 2D planes and three 1D lines in a single
+pass as follows:
+
+```98:112:apps/c/lowdim_test/lowdim.cpp
+ops_par_loop(reduct22D_max, "reduct22D_max", block, 3, range_3D,
+    ops_arg_dat(dat3D, 1, S3D_000, "double", OPS_READ),
+    ops_arg_dat(dat2D_XZ, 1, S3D_000_STRID3D_XZ, "double", OPS_MAX),
+    ops_arg_dat(dat2D_XY, 1, S3D_000_STRID3D_XY, "double", OPS_MAX),
+    ops_arg_dat(dat2D_YZ, 1, S3D_000_STRID3D_YZ, "double", OPS_MAX));
+```
+
 ### Checkpointing
 
 OPS supports the automatic checkpointing of applications. Using the API below, the user specifies the file name for the checkpoint and an average time interval between checkpoints. OPS will then automatically save all necessary information periodically that is required to fast-forward to the last checkpoint if a crash occurred. Currently, when re-launching after a crash, the same number of MPI processes have to be used. To enable checkpointing mode, the *OPS_CHECKPOINT* runtime argument has to be used. 

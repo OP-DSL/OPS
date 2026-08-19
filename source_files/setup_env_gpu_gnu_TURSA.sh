@@ -44,4 +44,3 @@ export LD_LIBRARY_PATH=$HDF5_INSTALL_PATH/lib:$LD_LIBRARY_PATH
 
 # Python
 alias python3='python3.11'
-source $OPS_INSTALL_PATH/../ops_translator/ops_venv/bin/activate
