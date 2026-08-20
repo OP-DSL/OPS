@@ -46,7 +46,7 @@ jobs:
         module load CUDA
         export CXX=mpicxx
         cmake -S . -B build -DCMAKE_INSTALL_PREFIX=./build/opt -DCMAKE_CUDA_HOST_COMPILER=gcc-11 -DCMAKE_BUILD_TYPE=Release -DLEGACY_CODEGEN=OFF -DHDF5_ROOT=/usr/lib/x86_64-linux-gnu/hdf5/openmpi 
-        cmake --build build -j 12
+        cmake --build build -j 8
         cmake --install build 
         ctest --test-dir build --output-on-failure
         rm -rf build  
