@@ -7,7 +7,7 @@ enable_testing()
 option(OPS_TEST "Turn on tests for Apps" ON)
 option(OPS_HIP "Turn on the HIP backend" OFF)
 option(OPS_CUDA "Turn on the CUDA backend" ON)
-option(OPS_FORTRAN "Turn on the Fortran build" ON)
+option(OPS_FORTRAN "Turn on the Fortran build" OFF)
 option(IEEE "Use IEEE flags" ON)
 
 # Output of the installation directory
