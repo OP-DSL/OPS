@@ -269,21 +269,21 @@ $(APP)_hip: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops
 		@echo ""
 		@echo "Building ${APP}_hip"
 		@echo ""
-	    $(HIPCC) $(CXXFLAGS_NOOMP) $(HIPFLAGS) -D$(OPS_COMPILER) -I$(C_OPS_INC) $(OPS_FILES_GEN) -I. ./hip/$(HIP_KERNELS) -L$(C_OPS_LIB) $(OPS_LINK) $(OPS_LIB_HIP) $(HDF5_LIB_SEQ) $(HIP_LINK) $(HIPRAND) -o $(APP)_hip
+	    $(HIPCC) $(CXXFLAGS_NOOMP) $(HIPFLAGS) -D$(OPS_COMPILER) -I$(C_OPS_INC) $(OPS_FILES_GEN) -I. ./hip/$(HIP_KERNELS) -L$(C_OPS_LIB) $(OPS_LINK) $(OPS_LIB_HIP) $(HDF5_LIB_SEQ) $(HIP_LINK) $(HIP_LIB) $(HIPRAND) -o $(APP)_hip
 
 $(APP)_mpi_hip: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_mpi_hip.a $(OPS_FILES_GEN) $(HEADERS)
 		@echo ""
 		@echo ""
 		@echo "Building ${APP}_mpi_hip"
 		@echo ""
-		$(HIPMPICXX) $(CXXFLAGS_NOOMP) $(HIPFLAGS) -D$(OPS_COMPILER) -DOPS_MPI -I$(C_OPS_INC) $(I_MPI_INC) $(OPS_FILES_GEN) -I. ./hip/$(HIP_KERNELS) -L$(C_OPS_LIB) $(OPS_LINK) $(OPS_LIB_MPI_HIP) $(HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) $(MPI_HIP_LINK) $(HIP_LINK) $(HIPRAND) -o $(APP)_mpi_hip
+		$(HIPMPICXX) $(CXXFLAGS_NOOMP) $(HIPFLAGS) -D$(OPS_COMPILER) -DOPS_MPI -I$(C_OPS_INC) $(I_MPI_INC) $(OPS_FILES_GEN) -I. ./hip/$(HIP_KERNELS) -L$(C_OPS_LIB) $(OPS_LINK) $(OPS_LIB_MPI_HIP) $(HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) $(MPI_HIP_LINK) $(HIP_LINK) $(HIP_LIB) $(HIPRAND) -o $(APP)_mpi_hip
 
 $(APP)_mpi_hip_tiled: Makefile .generated $(OPS_INSTALL_PATH)/c/lib/$(OPS_COMPILER)/libops_mpi_hip.a $(OPS_FILES_GEN) $(HEADERS)
 		@echo ""
 		@echo ""
 		@echo "Building ${APP}_mpi_hip_tiled"
 		@echo ""
-		$(HIPMPICXX) $(CXXFLAGS_NOOMP) $(HIPFLAGS) -D$(OPS_COMPILER) -DOPS_MPI -DOPS_LAZY -I$(C_OPS_INC) $(I_MPI_INC) $(OPS_FILES_GEN) -I. ./hip/$(HIP_KERNELS) -L$(C_OPS_LIB) $(OPS_LINK) $(OPS_LIB_MPI_HIP) $(HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) $(MPI_HIP_LINK) $(HIP_LINK) $(HIPRAND) -o $(APP)_mpi_hip_tiled
+		$(HIPMPICXX) $(CXXFLAGS_NOOMP) $(HIPFLAGS) -D$(OPS_COMPILER) -DOPS_MPI -DOPS_LAZY -I$(C_OPS_INC) $(I_MPI_INC) $(OPS_FILES_GEN) -I. ./hip/$(HIP_KERNELS) -L$(C_OPS_LIB) $(OPS_LINK) $(OPS_LIB_MPI_HIP) $(HDF5_LIB_MPI) $(L_MPI_LIB) $(MPI_LINK) $(MPI_HIP_LINK) $(HIP_LINK) $(HIP_LIB) $(HIPRAND) -o $(APP)_mpi_hip_tiled
 
 
 #=====================================================================================================================================================================

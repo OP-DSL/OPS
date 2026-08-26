@@ -628,7 +628,11 @@ void ops_free_dat_core(ops_dat dat) {
     }
   }
   if(dat->user_managed == 0) {
-      ops_free(dat->data);
+      if (OPS_instance::getOPSInstance()->OPS_uvm_device)
+      {
+        dat->data = nullptr; // UVM managed memory, no need to free as data_d will be freed
+      } else
+        ops_free(dat->data);
       dat->data = nullptr;
   }
   ops_free((char*)dat->name);
@@ -2306,12 +2310,17 @@ int ops_dat_copy_metadata_core(ops_dat target, ops_dat orig_dat)
 void ops_cpHostToDevice(OPS_instance *instance, void **data_d, void **data_h, size_t size) {
   if (instance->OPS_hybrid_gpu == 0) return;
   if ( *data_d == NULL ) {
-    ops_device_malloc(instance, data_d, size);
+    if (instance->OPS_uvm_device) {
+      *data_d = *data_h;
+    } else {
+      ops_device_malloc(instance, data_d, size);
+    }
   }
   if (data_h == NULL || *data_h == NULL) {
     ops_device_memset(instance, data_d, 0, size);
     return;
   }
+  if (instance->OPS_uvm_device) return; // UVM does not need explicit copy
   ops_device_memcpy_h2d(instance, data_d, data_h, size);
 }
 
@@ -2387,8 +2396,11 @@ void ops_put_data(ops_dat dat) {
   size_t bytes = dat->elem_size;
   for (int i = 0; i < dat->block->dims; i++)
     bytes = bytes * dat->size[i];
-  ops_device_memcpy_h2d(dat->block->instance, (void**)&dat->data_d, (void**)&dat->data, bytes);
-  ops_device_sync(dat->block->instance);
+  if (not dat->block->instance->OPS_uvm_device)
+  {
+    ops_device_memcpy_h2d(dat->block->instance, (void**)&dat->data_d, (void**)&dat->data, bytes);
+    ops_device_sync(dat->block->instance);
+  }
 }
 
 void ops_randomgen_init_host(unsigned int seed, int options, std::mt19937 &ops_rand_gen) {
