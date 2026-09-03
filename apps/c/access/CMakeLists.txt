@@ -1,3 +1,4 @@
-cmake_minimum_required(VERSION 3.18)
-
-BUILD_OPS_C_SAMPLE(access "NONE" "NONE" "NO" "NONE")
+set(case "access")
+set(CASE_DIR "${app_dir_c}/${case}")
+createtempdir()
+build_ops_c_sample(${case} "NONE" "NONE" "NONE" "NO" "OPS_TEST_DEV" "2")

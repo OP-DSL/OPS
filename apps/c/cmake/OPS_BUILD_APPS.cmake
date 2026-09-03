@@ -1,0 +1,471 @@
+#   Clean the tmp directory for the code generation
+macro(CreateTempDir)
+    file(REMOVE_RECURSE "${CMAKE_CURRENT_BINARY_DIR}/tmp")
+    file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/tmp")
+endmacro()
+
+function(add_cmake_test WORK_DIR EXE_NAME SCRIPT_PATH ARGUMENTS OMPNT)
+  if(EXISTS ${SCRIPT_PATH})
+    set(exe_file "${WORK_DIR}/${EXE_NAME}")
+    list(LENGTH ARGUMENTS NL)
+    if(NL LESS 2)
+      separate_arguments(args NATIVE_COMMAND ${ARGUMENTS})
+    else()
+      message(WARNING "ARGUMENTS to indentify execute command is a list and not a string: this might not work")
+    endif()
+    execute_process(COMMAND /bin/bash ${SCRIPT_PATH} ${exe_file} ${args}
+                    RESULT_VARIABLE test_result
+                    OUTPUT_VARIABLE test_output)
+    if(test_result EQUAL 0)
+      string(REGEX REPLACE "\n" "" test_output "${test_output}")
+      #message(STATUS "run command: ${test_output}")
+      set(args " ")
+      set(cmd "${test_output}")
+      add_test(NAME ${EXE_NAME}
+              COMMAND ${CMAKE_COMMAND}
+	      -DCMD=${cmd} -DARG=${args} -DOMPNT=${OMPNT}
+              -DOPS_INSTALL_PATH=${CMAKE_INSTALL_PATH} -P ${CMAKE_SOURCE_DIR}/apps/c/cmake/OPS_runtests.cmake
+	      WORKING_DIRECTORY "${WORK_DIR}")
+    else()
+      message(FATAL_ERROR "Error in executing script to get runtime command string ${test_result}: ${test_output}")
+    endif()
+  endif()
+endfunction()
+
+
+macro(SetAppExe
+    APP_SRC 
+    Root_Name
+    APP_type
+    APP_DIR_ROOT
+    APP_DIR_SRC
+    CWD 
+    INP
+    Links 
+    Defs
+    Options
+    Props
+    OMPNT)
+    # Init the lists for FLAGS and LINKS
+    set(Defs_Loc "")
+    set(Links_Loc "")
+    set(Opts_Loc "")
+    set(Props_Loc "")
+    list(APPEND Defs_Loc ${Defs})
+    list(APPEND Links_Loc ${Links})
+    list(APPEND Opts_Loc ${Options})
+    list(APPEND Props_Loc ${Props})
+    # Set APP names and paths
+    set(APP_exe ${Root_Name}_${APP_TYPE})
+    set(APP_DIR_DST ${APP_DIR_ROOT}/${APP_exe})
+    string(FIND ${APP_type} "mpi" FLAG_FOUND)
+    if(FLAG_FOUND GREATER -1)
+      list(APPEND Defs_Loc "-DOPS_MPI")
+    endif()
+    #
+    if (HDF5_FOUND)
+      if(FLAG_FOUND GREATER -1)
+	list(APPEND Links_Loc "ops_hdf5_mpi")
+      else()
+	list(APPEND Links_Loc "ops_hdf5_seq")
+      endif()
+      list(APPEND Links_Loc "hdf5::hdf5")
+      list(APPEND Links_Loc "hdf5::hdf5_hl")
+      list(APPEND Links_Loc "MPI::MPI_CXX")
+    endif()
+    #
+    string(FIND ${APP_type} "tiled" FLAG_FOUND)
+    if(FLAG_FOUND GREATER -1)
+      list(APPEND Defs_Loc "-DOPS_LAZY")
+    endif()
+    add_executable(${APP_exe} ${APP_SRC})
+    #message(STATUS "${APP_type} APP_DIR_SRC ${APP_DIR_SRC}")
+    target_include_directories(${APP_exe} PRIVATE ${APP_DIR_SRC})
+    foreach(Def IN LISTS Defs_Loc)
+      target_compile_definitions(${APP_exe} PUBLIC ${Def})
+    endforeach()
+    foreach(Opt IN LISTS Opts_Loc)
+      target_compile_options(${APP_exe} PUBLIC ${Opt})
+    endforeach()
+    list(LENGTH Props_Loc Props_length)
+    # These link properties needs to be passed and a single string 
+    # Passing them individually does not work
+    if(Props_length GREATER 0)
+      string(REPLACE ";" " " Props_string "${Props_Loc}")
+      set_target_properties(${APP_exe} PROPERTIES LINK_FLAGS "${Props_string}")
+    endif() 
+    string(FIND "${INP}" "/" position REVERSE)
+    if(position GREATER -1)
+      install(FILES ${INP} DESTINATION ${APP_DIR_DST} RENAME clover.in)
+    endif()
+    foreach(Link IN LISTS Links_Loc)
+      target_link_libraries(${APP_exe} PRIVATE ${Link})
+    endforeach()
+    install(TARGETS ${APP_exe} DESTINATION ${APP_DIR_DST})
+    # Append the number of GPUs
+    string(FIND ${APP_type} "mpi_cuda" FLAG_FOUND1)
+    string(FIND ${APP_type} "mpi_ompoffload" FLAG_FOUND2)
+    if(FLAG_FOUND1 GREATER -1 OR FLAG_FOUND2 GREATER -1) 
+      set(ARGUMENTS "${APP_type} ${GPU_NUMBER}")
+    else()
+      set(ARGUMENTS "${APP_type}" )
+    endif()
+    add_cmake_test(${APP_DIR_DST} ${APP_exe} ${CWD}/cmake_test.sh ${ARGUMENTS} ${OMPNT})
+endmacro()
+
+#   Prepare the macro for compiling apps Name: App name Odd: Key words for source
+#   files are included in other source files and need no explicit compilation
+#   Others: Key words for source codes need no code generation using ops.py Extra:
+#   Key words for ource codes that cannot be treated by the macro Trid: Whether
+#   the tridiagonal library is required for this application GenerateTest: if
+#   generating the testings, some apps need specific testing targets. 
+#   TODO: tiled, sycl, openmpoffload
+macro(
+    BUILD_OPS_C_SAMPLE
+    Name
+    Odd
+    Others
+    Extra
+    Trid
+    TestDev
+    OMPNT)
+
+    message(STATUS "------Build SAMPLE-----------")
+
+    # Copy all source and head files into tmp
+    file(GLOB CPP "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
+    
+    list(FILTER CPP EXCLUDE REGEX "ops.cpp")
+
+    file(COPY ${CPP} DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/tmp/")
+    file(GLOB HEADS "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
+    file(COPY ${HEADS} DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/tmp/")
+
+    set(TMP_SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/tmp")
+
+    # Get the file to be compiled, DEV: non-optimised codes (full directory and filename) 
+    # OPS: codes generated by ops.py (full directory and filename)
+    # OTHERS: Source codes need no code generation (full directory and filename)
+    file(GLOB DEV "${TMP_SOURCE_DIR}/*.cpp")
+    list(FILTER DEV EXCLUDE REGEX ${Odd})
+    foreach(oth ${Others})
+            list(FILTER DEV EXCLUDE REGEX ${oth})
+    endforeach()
+    foreach(ext ${Extra})
+        list(FILTER DEV EXCLUDE REGEX ${ext})
+    endforeach()
+
+    list(GET DEV 0 Kernel)
+
+    get_filename_component(KernelName ${Kernel} NAME_WE)
+
+    # If not LEGACY_CODEGEN then activate the Installed Python Virtual Environment
+    if(NOT LEGACY_CODEGEN)
+	set(VENV_ACTIVATE "source ${CMAKE_INSTALL_PREFIX}/translator/ops_translator/ops_venv/bin/activate")
+
+        execute_process(COMMAND /bin/bash -c ${VENV_ACTIVATE}
+                        WORKING_DIRECTORY ${TMP_SOURCE_DIR}
+                        RESULT_VARIABLE result
+                        OUTPUT_VARIABLE output)
+
+        if(result EQUAL 0)
+	    set(PYTHON_EXECUTABLE "${CMAKE_INSTALL_PREFIX}/translator/ops_translator/ops_venv/bin/python3")
+            message(STATUS "Python Virtual Enviroment activated successfully")
+        else()
+            message("command: ${VENV_ACTIVATE}")
+            if(NOT "${output}" STREQUAL "")
+                message(FATAL_ERROR "Activate Python Virtual Environment command failed with error code ${result}: ${output}")
+            else()
+                message(FATAL_ERROR "Activate Python Virtual Environment command failed with error code ${result}")
+            endif()
+        endif()
+    endif()
+
+    #       Run OPS code-generation
+    message(STATUS "Start Code Generation")
+    if(LEGACY_CODEGEN)
+        message(STATUS "Code-gen command legacy: ${OPS_C_TRANSLATOR} ${DEV}")
+        execute_process(COMMAND ${OPS_C_TRANSLATOR} ${DEV}
+                        WORKING_DIRECTORY ${TMP_SOURCE_DIR}
+                        RESULT_VARIABLE result
+                        OUTPUT_VARIABLE output)
+    else()
+        if(${CMAKE_PROJECT_NAME} STREQUAL OPS)
+            set(PYTHON_FILE_ARGS "-DOPS_ACC_IGNORE -I ${CMAKE_SOURCE_DIR}/ops/c/include --file_paths")
+            set(PYTHON_OPS_INCLUDE ${CMAKE_SOURCE_DIR}/ops/c/include)
+        endif()
+        if(${CMAKE_PROJECT_NAME} STREQUAL APP)
+            set(PYTHON_FILE_ARGS "-DOPS_ACC_IGNORE -I ${CMAKE_INSTALL_PATH}/include --file_paths")
+            set(PYTHON_OPS_INCLUDE ${CMAKE_INSTALL_PATH}/include)
+        endif()
+        foreach(filepath ${DEV})
+            get_filename_component(filename ${filepath} NAME)
+            list(APPEND FILENAMES ${filename})
+        endforeach()
+
+        message(STATUS "Code-gen command: ${PYTHON_EXECUTABLE} ${OPS_C_TRANSLATOR} ${PYTHON_FILE_ARGS} ${FILENAMES}")
+        execute_process(COMMAND ${PYTHON_EXECUTABLE} ${OPS_C_TRANSLATOR}
+                        -DOPS_ACC_IGNORE
+                        -I ${PYTHON_OPS_INCLUDE}
+                        --file_paths ${FILENAMES}
+                        WORKING_DIRECTORY ${TMP_SOURCE_DIR}
+                        RESULT_VARIABLE result
+                        OUTPUT_VARIABLE output)
+    endif()
+
+    if(result EQUAL 0)
+        message(STATUS "OPS Python code generation runs successfully")
+    else()
+        message(FATAL_ERROR "OPS Python code generation command failed with error code ${result}: ${output}")
+    endif()
+
+    file(GLOB OPS "${TMP_SOURCE_DIR}/*ops*.cpp")
+
+    list(FILTER OPS EXCLUDE REGEX ${Odd})
+
+    file(GLOB OTHERS "${TMP_SOURCE_DIR}/*.cpp")
+    foreach(OpsFile ${OPS})
+      list(REMOVE_ITEM OTHERS ${OpsFile})
+      string(REPLACE "_ops" "" NoOPS ${OpsFile})
+      list(REMOVE_ITEM OTHERS ${NoOPS})
+    endforeach()
+
+    list(FILTER OTHERS EXCLUDE REGEX ${Odd})
+
+    foreach(ext ${Extra})
+      list(FILTER OTHERS EXCLUDE REGEX ${ext})
+    endforeach()
+
+    # Copy input parameters
+    file(GLOB_RECURSE INP "${CMAKE_CURRENT_SOURCE_DIR}/*bm_short.in")
+
+    # TARGET: DEV_SEQ, SEQ, OPENMP, TILED
+    set(Defs "")
+    set(Opts "")
+    set(Props "")
+    set(APP_SRC ${DEV} ${OTHERS})
+    if(${TestDev})
+      message(STATUS "Set UP also DEV")
+      set(APP_TYPE "dev_seq")
+      if (USE_OMP)
+        set(Links "ops_seq" 
+                  "OpenMP::OpenMP_CXX")
+      else ()
+        set(Links "ops_seq")
+      endif()
+      # Make sure to use "" for potentially empty inputs
+      setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
+         	"${app_dir_c}" "${TMP_SOURCE_DIR}" 
+	        "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
+		"${Links}" "${Defs}" "${Opts}" "${Props}" "${OMPNT}")  
+      if(MPI_FOUND)
+        set(APP_TYPE "dev_mpi")
+        if (USE_OMP)
+          set(Links "ops_mpi" 
+                    "OpenMP::OpenMP_CXX")
+        else ()
+          set(Links "ops_mpi") 
+        endif()
+        setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
+          	"${app_dir_c}" "${TMP_SOURCE_DIR}" 
+                  "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
+		  "${Links}" "${Defs}" "${Opts}" "${Props}" "${OMPNT}")  
+      endif()
+    endif()
+   
+    set(APP_TYPE "seq")
+    set(APP_SRC ${OPS} ${OTHERS} "${TMP_SOURCE_DIR}/mpi_openmp/mpi_openmp_kernels.cpp")
+    if (USE_OMP)
+      set(Links "ops_seq" 
+                "OpenMP::OpenMP_CXX")
+    else ()
+      set(Links "ops_seq")
+    endif()
+    set(Defs "")
+    set(Opts "")
+    set(Props "")
+    # Make sure to use "" for potentially empty inputs
+    setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
+	      "${app_dir_c}" "${TMP_SOURCE_DIR}" 
+	      "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
+	      "${Links}" "${Defs}" "${Opts}" "${Props}" "${OMPNT}")  
+    if(MPI_FOUND)
+      set(APP_TYPE "mpi")
+      if (USE_OMP)
+        set(Links "ops_mpi" 
+                  "OpenMP::OpenMP_CXX")
+      else ()
+        set(Links "ops_mpi") 
+      endif()
+      setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
+        	"${app_dir_c}" "${TMP_SOURCE_DIR}" 
+  	        "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
+	        "${Links}" "${Defs}" "${Opts}" "${Props}" "${OMPNT}")  
+    endif()
+
+    if (USE_OMP)
+      set(APP_TYPE "openmp")
+      set(APP_SRC ${OPS} ${OTHERS} 
+                  "${TMP_SOURCE_DIR}/mpi_openmp/mpi_openmp_kernels.cpp")
+      set(Links "ops_seq" 
+                "OpenMP::OpenMP_CXX")
+      set(Defs "")
+      set(Opts "")
+      set(Props "")
+      # Make sure to use "" for potentially empty inputs
+      setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
+                "${app_dir_c}" "${TMP_SOURCE_DIR}" 
+                "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
+	        "${Links}" "${Defs}" "${Opts}" "${Props}" "${OMPNT}")  
+      if(MPI_FOUND)
+        set(APP_TYPE "mpi_openmp")
+        set(Links "ops_mpi" 
+                  "OpenMP::OpenMP_CXX")
+        setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
+          	"${app_dir_c}" "${TMP_SOURCE_DIR}" 
+                "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
+	        "${Links}" "${Defs}" "${Opts}" "${Props}" "${OMPNT}")  
+      endif()
+    endif()
+    
+    set(APP_TYPE "tiled")
+    set(APP_SRC ${OPS} ${OTHERS} 
+	        "${TMP_SOURCE_DIR}/mpi_openmp/mpi_openmp_kernels.cpp")
+    if (USE_OMP)
+      set(Links "ops_seq" 
+                "OpenMP::OpenMP_CXX")
+    else ()
+      set(Links "ops_seq")
+    endif()
+    set(Defs "")
+    set(Opts "")
+    set(Props "")
+    # Make sure to use "" for potentially empty inputs
+    setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
+	      "${app_dir_c}" "${TMP_SOURCE_DIR}" 
+	      "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
+	      "${Links}" "${Defs}" "${Opts}" "${Props}" "${OMPNT}")  
+    if(MPI_FOUND)
+      set(APP_TYPE "mpi_tiled")
+      if (USE_OMP)
+        set(Links "ops_mpi" 
+                  "OpenMP::OpenMP_CXX")
+      else ()
+        set(Links "ops_mpi") 
+      endif()
+      setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
+        	"${app_dir_c}" "${TMP_SOURCE_DIR}" 
+  	        "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
+	        "${Links}" "${Defs}" "${Opts}" "${Props}" "${OMPNT}")  
+    endif()
+   
+    if(CUDAToolkit_FOUND) 
+      set(APP_TYPE "cuda")
+      set(APP_SRC ${OPS} ${OTHERS} 
+                  "${TMP_SOURCE_DIR}/cuda/cuda_kernels.cu")
+      if (USE_OMP)
+        set(Links "ops_cuda"
+                  "CUDA::cudart_static"
+                  "-lcurand"	
+                  "OpenMP::OpenMP_CXX")
+      else ()
+        set(Links "ops_cuda"
+                  "CUDA::cudart_static"
+                  "-lcurand")
+      endif()
+      
+      set(Defs "")
+      # Not sure this should be here: why not on the general nvcc flags? 
+      set(Opts "")
+      set(Props "")
+      # Make sure to use "" for potentially empty inputs
+      setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
+             	"${app_dir_c}" "${TMP_SOURCE_DIR}" 
+	        "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
+	        "${Links}" "${Defs}" "${Opts}" "${Props}" "${OMPNT}")  
+      if(MPI_FOUND)
+        set(APP_TYPE "mpi_cuda")
+        set(Defs "-DMPICH_IGNORE_CXX_SEEK")
+        if (USE_OMP)
+          set(Links "ops_mpi_cuda" 
+	            "CUDA::cudart_static"
+	            "-lcurand"	
+                    "OpenMP::OpenMP_CXX")
+	else()
+          set(Links "ops_mpi_cuda" 
+	            "CUDA::cudart_static"
+	            "-lcurand")	
+	endif()
+	list(APPEND Opts ${MPI_INC_LIST})
+        setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
+                  "${app_dir_c}" "${TMP_SOURCE_DIR}" 
+                  "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
+	          "${Links}" "${Defs}" "${Opts}" "${Props}" "${OMPNT}")  
+	#
+	set(APP_TYPE "mpi_cuda_tiled")
+        setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
+                  "${app_dir_c}" "${TMP_SOURCE_DIR}" 
+                  "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
+	          "${Links}" "${Defs}" "${Opts}" "${Props}" "${OMPNT}")  
+      endif()
+    endif()
+    # HIP    
+    if(HIP_FOUND) 
+      set(APP_TYPE "hip")
+      set(APP_SRC ${OPS} ${OTHERS} 
+                  "${TMP_SOURCE_DIR}/hip/hip_kernels.cpp")
+      set(Links "ops_hip"
+	        "hip::device"
+                "OpenMP::OpenMP_CXX")
+      set(Defs "-D__HIP_PLATFORM_NVIDIA__")
+      # Not sure this should be here: why not on the general nvcc flags? 
+      set(Opts "")
+      set(Props "")
+      # Make sure to use "" for potentially empty inputs
+      message(STATUS "HIP SRC ${APP_SRC} for ${APP_TYPE}")
+      setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
+             	"${app_dir_c}" "${TMP_SOURCE_DIR}" 
+	        "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
+	        "${Links}" "${Defs}" "${Opts}" "${Props}" "${OMPNT}")  
+    endif()
+    # OMPOFFLOAD
+    if(OPS_CXXFLAGS_OMPOFFLOAD)
+      set(APP_TYPE "ompoffload")
+      set(APP_SRC ${OPS} ${OTHERS} 
+                  "${TMP_SOURCE_DIR}/openmp_offload/openmp_offload_kernels.cpp")
+      set(Links "ops_ompoffload"
+                "OpenMP::OpenMP_CXX")
+      set(Defs "")
+      set(Opts "")
+      set(Props "")
+      foreach(Flag IN LISTS OPS_CXXFLAGS_OMPOFFLOAD)
+        set(Opt "$<$<COMPILE_LANGUAGE:CXX>:${Flag}>")
+        list(APPEND Opts "${Opt}")
+	list(APPEND Props "${Flag}")
+      endforeach()
+      # Make sure to use "" for potentially empty inputs
+      setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
+  	        "${app_dir_c}" "${TMP_SOURCE_DIR}" 
+  	        "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
+	        "${Links}" "${Defs}" "${Opts}" "${Props}" "${OMPNT}")  
+      if(MPI_FOUND)
+        set(APP_TYPE "mpi_ompoffload")
+        set(Defs "-DMPICH_IGNORE_CXX_SEEK")
+        set(Links "ops_mpi_ompoffload" 
+                  "OpenMP::OpenMP_CXX")
+	list(APPEND Opts ${MPI_INC_LIST})
+        setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
+                  "${app_dir_c}" "${TMP_SOURCE_DIR}" 
+                  "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
+	          "${Links}" "${Defs}" "${Opts}" "${Props}" "${OMPNT}")  
+	#
+        set(APP_TYPE "mpi_ompoffload_tiled")
+        setappexe("${APP_SRC}" "${Name}" "${APP_TYPE}" 
+                  "${app_dir_c}" "${TMP_SOURCE_DIR}" 
+                  "${CMAKE_CURRENT_SOURCE_DIR}" "${INP}" 
+	          "${Links}" "${Defs}" "${Opts}" "${Props}" "${OMPNT}")  
+      endif()
+
+    endif()
+
+endmacro()

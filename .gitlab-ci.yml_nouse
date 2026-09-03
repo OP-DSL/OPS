@@ -1,13 +1,9 @@
-# Defines stages which are to be executed
 stages:
-  - API_CXX_Build
-  - API_FORTRAN_Build
-  - APPS_CXX_Build_and_Test
-  - APPS_FORTRAN_Build_and_Test
+  - test_gnu11
+  - test_nvhpc239
 
-# Stage "API_Build"
-build:GNU11:API_CXX:
-  stage: API_CXX_Build
+build_test_gnu11:
+  stage: test_gnu11
   tags:
     - CCP, test
   script:
@@ -15,58 +11,26 @@ build:GNU11:API_CXX:
     - module avail 
     - module load CUDA
     - export CXX=mpicxx
-    - mkdir build
-    - cd build
-    - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DGPU_ARCH=75
-    - cmake --build . -j 4
-    - cmake --install .
-  artifacts:
-    expire_in: 1 week
-    paths:
-    - $CI_PROJECT_DIR/OPS-INSTALL
+    #- cmake -S . -B build -DCMAKE_INSTALL_PREFIX=./build/opt -DOPS_TEST_FULL=OFF 
+    - cmake -S . -B build -DCMAKE_INSTALL_PREFIX=./build/opt -DOPS_TEST=OFF 
+    - cmake --build build -j 6
+    - cmake --install build 
+    - echo `pwd`
+    - echo $CI_PROJECT_DIR
+    - ctest --test-dir build --output-on-failure
+    #- mkdir -p ~/.ssh/ && touch ~/.ssh/known_hosts && chmod 644 ~/.ssh/known_hosts
+    #- ssh-keyscan -H bitbucket.org >> ~/.ssh/known_hosts
+    #- echo -e "machine bitbucket.org\nlogin gitlab-ci-token\npassword ${CI_JOB_TOKEN}" > ~/.netrc 
+    - git config --global --add safe.directory /home/rfj82982/GIT/opensbli_jaxa.git
+    - git clone /home/rfj82982/GIT/opensbli_jaxa 
+    - cd opensbli_jaxa
+    - git checkout UpdateTests
+    - git status
+    - ls $CI_PROJECT_DIR/build/opt 
+    - ./RunTests.sh /usr/lib/x86_64-linux-gnu/hdf5/openmpi $CI_PROJECT_DIR/build/opt
 
-build:GNU11:API_FORTRAN:
-  stage: API_FORTRAN_Build
-  tags:
-    - CCP, test
-  script:
-    - source ~/.bash_aliases
-    - module avail
-    - module load CUDA
-    - export CXX=mpicxx
-    - mkdir build
-    - cd build
-    - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DBUILD_OPS_CXX=OFF -DBUILD_OPS_FORTRAN=ON -DGPU_ARCH=75
-    - cmake --build .
-    - cmake --install .
-  artifacts:
-    expire_in: 1 week
-    paths:
-    - $CI_PROJECT_DIR/OPS-INSTALL
-
-# This is the latest easybuild based on GNU
-build:foss:API_CXX:
-  stage: API_CXX_Build
-  tags:
-    - CCP, test
-  script:
-    - source ~/.bash_aliases
-    - module avail 
-    - module load foss CUDA
-    - export CXX=mpicxx
-    - mkdir build
-    - cd build
-    - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DGPU_ARCH=75 -DCMAKE_CUDA_HOST_COMPILER=gcc-11
-    - cmake --build . -j 4
-    - cmake --install .
-  artifacts:
-    expire_in: 1 week
-    paths:
-    - $CI_PROJECT_DIR/OPS-INSTALL
-
-# Build with NVHPC compiler
-build:NVHCP23:API_CXX:
-  stage: API_CXX_Build
+build_test_nvhpc239:
+  stage: test_nvhpc239
   tags:
     - CCP, test
   script:
@@ -74,120 +38,8 @@ build:NVHCP23:API_CXX:
     - module avail 
     - module load nvhpc/23.9
     - export CXX=mpicxx
-    - mkdir build
-    - cd build
-    - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DGPU_ARCH=75
-    - cmake --build . -j 4
-    - cmake --install . 
-  artifacts:
-    expire_in: 1 week
-    paths:
-    - $CI_PROJECT_DIR/OPS-INSTALL
-
-# Build with NVHPC compiler
-build:NVHCP23:API_FORTRAN:
-  stage: API_FORTRAN_Build
-  tags:
-    - CCP, test
-  script:
-    - source ~/.bash_aliases
-    - module avail
-    - module load nvhpc/23.9
-    - export CXX=mpicxx
-    - mkdir build
-    - cd build
-    - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DBUILD_OPS_CXX=OFF -DBUILD_OPS_FORTRAN=ON -DGPU_ARCH=75
-    - cmake --build .
-    - cmake --install .
-  artifacts:
-    expire_in: 1 week
-    paths:
-    - $CI_PROJECT_DIR/OPS-INSTALL
-
-# Stage "Test"
-build_and_test:GNU11:APPS_CXX:
-  stage: APPS_CXX_Build_and_Test
-  tags:
-    - CCP, test
-  script:
-    - source ~/.bash_aliases
-    - module avail
-    - module load CUDA
-    - export CXX=mpicxx
-    - mkdir build
-    - cd build
-    - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DBUILD_OPS_APPS=ON -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP -DOPS_TEST=ON -DGPU_ARCH=75 -DGPU_NUMBER=1
-    - cmake --build . -j 4
-    - cmake --install .
-#    - ctest -V
-    - ctest
-  artifacts:
-    expire_in: 1 week
-    paths:
-    - $CI_PROJECT_DIR/OPS-APP
-
-build_and_test:GNU11:APPS_FORTRAN:
-  stage: APPS_FORTRAN_Build_and_Test
-  tags:
-    - CCP, test
-  script:
-    - source ~/.bash_aliases
-    - module avail
-    - module load CUDA
-    - export CXX=mpicxx
-    - mkdir build
-    - cd build
-    - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DBUILD_OPS_CXX=OFF -DBUILD_OPS_FORTRAN=ON -DBUILD_OPS_APPS=ON -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP -DOPS_TEST=ON -DGPU_ARCH=75 -DGPU_NUMBER=1
-    - cmake --build .
-    - cmake --install .
-#    - ctest -V
-    - ctest
-  artifacts:
-    expire_in: 1 week
-    paths:
-    - $CI_PROJECT_DIR/OPS-APP
-
-build_and_test:NVHCP23:APPS_FORTRAN:
-  stage: APPS_FORTRAN_Build_and_Test
-  tags:
-    - CCP, test
-  script:
-    - source ~/.bash_aliases
-    - module avail
-    - module load nvhpc/23.9
-    - export CXX=mpicxx
-    - mkdir build
-    - cd build
-    - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DBUILD_OPS_CXX=OFF -DBUILD_OPS_FORTRAN=ON -DBUILD_OPS_APPS=ON -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP -DOPS_TEST=ON -DGPU_ARCH=75 -DGPU_NUMBER=1
-    - cmake --build . --verbose
-    - cmake --install .
-#    - ctest -V
-    - ctest
-  artifacts:
-    expire_in: 1 week
-    paths:
-    - $CI_PROJECT_DIR/OPS-INSTALL
-
-build_and_test:foss:APPS_CXX:
-  stage: APPS_CXX_Build_and_Test
-  tags:
-    - CCP, test
-  script:
-    - source ~/.bash_aliases
-    - module avail
-    - module load foss CUDA
-    - export CXX=mpicxx
-    - mkdir build
-    - cd build
-    - cmake ../ -DCMAKE_INSTALL_PREFIX=$CI_PROJECT_DIR/OPS-INSTALL -DBUILD_OPS_APPS=ON -DAPP_INSTALL_DIR=$CI_PROJECT_DIR/OPS-APP -DOPS_TEST=ON -DGPU_ARCH=75 -DCMAKE_CUDA_HOST_COMPILER=gcc-11 -DGPU_NUMBER=1
-    - cmake --build . -j 4
-    - cmake --install .
-#    - ctest -V
-    - ctest
-  artifacts:
-    expire_in: 1 week
-    paths:
-    - $CI_PROJECT_DIR/OPS-APP
+      #- cmake -S . -B build -DCMAKE_INSTALL_PREFIX=./build/opt -DOPS_TEST_FULL=ON -DOPS_TEST_DEV=ON -DHDF5_ROOT=/usr/lib/x86_64-linux-gnu/hdf5/openmpi/
+      #- cmake --build build -j 6
 
 # Build and Test with NVHPC compiler
 #build_and_test:NVHCP23:APPS:

@@ -1,10 +1,4 @@
-cmake_minimum_required(VERSION 3.18)
+set(case "multidim")
+set(CASE_DIR "${app_dir_c}/${case}")
 createtempdir()
-if(CPU_NUMBER GREATER 4)
-  set(OringalCPUNum ${CPU_NUMBER})
-  set(CPU_NUMBER 4)
-else()
-  # Note that undefined variables would be `""` thus false
-endif()
-build_ops_c_sample(multidim "NONE" "NONE" "NONE" "NO" "YES")
-set(CPU_NUMBER ${OringalCPUNum})
+build_ops_c_sample(${case} "NONE" "NONE" "NONE" "NO" "${OPS_TEST_DEV}" "1")

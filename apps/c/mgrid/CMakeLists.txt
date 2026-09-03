@@ -1,2 +1,4 @@
-cmake_minimum_required(VERSION 3.18)
-build_ops_c_sample(mgrid "NONE" "NONE" "NONE" "NO" "YES")
+set(case "mgrid")
+set(CASE_DIR "${app_dir_c}/${case}")
+createtempdir()
+build_ops_c_sample(${case} "NONE" "NONE" "NONE" "NO" "${OPS_TEST_DEV}")

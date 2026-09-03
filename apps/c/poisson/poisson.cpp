@@ -257,27 +257,27 @@ int main(int argc, char **argv)
       }
     }
 
-		if (non_copy) {
-			for (int j = 0; j < ngrid_y; j++) {
-				for (int i = 0; i < ngrid_x; i++) {
-					int iter_range[] = {0,sizes[2*(i+ngrid_x*j)],0,sizes[2*(i+ngrid_x*j)+1]};
-					ops_par_loop(poisson_kernel_stencil, "poisson_kernel_stencil", blocks[i+ngrid_x*j], 2, iter_range,
-							    ops_arg_dat(u2[i+ngrid_x*j], 1, S2D_00_P10_M10_0P1_0M1, "double", OPS_READ),
-                                ops_arg_dat(f[i+ngrid_x*j], 1, S2D_00, "double", OPS_READ),
-							    ops_arg_dat(u[i+ngrid_x*j], 1, S2D_00, "double", OPS_WRITE));
-				}
-			}
-		} else {
-			for (int j = 0; j < ngrid_y; j++) {
-				for (int i = 0; i < ngrid_x; i++) {
-					int iter_range[] = {0,sizes[2*(i+ngrid_x*j)],0,sizes[2*(i+ngrid_x*j)+1]};
-					ops_par_loop(poisson_kernel_update, "poisson_kernel_update", blocks[i+ngrid_x*j], 2, iter_range,
-							    ops_arg_dat(u2[i+ngrid_x*j], 1, S2D_00, "double", OPS_READ),
-							    ops_arg_dat(u[i+ngrid_x*j] , 1, S2D_00, "double", OPS_WRITE));
-				}
-			}
-		}
-//    if (iter == 5) u[0] = ops_dat_copy(u[0]); //TESTING
+    if (non_copy) {
+      for (int j = 0; j < ngrid_y; j++) {
+      	for (int i = 0; i < ngrid_x; i++) {
+          int iter_range[] = {0,sizes[2*(i+ngrid_x*j)],0,sizes[2*(i+ngrid_x*j)+1]};
+          ops_par_loop(poisson_kernel_stencil, "poisson_kernel_stencil", blocks[i+ngrid_x*j], 2, iter_range,
+          		    ops_arg_dat(u2[i+ngrid_x*j], 1, S2D_00_P10_M10_0P1_0M1, "double", OPS_READ),
+          ops_arg_dat(f[i+ngrid_x*j], 1, S2D_00, "double", OPS_READ),
+          		    ops_arg_dat(u[i+ngrid_x*j], 1, S2D_00, "double", OPS_WRITE));
+      	}
+      }
+    } else {
+      for (int j = 0; j < ngrid_y; j++) {
+        for (int i = 0; i < ngrid_x; i++) {
+          int iter_range[] = {0,sizes[2*(i+ngrid_x*j)],0,sizes[2*(i+ngrid_x*j)+1]};
+          ops_par_loop(poisson_kernel_update, "poisson_kernel_update", blocks[i+ngrid_x*j], 2, iter_range,
+                       ops_arg_dat(u2[i+ngrid_x*j], 1, S2D_00, "double", OPS_READ),
+                       ops_arg_dat(u[i+ngrid_x*j] , 1, S2D_00, "double", OPS_WRITE));
+        }
+      }
+    }
+    //if (iter == 5) u[0] = ops_dat_copy(u[0]); //TESTING
   }
 
   ops_execute(blocks[0]->instance);

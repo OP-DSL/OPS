@@ -1,3 +1,4 @@
-cmake_minimum_required(VERSION 3.18)
+set(case "multidim3d")
+set(CASE_DIR "${app_dir_c}/${case}")
 createtempdir()
-build_ops_c_sample(multidim3d "NONE" "NONE" "NONE" "NO" "YES")
+build_ops_c_sample(${case} "NONE" "NONE" "NONE" "NO" "${OPS_TEST_DEV}" "1")

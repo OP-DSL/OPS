@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #Do not run below command if virtualenv is already installed
-#python3 -m pip install --user virtualenv
+python3 -m pip install --user virtualenv
 
 OPS_INSTALL_PATH=$1
 
