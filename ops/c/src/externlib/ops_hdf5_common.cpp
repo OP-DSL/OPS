@@ -46,6 +46,8 @@
 // hdf5 header
 #include "ops_hdf5_common.h"
 #include <ops_exceptions.h>
+#include <cstring>
+#include <cstdlib>
 
 int half_type_init = 0;
 hid_t H5T_IEEE_FP16;
@@ -161,6 +163,136 @@ hid_t h5_type(const char *type) {
     return h5t;
 }
 
+hid_t h5_storage_type(const char *data_type, REAL_PRECISION real_precision) {
+  hid_t type = h5_type(data_type);
+  if (real_precision == REAL_PRECISION::Undefined)
+    return type;
+
+  if (type == H5T_NATIVE_DOUBLE) {
+    if (real_precision == REAL_PRECISION::Single)
+      return H5T_NATIVE_FLOAT;
+    if (real_precision == REAL_PRECISION::Half)
+      return H5T_IEEE_FP16;
+    return H5T_NATIVE_DOUBLE;
+  }
+  if (type == H5T_NATIVE_FLOAT) {
+    if (real_precision == REAL_PRECISION::Half)
+      return H5T_IEEE_FP16;
+    return H5T_NATIVE_FLOAT;
+  }
+  return type;
+}
+
+/* Convert buf to the dataset's type before H5Dwrite. Parallel HDF5 disables
+ * collective MPI-IO when H5Dwrite itself has to convert
+ * (H5D_MPIO_DATATYPE_CONVERSION). */
+herr_t H5Dwrite_matching_types(hid_t dataset_id, hid_t mem_type, hid_t mem_space,
+                               hid_t file_space, hid_t xfer_plist,
+                               const void *buf, size_t nelem) {
+  hid_t dset_type = H5Dget_type(dataset_id);
+  if (dset_type < 0) {
+    OPSException ex(OPS_HDF5_ERROR);
+    ex << "Error: H5Dget_type failed";
+    throw ex;
+  }
+
+  char *converted = nullptr;
+  const void *write_buf = buf;
+  hid_t write_type = mem_type;
+  htri_t equal = H5Tequal(mem_type, dset_type);
+  if (equal < 0) {
+    H5Tclose(dset_type);
+    OPSException ex(OPS_HDF5_ERROR);
+    ex << "Error: H5Tequal failed comparing memory and dataset types";
+    throw ex;
+  }
+  if (equal == 0 && nelem > 0 && buf != nullptr) {
+    size_t src_sz = H5Tget_size(mem_type);
+    size_t dst_sz = H5Tget_size(dset_type);
+    size_t nbytes = nelem * (src_sz > dst_sz ? src_sz : dst_sz);
+    converted = (char *)malloc(nbytes);
+    if (converted == nullptr) {
+      H5Tclose(dset_type);
+      OPSException ex(OPS_HDF5_ERROR);
+      ex << "Error: out of memory converting HDF5 write buffer";
+      throw ex;
+    }
+    memcpy(converted, buf, nelem * src_sz);
+    if (H5Tconvert(mem_type, dset_type, nelem, converted, NULL, H5P_DEFAULT) <
+        0) {
+      free(converted);
+      H5Tclose(dset_type);
+      OPSException ex(OPS_HDF5_ERROR);
+      ex << "Error: H5Tconvert failed for HDF5 write buffer";
+      throw ex;
+    }
+    write_buf = converted;
+    write_type = dset_type;
+  }
+
+  herr_t err =
+      H5Dwrite(dataset_id, write_type, mem_space, file_space, xfer_plist,
+               write_buf);
+  free(converted);
+  H5Tclose(dset_type);
+  return err;
+}
+
+/* Read with the dataset's type, then convert into mem_type. Same collective
+ * MPI-IO constraint as the write path. */
+herr_t H5Dread_matching_types(hid_t dataset_id, hid_t mem_type, hid_t mem_space,
+                              hid_t file_space, hid_t xfer_plist, void *buf,
+                              size_t nelem) {
+  hid_t dset_type = H5Dget_type(dataset_id);
+  if (dset_type < 0) {
+    OPSException ex(OPS_HDF5_ERROR);
+    ex << "Error: H5Dget_type failed";
+    throw ex;
+  }
+
+  htri_t equal = H5Tequal(mem_type, dset_type);
+  if (equal < 0) {
+    H5Tclose(dset_type);
+    OPSException ex(OPS_HDF5_ERROR);
+    ex << "Error: H5Tequal failed comparing memory and dataset types";
+    throw ex;
+  }
+  if (equal > 0) {
+    herr_t err =
+        H5Dread(dataset_id, mem_type, mem_space, file_space, xfer_plist, buf);
+    H5Tclose(dset_type);
+    return err;
+  }
+
+  size_t src_sz = H5Tget_size(dset_type);
+  size_t dst_sz = H5Tget_size(mem_type);
+  size_t nbytes = nelem * (src_sz > dst_sz ? src_sz : dst_sz);
+  if (nbytes == 0)
+    nbytes = 1;
+  char *tmp = (char *)malloc(nbytes);
+  if (tmp == nullptr) {
+    H5Tclose(dset_type);
+    OPSException ex(OPS_HDF5_ERROR);
+    ex << "Error: out of memory converting HDF5 read buffer";
+    throw ex;
+  }
+  herr_t err =
+      H5Dread(dataset_id, dset_type, mem_space, file_space, xfer_plist, tmp);
+  if (err >= 0 && nelem > 0 && buf != nullptr) {
+    if (H5Tconvert(dset_type, mem_type, nelem, tmp, NULL, H5P_DEFAULT) < 0) {
+      free(tmp);
+      H5Tclose(dset_type);
+      OPSException ex(OPS_HDF5_ERROR);
+      ex << "Error: H5Tconvert failed for HDF5 read buffer";
+      throw ex;
+    }
+    memcpy(buf, tmp, nelem * dst_sz);
+  }
+  free(tmp);
+  H5Tclose(dset_type);
+  return err;
+}
+
 void split_h5_name(const char *data_name,
                        std::vector<std::string> &h5_name_list) {
   std::stringstream name_stream(data_name);
@@ -197,32 +329,7 @@ void H5_dataset_space(const hid_t file_id, const int data_dims,
 
     hid_t type = h5_type(data_type);
     if (type == H5T_NATIVE_FLOAT || type == H5T_NATIVE_DOUBLE || type == H5T_IEEE_FP16) {
-      hid_t real_type;
-      if (type == H5T_NATIVE_DOUBLE) {
-        if (real_precision == REAL_PRECISION::Double) {
-          real_type = H5T_NATIVE_DOUBLE;
-        }
-        if (real_precision == REAL_PRECISION::Single) {
-          real_type = H5T_NATIVE_FLOAT;
-        }
-        if (real_precision == REAL_PRECISION::Half) {
-          real_type = H5T_IEEE_FP16;
-        }
-      }
-
-      if (type == H5T_NATIVE_FLOAT) {
-        if (real_precision == REAL_PRECISION::Single) {
-          real_type = H5T_NATIVE_FLOAT;
-        }
-        if (real_precision == REAL_PRECISION::Half) {
-          real_type = H5T_IEEE_FP16;
-        }
-      }
-
-      if (type == H5T_IEEE_FP16) {
-        real_type = H5T_IEEE_FP16;
-      }
-
+      hid_t real_type = h5_storage_type(data_type, real_precision);
       dataset_id = H5Dcreate(parent_group, data_name, real_type, file_space,
                              H5P_DEFAULT, data_plist_id, H5P_DEFAULT);
     } else {

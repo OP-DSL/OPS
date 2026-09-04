@@ -37,6 +37,7 @@
  */
 
 #include <math.h>
+#include <stdint.h>
 #include <mpi.h>
 #include <ops_mpi_core.h>
 #include <ops_util.h>
@@ -60,6 +61,23 @@ static char *copy_str(char const *src) {
   const size_t len = strlen(src) + 1;
   char *dest = (char *)calloc(len + 16, sizeof(char));
   return strncpy(dest, src, len);
+}
+
+/* Report whether HDF5 honoured the collective MPI-IO request. Datatype
+ * conversion (mem type != file type) is a documented reason for falling
+ * back to independent I/O (H5D_MPIO_DATATYPE_CONVERSION = 0x02). */
+static void report_mpio_io_mode(hid_t xfer_plist, const char *tag) {
+  if (OPS_instance::getOPSInstance()->OPS_diags <= 3)
+    return;
+  H5D_mpio_actual_io_mode_t mode = H5D_MPIO_NO_COLLECTIVE;
+  herr_t e1 = H5Pget_mpio_actual_io_mode(xfer_plist, &mode);
+  uint32_t local_cause = 0, global_cause = 0;
+  herr_t e2 =
+      H5Pget_mpio_no_collective_cause(xfer_plist, &local_cause, &global_cause);
+  ops_printf("HDF5 %s actual_io_mode=%d (4=contiguous collective, 0=none) "
+             "no_collective_cause local=0x%x global=0x%x "
+             "(0x2=DATATYPE_CONVERSION) get_status=%d/%d\n",
+             tag, (int)mode, local_cause, global_cause, (int)e1, (int)e2);
 }
 
 //
@@ -860,7 +878,11 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
 
       // write data
       hid_t datatype = h5_type(dat->type);
-      H5Dwrite(dset_id, datatype, memspace, filespace, plist_id, data);
+      size_t nelem = 1;
+      for (int d = 0; d < block->dims; d++)
+        nelem *= (size_t)SIZE[d];
+      H5Dwrite_matching_types(dset_id, datatype, memspace, filespace, plist_id,
+                              data, nelem);
 
       MPI_Barrier(OPS_MPI_HDF5_BLOCK_WORLD);
       free(data);
@@ -1567,7 +1589,11 @@ void ops_read_dat_hdf5(ops_dat dat) {
 
     // read data
     hid_t datatype = h5_type(dat->type);
-    H5Dread(dset_id, datatype, memspace, filespace, plist_id, data);
+    size_t nelem = 1;
+    for (int d = 0; d < block->dims; d++)
+      nelem *= (size_t)size[d];
+    H5Dread_matching_types(dset_id, datatype, memspace, filespace, plist_id,
+                           data, nelem);
 
     ops_dat_set_data(dat, 0, data);
 
@@ -1789,7 +1815,6 @@ void ops_get_const_hdf5(char const *name, int dim, char const *type,
           "type of constant %s in file %s and requested type %s do not match, "
           "performing automatic type conversion\n",
           typ, file_name, type);
-    typ = type;
   }
   H5Dclose(dset_id);
 
@@ -1797,10 +1822,11 @@ void ops_get_const_hdf5(char const *name, int dim, char const *type,
   dset_id = H5Dopen(file_id, name, H5P_DEFAULT);
 
   char *data = nullptr;
-  hid_t datatype = h5_type(typ);
+  hid_t datatype = h5_type(type);
   size_t type_size = H5Tget_size(datatype);
   data = (char *)xmalloc(type_size * const_dim);
-  H5Dread(dset_id, datatype, H5S_ALL, H5S_ALL, plist_id, data);
+  H5Dread_matching_types(dset_id, datatype, H5S_ALL, H5S_ALL, plist_id, data,
+                         (size_t)const_dim);
   memcpy((void *)const_data, (void *)data, type_size * const_dim);
 
   free(data);
@@ -1895,7 +1921,6 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
         ops_printf("type of constant %s in file %s and requested type %s do "
                    "not match, performing automatic type conversion\n",
                    typ, file_name, type);
-      typ = type;
     }
 
     // existing const attributes matches with const to be written .. overwriting
@@ -1904,8 +1929,8 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
     dataspace = H5Dget_space(dset_id);
 
     hid_t datatype = h5_type(type);
-    H5Dwrite(dset_id, datatype, H5S_ALL, dataspace, plist_id,
-               const_data);
+    H5Dwrite_matching_types(dset_id, datatype, H5S_ALL, dataspace, plist_id,
+                            const_data, (size_t)dim);
 
     H5Pclose(plist_id);
     H5Sclose(dataspace);
@@ -1932,8 +1957,8 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
   dset_id = H5Dcreate(file_id, name, datatype, dataspace,
       H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
   // write data
-  H5Dwrite(dset_id, datatype, H5S_ALL, dataspace, plist_id,
-      const_data);
+  H5Dwrite_matching_types(dset_id, datatype, H5S_ALL, dataspace, plist_id,
+                          const_data, (size_t)dim);
   H5Dclose(dset_id);
 
   H5Pclose(plist_id);
@@ -2127,8 +2152,12 @@ void write_plane_buf_hdf5(const char *file_name, const char *data_name,
     hid_t xfer_data_plist_id = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(xfer_data_plist_id, H5FD_MPIO_COLLECTIVE);
 
-    H5Dwrite(dataset_id, h5_type(dat->type), memspace, file_space,
-             xfer_data_plist_id, buf);
+    size_t nelem = 1;
+    for (int d = 0; d < data_dims; d++)
+      nelem *= (size_t)local_data_size_c[d];
+    H5Dwrite_matching_types(dataset_id, h5_type(dat->type), memspace, file_space,
+                            xfer_data_plist_id, buf, nelem);
+    report_mpio_io_mode(xfer_data_plist_id, "plane write");
     H5Pclose(xfer_data_plist_id);
     H5Sclose(file_space);
     H5Sclose(memspace);
@@ -2250,8 +2279,12 @@ void write_slab_buf_hdf5(const char *file_name, const char *data_name,
     hid_t xfer_data_plist_id = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(xfer_data_plist_id, H5FD_MPIO_COLLECTIVE);
 
-    H5Dwrite(dataset_id, h5_type(dat->type), memspace, file_space,
-             xfer_data_plist_id, buf);
+    size_t nelem = 1;
+    for (int d = 0; d < space_dim; d++)
+      nelem *= (size_t)local_data_size_c[d];
+    H5Dwrite_matching_types(dataset_id, h5_type(dat->type), memspace, file_space,
+                            xfer_data_plist_id, buf, nelem);
+    report_mpio_io_mode(xfer_data_plist_id, "slab write");
     H5Pclose(xfer_data_plist_id);
     H5Sclose(file_space);
     H5Sclose(memspace);
