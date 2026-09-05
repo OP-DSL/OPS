@@ -286,6 +286,8 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc);
 OPS_FTN_INTEROP
 void ops_execute(OPS_instance *instance=NULL);
 OPS_FTN_INTEROP
+void ops_tiling_break(OPS_instance *instance=NULL);
+OPS_FTN_INTEROP
 void ops_execute_block(ops_block block);
 bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, int *disp, int *size);
 int compute_ranges(ops_arg* args, int nargs, ops_block block, int* range, int* start, int* end, int* arg_idx);

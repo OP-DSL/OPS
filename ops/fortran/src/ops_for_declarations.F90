@@ -520,6 +520,12 @@ module OPS_Fortran_Declarations
             type(c_ptr), value :: nullPtr
         end subroutine ops_execute_c
 
+        subroutine ops_tiling_break_c( nullPtr ) BIND(C,name='ops_tiling_break')
+            use, intrinsic :: ISO_C_BINDING
+
+            type(c_ptr), value :: nullPtr
+        end subroutine ops_tiling_break_c
+
         subroutine ops_execute_block_c( block ) BIND(C,name='ops_execute_block')
             use, intrinsic :: ISO_C_BINDING
             import :: ops_block_core
@@ -1433,6 +1439,12 @@ module OPS_Fortran_Declarations
 
         call ops_execute_c(c_null_ptr)
     end subroutine ops_execute
+
+    subroutine ops_tiling_break()
+        use, intrinsic :: ISO_C_BINDING
+
+        call ops_tiling_break_c(c_null_ptr)
+    end subroutine ops_tiling_break
 
     subroutine ops_execute_block(block)
         use, intrinsic :: ISO_C_BINDING

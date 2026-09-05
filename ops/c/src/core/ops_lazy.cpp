@@ -37,6 +37,7 @@
  * backends
   */
 #include <stdlib.h>
+#include <cmath>
 #include "ops_lib_core.h"
 #include "ops_hdf5.h"
 #include <ops_exceptions.h>
@@ -94,6 +95,11 @@ public:
       data_read_deps_edge; // latest data dependencies for each dataset around the edges
 
   std::vector<tiling_plan> tiling_plans;
+  // Split points (kernel-list size after a user ops_tiling_break). Halo
+  // analysis still uses the full queued chain; tile construction uses each
+  // segment so CACHE_SIZE blocking is not skewed by the whole chain.
+  std::vector<int> tiling_breaks;
+  std::vector<ops_kernel_descriptor *> tiling_break_tail;
 
   // tile sizes
   int TILE1D;
@@ -112,6 +118,8 @@ public:
 #define data_write_deps instance->tiling_instance->data_write_deps
 #define data_read_deps_edge instance->tiling_instance->data_read_deps_edge
 #define tiling_plans instance->tiling_instance->tiling_plans
+#define tiling_breaks instance->tiling_instance->tiling_breaks
+#define tiling_break_tail instance->tiling_instance->tiling_break_tail
 #define TILE1D instance->tiling_instance->TILE1D
 #define TILE2D instance->tiling_instance->TILE2D
 #define TILE3D instance->tiling_instance->TILE3D
@@ -466,6 +474,92 @@ int ops_construct_tile_plan(OPS_instance *instance) {
       biggest_range[2 * d + 1] = 1;
     }
   } // Last loop block for end
+
+  // If this plan is one tiling-break segment, later loops still depend on
+  // values this segment writes. Reverse-walk the tail so RAW/INC through
+  // later segments expands this segment's writes by the transitive stencil
+  // depth, without putting those loops in the live set (CACHE_SIZE still
+  // sees this segment only).
+  if (!tiling_break_tail.empty()) {
+    std::vector<int> req_min(instance->OPS_dat_index * OPS_MAX_DIM, INT_MAX);
+    std::vector<int> req_max(instance->OPS_dat_index * OPS_MAX_DIM, INT_MIN);
+    for (int li = (int)tiling_break_tail.size() - 1; li >= 0; li--) {
+      ops_kernel_descriptor *later = tiling_break_tail[li];
+      int *rng = later->orig_range ? later->orig_range : later->range;
+      int start[OPS_MAX_DIM], end[OPS_MAX_DIM], disp[OPS_MAX_DIM], decomp_size[OPS_MAX_DIM];
+      ops_get_abs_owned_range(later->block, rng, start, end, disp, decomp_size);
+      int need_min[OPS_MAX_DIM], need_max[OPS_MAX_DIM];
+      for (int d = 0; d < later->block->dims; d++) {
+        need_min[d] = start[d];
+        need_max[d] = end[d];
+      }
+      for (int arg = 0; arg < later->nargs; arg++) {
+        if (later->args[arg].argtype != OPS_ARG_DAT || later->args[arg].opt != 1)
+          continue;
+        if (later->args[arg].acc == OPS_READ)
+          continue;
+        int datidx = later->args[arg].dat->index;
+        for (int d = 0; d < later->block->dims; d++) {
+          int off = datidx * OPS_MAX_DIM + d;
+          if (req_min[off] != INT_MAX)
+            need_min[d] = MIN(need_min[d], req_min[off]);
+          if (req_max[off] != INT_MIN)
+            need_max[d] = MAX(need_max[d], req_max[off]);
+        }
+      }
+      for (int arg = 0; arg < later->nargs; arg++) {
+        if (later->args[arg].argtype != OPS_ARG_DAT || later->args[arg].opt != 1)
+          continue;
+        if (later->args[arg].acc != OPS_WRITE)
+          continue;
+        int datidx = later->args[arg].dat->index;
+        for (int d = 0; d < later->block->dims; d++) {
+          int off = datidx * OPS_MAX_DIM + d;
+          req_min[off] = INT_MAX;
+          req_max[off] = INT_MIN;
+        }
+      }
+      for (int arg = 0; arg < later->nargs; arg++) {
+        if (later->args[arg].argtype != OPS_ARG_DAT || later->args[arg].opt != 1)
+          continue;
+        if (later->args[arg].acc == OPS_WRITE)
+          continue;
+        int datidx = later->args[arg].dat->index;
+        ops_stencil sten = later->args[arg].stencil;
+        int sdims = (sten != NULL) ? sten->dims : later->block->dims;
+        for (int d = 0; d < later->block->dims; d++) {
+          int d_m = 0, d_p = 0;
+          if (sten != NULL && sten->stencil != NULL) {
+            d_m = INT_MAX;
+            d_p = INT_MIN;
+            for (int p = 0; p < sten->points; p++) {
+              int s = sten->stencil[p * sdims + d];
+              d_m = MIN(d_m, s);
+              d_p = MAX(d_p, s);
+            }
+            if (d_m == INT_MAX) {
+              d_m = 0;
+              d_p = 0;
+            }
+          }
+          int off = datidx * OPS_MAX_DIM + d;
+          req_min[off] = MIN(req_min[off], need_min[d] + d_m);
+          req_max[off] = MAX(req_max[off], need_max[d] + d_p);
+        }
+      }
+    }
+    for (int datidx = 0; datidx < instance->OPS_dat_index; datidx++) {
+      if (!dataset_written[datidx])
+        continue;
+      for (int d = 0; d < OPS_MAX_DIM; d++) {
+        int off = datidx * OPS_MAX_DIM + d;
+        if (req_min[off] == INT_MAX)
+          continue;
+        terminal_read_min[off] = MIN(terminal_read_min[off], req_min[off]);
+        terminal_read_max[off] = MAX(terminal_read_max[off], req_max[off]);
+      }
+    }
+  }
   
   for (int d = 0; d < dims; d++) {
     if (biggest_range[2*d] > biggest_range[2*d+1])
@@ -1382,22 +1476,21 @@ void ops_execute_block(ops_block block) {
     ops_execute(block->instance);
 }
 
-void ops_execute(OPS_instance *instance) {
-
-  if(instance == NULL)
+void ops_tiling_break(OPS_instance *instance) {
+  if (instance == NULL)
     instance = OPS_instance::getOPSInstance();
-
-  if (!instance->ops_enable_tiling) return;
+  if (!instance->ops_enable_tiling)
+    return;
   if (instance->tiling_instance == NULL)
     instance->tiling_instance = new OPS_instance_tiling();
   if (ops_kernel_list.size() == 0)
     return;
+  int n = (int)ops_kernel_list.size();
+  if (tiling_breaks.empty() || tiling_breaks.back() != n)
+    tiling_breaks.push_back(n);
+}
 
-  // Try to find an existing tiling plan for this sequence of loops which is
-  // 
-  //       instance->tiling_instance->ops_kernel_list
-  // 
-  // which is a vector of ops_kernel_descriptors
+static int ops_find_or_construct_tile_plan(OPS_instance *instance) {
   int match = -1;
   for (unsigned int i = 0; i < tiling_plans.size(); i++) {
     if (int(ops_kernel_list.size()) == tiling_plans[i].nloops) {
@@ -1414,39 +1507,19 @@ void ops_execute(OPS_instance *instance) {
       }
     }
   }
-
-  // If not found, construct one
   if (match == -1)
     match = ops_construct_tile_plan(instance);
+  return match;
+}
+
+static void ops_execute_tiles(OPS_instance *instance, int match) {
   std::vector<std::vector<int> > &tiled_ranges =
       tiling_plans[match].tiled_ranges;
   int total_tiles = tiling_plans[match].ntiles;
 
-  std::vector<std::vector<int> > &decomp_disp = tiling_plans[match].loop_decomp_disp;
-  std::vector<std::vector<int> > &decomp_size = tiling_plans[match].loop_decomp_size;
-
   if (instance->OPS_diags>3)
     ops_printf2(instance,"Executing tiling plan for %d loops\n", ops_kernel_list.size());
 
-  //Do halo exchanges
-  double c,t1=0,t2=0;
-  if (instance->OPS_diags>1)
-    ops_timers_core(&c,&t1);
-  
-  ops_halo_exchanges_datlist(&tiling_plans[match].dats_to_exchange[0],
-                             (int)tiling_plans[match].dats_to_exchange.size(),
-                             &tiling_plans[match].depths_to_exchange[0]);
-
-  if (instance->OPS_diags>1) {
-    ops_timers_core(&c,&t2);
-    instance->ops_tiled_halo_exchange_time += t2-t1;
-  }
-
-  for (unsigned int i = 0; i < ops_kernel_list.size(); i++) {
-    if (ops_kernel_list[i]->startup_func) ops_kernel_list[i]->startup_func(ops_kernel_list[i]);
-  }
-
-  //Execute tiles
   for (int tile = 0; tile < total_tiles; tile++) {
     for (unsigned int i = 0; i < ops_kernel_list.size(); i++) {
 
@@ -1471,22 +1544,23 @@ void ops_execute(OPS_instance *instance) {
                ops_kernel_list[i]->range[0], ops_kernel_list[i]->range[1],
                ops_kernel_list[i]->range[2], ops_kernel_list[i]->range[3],
                ops_kernel_list[i]->range[4], ops_kernel_list[i]->range[5]);
-      // This function call could potentially throw
       ops_kernel_list[i]->func(ops_kernel_list[i]);
-
     }
   }
+}
+
+static void ops_set_tiled_dirtybits(OPS_instance *instance, int match) {
+  std::vector<std::vector<int> > &tiled_ranges =
+      tiling_plans[match].tiled_ranges;
+  int total_tiles = tiling_plans[match].ntiles;
+  std::vector<std::vector<int> > &decomp_disp = tiling_plans[match].loop_decomp_disp;
 
   int left_boundary_cleanUpTo[2*OPS_MAX_DIM], left_halo_cleanUpTo[2*OPS_MAX_DIM];
   int right_boundary_cleanUpTo[2*OPS_MAX_DIM], right_halo_cleanUpTo[2*OPS_MAX_DIM];
 
-  //Set dirtybits
   for (unsigned int i = 0; i < ops_kernel_list.size(); i++) {
-
-    // Compute dirtybit clear-upto information
     int my_tiled_begin[OPS_MAX_DIM], my_tiled_end[OPS_MAX_DIM];
 
-    // find the full tiled_range begin and end for current loop
     for (int d = 0; d < OPS_MAX_DIM; d++) {
       left_boundary_cleanUpTo[2*d+0] = 0;
       left_boundary_cleanUpTo[2*d+1] = 0;
@@ -1505,7 +1579,7 @@ void ops_execute(OPS_instance *instance) {
 
     ops_compute_dirtybit_clearupto(i, ops_kernel_list[i]->name, match, my_tiled_begin, my_tiled_end, left_boundary_cleanUpTo, left_halo_cleanUpTo, right_boundary_cleanUpTo, right_halo_cleanUpTo);
     if (instance->OPS_diags > 5)
-      ops_printf("kernel %s left_halo_cleanUpTo %d left_boundary_cleanUpTo %d right_boundary_cleanUpTo %d right_halo_cleanUpTo %d, owned range: %d-%d tiled range: %d-%d, left neighbour end: %d\n", ops_kernel_list[i]->name, left_halo_cleanUpTo[0], left_boundary_cleanUpTo[0], right_boundary_cleanUpTo[0], right_halo_cleanUpTo[0], decomp_disp[i][0], decomp_disp[i][0]+decomp_size[i][0], my_tiled_begin[0], my_tiled_end[0], tiling_plans[match].left_neighbour_end[i][0]);
+      ops_printf("kernel %s left_halo_cleanUpTo %d left_boundary_cleanUpTo %d right_boundary_cleanUpTo %d right_halo_cleanUpTo %d, owned range: %d-%d tiled range: %d-%d, left neighbour end: %d\n", ops_kernel_list[i]->name, left_halo_cleanUpTo[0], left_boundary_cleanUpTo[0], right_boundary_cleanUpTo[0], right_halo_cleanUpTo[0], tiling_plans[match].loop_decomp_disp[i][0], tiling_plans[match].loop_decomp_disp[i][0]+tiling_plans[match].loop_decomp_size[i][0], my_tiled_begin[0], my_tiled_end[0], tiling_plans[match].left_neighbour_end[i][0]);
 
     for (int arg = 0; arg < ops_kernel_list[i]->nargs; arg++) {
       if (ops_kernel_list[i]->args[arg].argtype == OPS_ARG_DAT && ops_kernel_list[i]->args[arg].acc != OPS_READ)
@@ -1514,7 +1588,9 @@ void ops_execute(OPS_instance *instance) {
     if (ops_kernel_list[i]->isdevice) ops_set_dirtybit_device(ops_kernel_list[i]->args,ops_kernel_list[i]->nargs);
     else ops_set_dirtybit_host(ops_kernel_list[i]->args,ops_kernel_list[i]->nargs);
   }
+}
 
+static void ops_free_lazy_kernel_list(OPS_instance *instance) {
   for (unsigned int i = 0; i < ops_kernel_list.size(); i++) {
     if (ops_kernel_list[i]->cleanup_func) ops_kernel_list[i]->cleanup_func(ops_kernel_list[i]);
     for (int j = 0; j < ops_kernel_list[i]->nargs; j++) {
@@ -1535,8 +1611,76 @@ void ops_execute(OPS_instance *instance) {
     ops_free(ops_kernel_list[i]);
     ops_kernel_list[i] = nullptr;
   }
-
   ops_kernel_list.clear();
+}
+
+void ops_execute(OPS_instance *instance) {
+
+  if(instance == NULL)
+    instance = OPS_instance::getOPSInstance();
+
+  if (!instance->ops_enable_tiling) return;
+  if (instance->tiling_instance == NULL)
+    instance->tiling_instance = new OPS_instance_tiling();
+  if (ops_kernel_list.size() == 0)
+    return;
+
+  std::vector<int> breaks = tiling_breaks;
+  tiling_breaks.clear();
+
+  int match = ops_find_or_construct_tile_plan(instance);
+
+  double c,t1=0,t2=0;
+  if (instance->OPS_diags>1)
+    ops_timers_core(&c,&t1);
+
+  ops_halo_exchanges_datlist(&tiling_plans[match].dats_to_exchange[0],
+                             (int)tiling_plans[match].dats_to_exchange.size(),
+                             &tiling_plans[match].depths_to_exchange[0]);
+
+  if (instance->OPS_diags>1) {
+    ops_timers_core(&c,&t2);
+    instance->ops_tiled_halo_exchange_time += t2-t1;
+  }
+
+  for (unsigned int i = 0; i < ops_kernel_list.size(); i++) {
+    if (ops_kernel_list[i]->startup_func) ops_kernel_list[i]->startup_func(ops_kernel_list[i]);
+  }
+
+  if (breaks.empty()) {
+    ops_execute_tiles(instance, match);
+    ops_set_tiled_dirtybits(instance, match);
+  } else {
+    std::vector<ops_kernel_descriptor *> full = ops_kernel_list;
+    std::vector<int> cuts;
+    cuts.push_back(0);
+    for (unsigned int b = 0; b < breaks.size(); b++) {
+      if (breaks[b] > cuts.back() && breaks[b] < (int)full.size())
+        cuts.push_back(breaks[b]);
+    }
+    cuts.push_back((int)full.size());
+
+    if (instance->OPS_diags > 2 && ops_get_proc() == 0)
+      ops_printf2(instance,
+                  "Tiling breaks: one halo for %d loops, %d cache-blocked segments\n",
+                  (int)full.size(), (int)cuts.size() - 1);
+
+    for (unsigned int s = 0; s + 1 < cuts.size(); s++) {
+      int lo = cuts[s];
+      int hi = cuts[s + 1];
+      if (lo >= hi)
+        continue;
+      ops_kernel_list.assign(full.begin() + lo, full.begin() + hi);
+      tiling_break_tail.assign(full.begin() + hi, full.end());
+      int seg_match = ops_find_or_construct_tile_plan(instance);
+      tiling_break_tail.clear();
+      ops_execute_tiles(instance, seg_match);
+      ops_set_tiled_dirtybits(instance, seg_match);
+    }
+    ops_kernel_list = full;
+  }
+
+  ops_free_lazy_kernel_list(instance);
 }
 
 void create_kerneldesc_and_enque(char const* kernel_name, ops_arg *args, int nargs, int index, int dim, int isdevice, int *range, ops_block block, void (*func)(struct ops_kernel_descriptor *desc))
