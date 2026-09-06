@@ -757,23 +757,33 @@ int ops_construct_tile_plan(OPS_instance *instance) {
                                     tile_sizes[d];
         int normal_tile_end = MIN(normal_tile_begin + tile_sizes[d], biggest_range[2 * d + 1]);
 
-        //calculate terminal read dependency's intersection with normal tile
+        // Calculate terminal read dependency's intersection with the owned tile.
+        // Tiling-break tails seed terminal_read outside biggest_range (owned ±
+        // later stencil). Clipping that overhang off would drop the overlap
+        // cells Sweep 1 needs — the sanity check (480 != 475, 64 != 69) is
+        // exactly that miss, and TILESIZE does not help: one large tile still
+        // starts at the owned face.
         int intersect_begin = 0;
         int intersect_len = intersection(terminal_read_min[off], terminal_read_max[off], normal_tile_begin, normal_tile_end, &intersect_begin);
         if (intersect_len > 0) {
-          data_read_deps[datidx][tile * OPS_MAX_DIM * 2 + 2 * d + 0] = intersect_begin;
-          data_read_deps[datidx][tile * OPS_MAX_DIM * 2 + 2 * d + 1] = intersect_begin + intersect_len;
+          int dep_beg = intersect_begin;
+          int dep_end = intersect_begin + intersect_len;
+          int tile_idx = (tile / tiles_prod[d]) % ntiles[d];
+          if (tile_idx == 0)
+            dep_beg = terminal_read_min[off];
+          if (tile_idx == ntiles[d] - 1)
+            dep_end = terminal_read_max[off];
+          data_read_deps[datidx][tile * OPS_MAX_DIM * 2 + 2 * d + 0] = dep_beg;
+          data_read_deps[datidx][tile * OPS_MAX_DIM * 2 + 2 * d + 1] = dep_end;
           if (instance->OPS_diags > 5)
-            printf2(instance, "Proc %d, terminal read dependency, dim %d tile %d set to %d %d\n", ops_get_proc(), d, tile, data_read_deps[datidx][tile * OPS_MAX_DIM * 2 + 2 * d + 0], data_read_deps[datidx][tile * OPS_MAX_DIM * 2 + 2 * d + 1]);
+            printf2(instance, "Proc %d, terminal read dependency, dim %d tile %d set to %d %d\n", ops_get_proc(), d, tile, dep_beg, dep_end);
 
-          //Sanity checks
-          if ((tile / tiles_prod[d]) % ntiles[d] == 0)
-            if (data_read_deps[datidx][tile * OPS_MAX_DIM * 2 + 2 * d + 0] != terminal_read_min[off])
-              printf2(instance, "Proc %d, terminal read dependency sanity check fail dim %d tile %d %d != %d\n", ops_get_proc(), d, tile, data_read_deps[datidx][tile * OPS_MAX_DIM * 2 + 2 * d + 0], terminal_read_min[off]);
-
-          if ((tile / tiles_prod[d]) % ntiles[d] == ntiles[d] - 1)
-            if (data_read_deps[datidx][tile * OPS_MAX_DIM * 2 + 2 * d + 1] != terminal_read_max[off])
-              printf2(instance, "Proc %d, terminal read dependency sanity check fail dim %d tile %d %d != %d\n", ops_get_proc(), d, tile, data_read_deps[datidx][tile * OPS_MAX_DIM * 2 + 2 * d + 1], terminal_read_max[off]);
+          if (instance->OPS_diags > 5) {
+            if (tile_idx == 0 && dep_beg != terminal_read_min[off])
+              printf2(instance, "Proc %d, terminal read dependency sanity check fail dim %d tile %d %d != %d\n", ops_get_proc(), d, tile, dep_beg, terminal_read_min[off]);
+            if (tile_idx == ntiles[d] - 1 && dep_end != terminal_read_max[off])
+              printf2(instance, "Proc %d, terminal read dependency sanity check fail dim %d tile %d %d != %d\n", ops_get_proc(), d, tile, dep_end, terminal_read_max[off]);
+          }
         }
       }
     }
