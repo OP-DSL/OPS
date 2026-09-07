@@ -206,28 +206,34 @@ herr_t H5Dwrite_matching_types(hid_t dataset_id, hid_t mem_type, hid_t mem_space
     ex << "Error: H5Tequal failed comparing memory and dataset types";
     throw ex;
   }
-  if (equal == 0 && nelem > 0 && buf != nullptr) {
-    size_t src_sz = H5Tget_size(mem_type);
-    size_t dst_sz = H5Tget_size(dset_type);
-    size_t nbytes = nelem * (src_sz > dst_sz ? src_sz : dst_sz);
-    converted = (char *)malloc(nbytes);
-    if (converted == nullptr) {
-      H5Tclose(dset_type);
-      OPSException ex(OPS_HDF5_ERROR);
-      ex << "Error: out of memory converting HDF5 write buffer";
-      throw ex;
-    }
-    memcpy(converted, buf, nelem * src_sz);
-    if (H5Tconvert(mem_type, dset_type, nelem, converted, NULL, H5P_DEFAULT) <
-        0) {
-      free(converted);
-      H5Tclose(dset_type);
-      OPSException ex(OPS_HDF5_ERROR);
-      ex << "Error: H5Tconvert failed for HDF5 write buffer";
-      throw ex;
-    }
-    write_buf = converted;
+  /* Always present a matching mem type to H5Dwrite when types differ — even
+   * for empty writes (nelem==0). A single rank still using the native type
+   * triggers H5D_MPIO_DATATYPE_CONVERSION and disables collective MPI-IO
+   * for the whole communicator. */
+  if (equal == 0) {
     write_type = dset_type;
+    if (nelem > 0 && buf != nullptr) {
+      size_t src_sz = H5Tget_size(mem_type);
+      size_t dst_sz = H5Tget_size(dset_type);
+      size_t nbytes = nelem * (src_sz > dst_sz ? src_sz : dst_sz);
+      converted = (char *)malloc(nbytes);
+      if (converted == nullptr) {
+        H5Tclose(dset_type);
+        OPSException ex(OPS_HDF5_ERROR);
+        ex << "Error: out of memory converting HDF5 write buffer";
+        throw ex;
+      }
+      memcpy(converted, buf, nelem * src_sz);
+      if (H5Tconvert(mem_type, dset_type, nelem, converted, NULL,
+                     H5P_DEFAULT) < 0) {
+        free(converted);
+        H5Tclose(dset_type);
+        OPSException ex(OPS_HDF5_ERROR);
+        ex << "Error: H5Tconvert failed for HDF5 write buffer";
+        throw ex;
+      }
+      write_buf = converted;
+    }
   }
 
   herr_t err =

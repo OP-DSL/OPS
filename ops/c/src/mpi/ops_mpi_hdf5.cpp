@@ -2197,10 +2197,15 @@ void write_slab_buf_hdf5(const char *file_name, const char *data_name,
   MPI_Comm BLOCK_WORLD{sb->comm1};
   MPI_Comm_rank(BLOCK_WORLD, &my_block_rank);
   int color{0};
-  bool no_data{true};
+  /* A hyperslab is empty if any dimension has non-positive extent. The old
+   * "all dims zero" check left ranks with e.g. (nx,ny,0) in the writer
+   * communicator; with a type mismatch those empty writes still disable
+   * collective MPI-IO (H5D_MPIO_DATATYPE_CONVERSION) for everyone. */
+  bool no_data{false};
   for (int d = 0; d < space_dim; d++) {
-    if ((local_range[2 * d + 1] - local_range[2 * d]) != 0) {
-      no_data = false;
+    if ((local_range[2 * d + 1] - local_range[2 * d]) <= 0) {
+      no_data = true;
+      break;
     }
   }
   if (no_data){
