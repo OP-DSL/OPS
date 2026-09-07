@@ -49,6 +49,18 @@
 
 hid_t h5_type(const char *type);
 
+hid_t h5_storage_type(const char *data_type, REAL_PRECISION real_precision);
+
+/* H5Dwrite after converting buf to the dataset type when it differs from
+ * mem_type. Needed so parallel HDF5 can use collective MPI-IO. */
+herr_t H5Dwrite_matching_types(hid_t dataset_id, hid_t mem_type, hid_t mem_space,
+                               hid_t file_space, hid_t xfer_plist,
+                               const void *buf, size_t nelem);
+
+herr_t H5Dread_matching_types(hid_t dataset_id, hid_t mem_type, hid_t mem_space,
+                              hid_t file_space, hid_t xfer_plist, void *buf,
+                              size_t nelem);
+
 void split_h5_name(const char *data_name,
                    std::vector<std::string> &h5_name_list);
 

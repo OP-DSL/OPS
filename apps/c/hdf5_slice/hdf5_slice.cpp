@@ -54,9 +54,10 @@
 // Defining the computational problem domain. As a test, we use the
 // simplest grid See the document for the meaning of variables r1 and r2.
 double xyzRange[2]{0, 1};
-int nx{64};
-int ny{64};
-int nz{64};
+/* Larger default so MPI single-vs-double slab conversion cost is visible. */
+int nx{512};
+int ny{512};
+int nz{512};
 double h{(xyzRange[1] - xyzRange[0]) / (nx - 1)};
 
 void copy_double_single(const ops_dat src_double, ops_dat desc_single) {
@@ -151,52 +152,36 @@ int main(int argc, char *argv[]) {
   ops_par_loop(initKernelV, "initKernelV", slice3Dv, 3, iterRange,
                ops_arg_dat(v, 1, S3D_000, "int", OPS_WRITE), ops_arg_idx());
 
+  /* Partial slab: many ranks contribute empty hyperslabs (OpenSBLI-like). */
+  int slab_range[]{0, nx, 0, ny, nz / 4, nz / 4 + 32};
   double ct0, ct1, et0, et1;
-  double total1{0}, total2{0}, total3{0}, total4{0};
-  ops_timers(&ct0, &et0);
 
-  ops_write_plane_group_hdf5({{1, 16}, {0, 1}, {2, 16}}, "1",
-                             {{u, buffer_single, v}, {u, v}, {u, v}});
-  ops_timers(&ct1, &et1);
-  total1 += et1 - et0;
+#ifdef OPS_MPI
+  MPI_Barrier(MPI_COMM_WORLD);
+#endif
   ops_timers(&ct0, &et0);
-  copy_double_single(u, buffer_single);
-  std::string file_name_single{"single.h5"};
-  std::string file_name_double{"double.h5"};
-  std::string file_name_half{"half.h5"};
-  std::string dataset_name_u{"slice3Du/0/u"};
-  ops_write_plane_hdf5(u, 1, 16, file_name_double.c_str(),
-                       dataset_name_u.c_str());
-  ops_write_plane_hdf5(u, 1, 16, file_name_single.c_str(),
-                       dataset_name_u.c_str(),REAL_PRECISION::Single);
-  ops_write_plane_hdf5(u, 1, 16, file_name_half.c_str(),
-                       dataset_name_u.c_str(),REAL_PRECISION::Half);
+  ops_write_data_slab_hdf5(u, slab_range, "slab_output_double.h5", "u",
+                           REAL_PRECISION::Double);
+#ifdef OPS_MPI
+  MPI_Barrier(MPI_COMM_WORLD);
+#endif
+  ops_timers(&ct1, &et1);
+  ops_printf("Double: time taken to write dataset onto slab_output.h5: %f sec\n",
+             et1 - et0);
 
-  ops_write_plane_group_hdf5({{1, 16}, {0, 1}, {2, 16}}, "2",
-                             {{u, v}, {u, v}, {u, v}});
+#ifdef OPS_MPI
+  MPI_Barrier(MPI_COMM_WORLD);
+#endif
+  ops_timers(&ct0, &et0);
+  ops_write_data_slab_hdf5(u, slab_range, "slab_output_single.h5", "u",
+                           REAL_PRECISION::Single);
+#ifdef OPS_MPI
+  MPI_Barrier(MPI_COMM_WORLD);
+#endif
   ops_timers(&ct1, &et1);
-  total2 += et1 - et0;
+  ops_printf("Single: time taken to write dataset onto slab_output.h5: %f sec\n",
+             et1 - et0);
 
-  ops_timers(&ct0, &et0);
-  ops_write_plane_group_hdf5({{1, 8}, {0, 4}, {2, 15}}, "0",
-                             {{velo}, {velo}, {velo}});
-  ops_timers(&ct1, &et1);
-  total3 += et1 - et0;
-  ops_printf("The time write 1 series is %f\n", total1);
-  ops_printf("The time write 2 series is %f\n", total2);
-  ops_printf("The time write velo series is %f\n", total3);
-  int range[]{-1, 16, -1, 32, 32, 64};
-  ops_timers(&ct0, &et0);
-  ops_write_data_slab_hdf5(v, range, "slab.h5", "vslab");
-  ops_timers(&ct1, &et1);
-  total4 += et1 - et0;
-  ops_printf("The time write slab is %f\n", total4);
-  ops_fetch_block_hdf5_file(slice3Du, "slice3Du.h5");
-  ops_fetch_dat_hdf5_file(u, "slice3Du.h5");
-  ops_fetch_dat_hdf5_file(buffer_single, "slice3Du.h5");
-  ops_fetch_dat_hdf5_file(velo, "slice3Du.h5");
-  ops_fetch_block_hdf5_file(slice3Dv, "slice3Dv.h5");
-  ops_fetch_dat_hdf5_file(v, "slice3Dv.h5");
   ops_printf("\nSuccessful exit from OPS!\n");
   ops_exit();
   return 0;

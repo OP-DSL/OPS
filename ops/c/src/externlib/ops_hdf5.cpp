@@ -608,7 +608,8 @@ void ops_fetch_dat_hdf5_file(ops_dat dat, char const *file_name) {
       hid_t dset_id = H5Dopen(group_id, dat->name, H5P_DEFAULT);
       hid_t dataspace = H5Dget_space(dset_id);
       hid_t datatype = h5_type(dat->type);
-      H5Dwrite(dset_id, datatype, H5S_ALL, dataspace, H5P_DEFAULT, data);
+      H5Dwrite_matching_types(dset_id, datatype, H5S_ALL, dataspace, H5P_DEFAULT,
+                              data, (size_t)t_size * (size_t)dat->dim);
     }
     free(data);
     H5Gclose(group_id);
@@ -1226,7 +1227,8 @@ void ops_get_const_hdf5(char const *name, int dim, char const *type,
   size_t bytesize = H5Tget_size(datatype);
 
   char *data = (char *)xmalloc(bytesize * const_dim);
-  H5Dread(dset_id, datatype, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
+  H5Dread_matching_types(dset_id, datatype, H5S_ALL, H5S_ALL, H5P_DEFAULT, data,
+                         (size_t)const_dim);
   memcpy((void *)const_data, (void *)data, bytesize * const_dim);
 
   ops_free(typ);
@@ -1307,10 +1309,10 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
     OPS_instance::getOPSInstance()->ostream() << " overwriting"
                                               << "\n";
     dataspace = H5Dget_space(dset_id);
-    hid_t datatype = h5_type(typ);
+    hid_t datatype = h5_type(type);
     // write to the existing dataset with default properties
-    H5Dwrite(dset_id, datatype, H5S_ALL, dataspace, H5P_DEFAULT,
-                          const_data);
+    H5Dwrite_matching_types(dset_id, datatype, H5S_ALL, dataspace, H5P_DEFAULT,
+                            const_data, (size_t)dim);
     ops_free(typ);
     H5Dclose(dset_id);
     H5Fclose(file_id);
@@ -1329,8 +1331,8 @@ void ops_write_const_hdf5(char const *name, int dim, char const *type,
   dset_id = H5Dcreate(file_id, name, datatype, dataspace,
       H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
   // write data
-  H5Dwrite(dset_id, datatype, H5S_ALL, dataspace, H5P_DEFAULT,
-      const_data);
+  H5Dwrite_matching_types(dset_id, datatype, H5S_ALL, dataspace, H5P_DEFAULT,
+                          const_data, (size_t)dim);
   H5Dclose(dset_id);
 
   H5Sclose(dataspace);
@@ -1488,8 +1490,11 @@ void write_buf_hdf5(char const *file_name, const char *data_name,
 
   H5_dataset_space(file_id, dims, size_f, h5_name_list, dat->type, groupid_list,
                    dataset_id, file_space);
-  H5Dwrite(dataset_id, h5_type(dat->type), H5S_ALL, file_space, H5P_DEFAULT,
-           buf);
+  size_t nelem = 1;
+  for (int d = 0; d < dims; d++)
+    nelem *= (size_t)size[d];
+  H5Dwrite_matching_types(dataset_id, h5_type(dat->type), H5S_ALL, file_space,
+                          H5P_DEFAULT, buf, nelem);
   H5Sclose(file_space);
   H5Dclose(dataset_id);
   for (int grp = groupid_list.size() - 1; grp >= 0; grp--) {
@@ -1517,8 +1522,11 @@ void write_buf_hdf5(char const *file_name, const char *data_name,
 
   H5_dataset_space(file_id, dims, size_f, h5_name_list, dat->type,
                    float_precision, groupid_list, dataset_id, file_space);
-  H5Dwrite(dataset_id, h5_type(dat->type), H5S_ALL, file_space, H5P_DEFAULT,
-           buf);
+  size_t nelem = 1;
+  for (int d = 0; d < dims; d++)
+    nelem *= (size_t)size[d];
+  H5Dwrite_matching_types(dataset_id, h5_type(dat->type), H5S_ALL, file_space,
+                          H5P_DEFAULT, buf, nelem);
   H5Sclose(file_space);
   H5Dclose(dataset_id);
   for (int grp = groupid_list.size() - 1; grp >= 0; grp--) {
