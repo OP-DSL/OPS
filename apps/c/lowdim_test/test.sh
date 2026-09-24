@@ -109,7 +109,7 @@ make clean
 make IEEE=1 lowdim_sycl lowdim_mpi_sycl lowdim_mpi_sycl_tiled
 
 echo '============> Running SYCL on CPU'
-./lowdim_sycl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1 > perf_out
+./lowdim_sycl OPS_SYCL_DEVICE=cpu OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1 > perf_out
 #$HDF5_INSTALL_PATH/bin/h5diff output.h5 output_seq.h5
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi;
 grep "PASSED" perf_out
@@ -117,7 +117,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -rf perf_out output.h5
 
 echo '============> Running MPI+SYCL on CPU'
-$MPI_INSTALL_PATH/bin/mpirun -np 4 ./lowdim_mpi_sycl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 4 ./lowdim_mpi_sycl OPS_SYCL_DEVICE=cpu OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
 #$HDF5_INSTALL_PATH/bin/h5diff output.h5 output_seq.h5
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi;
 grep "PASSED" perf_out
@@ -125,7 +125,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm -rf perf_out output.h5
 
 echo '============> Running MPI+SYCL+Tiled on CPU'
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./lowdim_mpi_sycl_tiled OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./lowdim_mpi_sycl_tiled OPS_SYCL_DEVICE=cpu OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
 #$HDF5_INSTALL_PATH/bin/h5diff output.h5 output_seq.h5
 #rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi;
 grep "PASSED" perf_out

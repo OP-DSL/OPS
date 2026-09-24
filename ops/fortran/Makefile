@@ -403,5 +403,10 @@ clean:
 	-rm -if $(F_INC_MOD)/ompoffload/*.mod
 	-rm -if $(F_INC_MOD)/f2c_hip/*.mod
 	-rm -if $(F_INC_MOD)/f2c_sycl/*.mod
+	-rm -if $(F_OPS)/*.mod
+
+cleanall: clean
+	-rm -rf $(F_OPS_OBJ) $(F_OPS_LIB) $(F_OPS_MOD) $(F_INC_MOD)
 	-rm -if $(F_OPS)/*~
 	-rm -if *.lst cudafe
+	-rm -rf $(dir $(F_OPS_OBJ)) $(dir $(F_OPS_LIB))

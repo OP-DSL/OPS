@@ -11,4 +11,7 @@ make cloverleaf_mpi
 mpirun -np 20 cloverleaf_mpi
 
 
-See CloverLeaf_3D directory for details on compiling the CloverLeaf_3D applications
+See CloverLeaf_3D directory for details on compiling the CloverLeaf_3D applications.
+
+Note: OpenCL and OpenACC targets referenced by older examples are legacy and unsupported in v2.0.0 —
+prefer SYCL, HIP or OpenMP-offload for new builds.

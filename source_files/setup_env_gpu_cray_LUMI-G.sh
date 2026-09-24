@@ -46,5 +46,4 @@ export HDF5_INSTALL_PATH=/opt/cray/pe/hdf5-parallel/1.12.2.11/crayclang/17.0/inc
 export LD_LIBRARY_PATH=$HDF5_INSTALL_PATH/lib:$LD_LIBRARY_PATH
 
 # Python
-module load cray-python/3.10.10
-source $OPS_INSTALL_PATH/../ops_translator/ops_venv/bin/activate
+module load cray-python/3.11.7

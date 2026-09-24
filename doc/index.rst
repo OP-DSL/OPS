@@ -10,12 +10,15 @@ Welcome to OPS documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   quickstart.md
    introduction.md
+   keyconcept.md
    installation.md
    devanapp.md
    opsapi.md
    apps.md
    perf.md
+   tiling.md
    devdoc.md
    pubs.md
 

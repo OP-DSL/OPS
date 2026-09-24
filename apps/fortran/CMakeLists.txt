@@ -906,6 +906,6 @@
         add_subdirectory(poisson)
 
 #       App: Laplace2d
-        add_subdirectory(laplace2dtutorial/step7)
+        add_subdirectory(laplace2d_tutorial/step7)
 
     endif(CMAKE_Fortran_COMPILER)
