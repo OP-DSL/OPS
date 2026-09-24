@@ -35,6 +35,7 @@
   * @author Gihan Mudalige, Istvan Reguly
   * @details Implements the runtime support routines for the OPS mpi backend
   */
+
 #include <vector>
 #include <ops_lib_core.h>
 #include "ops_util.h"
@@ -1752,10 +1753,15 @@ void ops_set_halo_dirtybit3_tiled(ops_arg *arg, int *iter_range, int *left_bound
   }
 
 
-  int *left_bnd_beg = (int *)ops_malloc(ndim * sizeof(int));	int *left_bnd_end = (int *)ops_malloc(ndim * sizeof(int));
-  int *left_halo_beg = (int *)ops_malloc(ndim * sizeof(int));   int *left_halo_end = (int *)ops_malloc(ndim * sizeof(int));
-  int *right_bnd_beg = (int *)ops_malloc(ndim * sizeof(int));   int *right_bnd_end = (int *)ops_malloc(ndim * sizeof(int));
-  int *right_halo_beg = (int *)ops_malloc(ndim * sizeof(int));  int *right_halo_end = (int *)ops_malloc(ndim * sizeof(int));
+  int *left_bnd_beg = (int *)ops_malloc(OPS_MAX_DIM * sizeof(int));	int *left_bnd_end = (int *)ops_malloc(OPS_MAX_DIM * sizeof(int));
+  int *left_halo_beg = (int *)ops_malloc(OPS_MAX_DIM * sizeof(int));   int *left_halo_end = (int *)ops_malloc(OPS_MAX_DIM * sizeof(int));
+  int *right_bnd_beg = (int *)ops_malloc(OPS_MAX_DIM * sizeof(int));   int *right_bnd_end = (int *)ops_malloc(OPS_MAX_DIM * sizeof(int));
+  int *right_halo_beg = (int *)ops_malloc(OPS_MAX_DIM * sizeof(int));  int *right_halo_end = (int *)ops_malloc(OPS_MAX_DIM * sizeof(int));
+
+  memset(left_bnd_beg, 0, OPS_MAX_DIM * sizeof(int));   memset(left_bnd_end, 0, OPS_MAX_DIM * sizeof(int));
+  memset(left_halo_beg, 0, OPS_MAX_DIM * sizeof(int));   memset(left_halo_end, 0, OPS_MAX_DIM * sizeof(int));
+  memset(right_bnd_beg, 0, OPS_MAX_DIM * sizeof(int));   memset(right_bnd_end, 0, OPS_MAX_DIM * sizeof(int));
+  memset(right_halo_beg, 0, OPS_MAX_DIM * sizeof(int));   memset(right_halo_end, 0, OPS_MAX_DIM * sizeof(int));
 
   for (int dim = 0; dim < ndim; dim++) {
     int other_dims = 1;

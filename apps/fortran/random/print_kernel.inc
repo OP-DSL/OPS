@@ -9,7 +9,9 @@ SUBROUTINE print_kernel(dat0)
 !    print *,"(",val1," ",val2,")"
 
 #if !defined(OPS_WITH_CUDAFOR) && !defined(OPS_WITH_OMPOFFLOADFOR)
+    !$OMP CRITICAL
     print '("(",F0.6,1X,F0.6,")")', val1, val2
+    !$OMP END CRITICAL
 #endif
 
 END SUBROUTINE print_kernel

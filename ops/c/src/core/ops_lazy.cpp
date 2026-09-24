@@ -210,9 +210,9 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
   if (lowdim_treatment)
     ops_execute(instance);
 
-  if (instance->ops_enable_tiling && !lowdim_treatment)
+  if (instance->ops_enable_tiling && !lowdim_treatment) {
     ops_kernel_list.push_back(desc);
-  else {
+  } else {
     //Prepare the local execution ranges
     int start[OPS_MAX_DIM]={0}, end[OPS_MAX_DIM]={1}, arg_idx[OPS_MAX_DIM];
     if (compute_ranges(desc->args, desc->nargs,desc->block, desc->range, start, end, arg_idx) < 0) return;
@@ -636,6 +636,14 @@ int ops_construct_tile_plan(OPS_instance *instance) {
     }
   }
 
+  // Sweep 3 marks an empty last-live tile dead so halo work attaches to the
+  // previous tile. If the next tile is already dead, Sweep 1 / leftover treat
+  // this tile as last and assign the remaining owned range — required so a
+  // later OPS_WRITE can clear stacked halo read_deps. The leftover
+  // "tb >= nat_end → stay empty" skip must NOT apply to that last-live tile:
+  // staying empty lets Sweep 3 mark it dead too, and the cascade walks left
+  // until tile 0 is last live. Interior leftover tiles still stay empty when
+  // WAW already covers the natural chunk.
 
   // Seed a terminal read dependency to cover the union of writes across the
   // tiling plan. Without this, if the last loops only touch boundaries, prior
@@ -821,42 +829,52 @@ int ops_construct_tile_plan(OPS_instance *instance) {
                 tile + tiles_prod[d] < total_tiles && 
                 dead_tiles[(tile + tiles_prod[d]) * OPS_MAX_DIM + d] != -1))) {
 
-            // Look at write dependencies of datasets being accessed
+            // WAW: later write of a dat this loop accesses (read or write).
+            // A snapshot that only *reads* U must still extend when a later
+            // mutate writes U (SENGA).  Grow only to this tile's later write
+            // plus this access's stencil — that is the true dependency.
+            // Do not absorb a neighbour's leftover range (that cascaded
+            // until one tile owned the rank).  If the true extent fully
+            // covers later tiles, empty them without taking their ends.
             for (int arg = 0; arg < ops_kernel_list[loop]->nargs; arg++) {
               if (LOOPARG.argtype == OPS_ARG_DAT &&
                   LOOPARG.opt == 1 &&
                   data_write_deps[LOOPARG.dat->index]
                                   [tile * OPS_MAX_DIM * 2 + 2 * d + 1] != INT_MIN ) {
-                int d_m_min = INT_MAX;  // Find biggest positive/negative direction
-                                  // stencil point for this dimension
-                int d_p_max = INT_MIN;
+                int d_m_min = 0;
                 for (int p = 0;
                       p < LOOPARG.stencil->points; p++) {
                   d_m_min = MIN(d_m_min,
                       LOOPARG.stencil->stencil
                           [LOOPARG.stencil->dims * p + d]);
-                  d_p_max = MAX(d_p_max,
-                      LOOPARG.stencil->stencil
-                          [LOOPARG.stencil->dims * p + d]);
                 }
-                // End index is the greatest across all of the dependencies, but
-                // no greater than the loop range
                 int intersect_begin = 0;
-                //Take intersection of execution range with tile start index and write data dependency + stencil width
                 int intersect_len = intersection(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
                                                   data_write_deps[LOOPARG.dat->index][tile * OPS_MAX_DIM * 2 + 2 * d + 1]-d_m_min,
                                                   LOOPRANGE[2 * d + 0], LOOPRANGE[2 * d + 1], &intersect_begin);
                 if (intersect_len > 0) {
-                  tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] = 
-                    MAX(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1],intersect_begin + intersect_len);
-                  
-                  //If we overshot the next tile's end index - due to different skewing factors
-                  // that means this tile is now the last one, and we don't need to worry about
-                  // write dependencies beyond that point
-                  if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] >
-                    tiled_ranges[loop][OPS_MAX_DIM * 2 * (tile + tiles_prod[d]) + 2 * d + 1])
-                    tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] = 
-                      tiled_ranges[loop][OPS_MAX_DIM * 2 * (tile + tiles_prod[d]) + 2 * d + 1];
+                  int &tile_end =
+                      tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1];
+                  int waw_end = intersect_begin + intersect_len;
+                  tile_end = MAX(tile_end, waw_end);
+                  for (int t = tile + tiles_prod[d];
+                       t < total_tiles &&
+                       (t / tiles_prod[d]) % ntiles[d] >
+                           (tile / tiles_prod[d]) % ntiles[d];
+                       t += tiles_prod[d]) {
+                    int &tb =
+                        tiled_ranges[loop][OPS_MAX_DIM * 2 * t + 2 * d + 0];
+                    int &te =
+                        tiled_ranges[loop][OPS_MAX_DIM * 2 * t + 2 * d + 1];
+                    if (tile_end <= tb)
+                      break;
+                    if (tile_end >= te) {
+                      tb = te = tile_end;
+                    } else {
+                      tb = tile_end;
+                      break;
+                    }
+                  }
                 }
               }
             }
@@ -868,26 +886,36 @@ int ops_construct_tile_plan(OPS_instance *instance) {
                 tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
                 tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1]);
 
-          // Leftover tiles: If no prior dependencies, end index is leftmost range + (tile index
-          // + 1) * tile size, or end index if not tiled in this dimension
+          // Leftover tiles: If no prior dependencies, end index is this tile's
+          // natural end. The geometric last tile, or a last-live tile whose
+          // next neighbour is Sweep-3 dead, fills to the owned end (halo
+          // WRITE-clear). Interior tiles whose begin already covers the
+          // natural chunk stay empty — filling those resurrected the WAW
+          // absorb cascade on CloverLeaf. Last-live must still fill: staying
+          // empty lets Sweep 3 mark this tile dead too and the cascade walks
+          // left until tile 0 owns the rank.
           if (tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] ==
               tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] &&
               dead_tiles[tile * OPS_MAX_DIM + d] == -1) { // and this tile is not dead
 
-            //if no tiling in this dimension, this is the last, or 
-            // if next tile is dead, set end index to end of loop range
-            if (tile_sizes[d] <= 0 || (tile / tiles_prod[d]) % ntiles[d] == ntiles[d] - 1 ||
-              (tile + tiles_prod[d] < total_tiles && 
-              dead_tiles[(tile + tiles_prod[d]) * OPS_MAX_DIM + d] != -1))
-              tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] = 
-                MAX(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0], end[d]);
-            else
-              tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] = 
-                MAX(tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0],
-                      MIN(end[d],
-                          biggest_range[2 * d + 0] +
-                              ((tile / tiles_prod[d]) % ntiles[d] + 1) *
-                                  tile_sizes[d]));
+            int tile_idx = (tile / tiles_prod[d]) % ntiles[d];
+            int nat_end = (tile_sizes[d] <= 0)
+                              ? end[d]
+                              : MIN(end[d], biggest_range[2 * d + 0] +
+                                                (tile_idx + 1) * tile_sizes[d]);
+            int &tb = tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0];
+            int &te = tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1];
+            bool next_dead =
+                tile + tiles_prod[d] < total_tiles &&
+                dead_tiles[(tile + tiles_prod[d]) * OPS_MAX_DIM + d] != -1;
+            bool last_live = tile_idx == ntiles[d] - 1 || next_dead;
+
+            if (tb >= nat_end && !last_live) {
+              ;
+            } else if (tile_sizes[d] <= 0 || last_live) {
+              te = MAX(tb, end[d]);
+            } else
+              te = MAX(tb, nat_end);
           }
 
           if (instance->OPS_diags > 5 && tile_sizes[d] != -1) {
@@ -924,10 +952,14 @@ int ops_construct_tile_plan(OPS_instance *instance) {
           //If this tile is newly dead
           bool has_zero_range = tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] - 
                                 tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0] <= 0;
-          bool is_last_live_tile = ((tile / tiles_prod[d]) % ntiles[d] == ntiles[d] - 1 || //last tile in dimension
-                                    (tile + tiles_prod[d] < total_tiles &&  //or next tile is dead
-                                    dead_tiles[(tile + tiles_prod[d]) * OPS_MAX_DIM + d] != -1)) &&
-                                    dead_tiles[tile * OPS_MAX_DIM + d] == -1; //live
+          bool is_geom_last =
+              (tile / tiles_prod[d]) % ntiles[d] == ntiles[d] - 1;
+          bool is_last_live_tile =
+              (is_geom_last ||
+               (tile + tiles_prod[d] < total_tiles &&
+                dead_tiles[(tile + tiles_prod[d]) * OPS_MAX_DIM + d] !=
+                    -1)) &&
+              dead_tiles[tile * OPS_MAX_DIM + d] == -1;
           bool previous_tile_exists = tile - tiles_prod[d] >= 0;
           int intersect_begin = 0;
           if (biggest_range[2*d+1] == largest_computed_index[d]) largest_computed_index[d]++;
@@ -998,16 +1030,15 @@ int ops_construct_tile_plan(OPS_instance *instance) {
 
             // Find biggest positive/negative direction stencil
             // point for this dimension
-            int d_m_min = INT_MAX;
-            int d_p_max = INT_MIN;
+            int d_m_min = 0;
+            int d_p_max = 0;
             for (int p = 0; p < LOOPARG.stencil->points; p++) {
               d_m_min = MIN(d_m_min,
                   LOOPARG.stencil->stencil[LOOPARG.stencil->dims * p + d]);
               d_p_max = MAX(d_p_max,
                   LOOPARG.stencil->stencil[LOOPARG.stencil->dims * p + d]);
             }
-          
-            // Extend dependency range with stencil
+
             data_read_deps[LOOPARG.dat->index]
                 [tile * OPS_MAX_DIM * 2 + 2 * d + 0] = MIN(
                     data_read_deps[LOOPARG.dat->index]
@@ -1175,6 +1206,112 @@ int ops_construct_tile_plan(OPS_instance *instance) {
   ops_timers_core(&c2, &t2);
   if (instance->OPS_diags > 2)
     printf2(instance,"Created tiling plan for %d loops in %g seconds, with tile size: %dx%dx%d\n", int(ops_kernel_list.size()), t2 - t1, tile_sizes[0], tile_sizes[1], tile_sizes[2]);
+  if (instance->OPS_diags > 2 && ops_get_proc() == 0) {
+    int max_w[OPS_MAX_DIM] = {0};
+    const char *max_w_name[OPS_MAX_DIM] = {NULL};
+    long long live_cells = 0;
+    long long nominal_cells = 0;
+    int live_tiles_max = 0;
+    // Worst offenders by footprint: the largest single tile a loop executes,
+    // against the nominal tile. A loop that is not blocked at all — one tile
+    // covering its whole range — shows up here with a large ratio and a low
+    // live tile count, and streams its dats through the cache once per plan.
+    long long nominal_tile_vol = 1;
+    for (int d = 0; d < dims; d++) {
+      int tw = tile_sizes[d] > 0 ? tile_sizes[d]
+                                 : (biggest_range[2 * d + 1] - biggest_range[2 * d]);
+      nominal_tile_vol *= MAX(1, tw);
+    }
+    const int nworst = 3;
+    double worst_ratio[nworst] = {0};
+    const char *worst_name[nworst] = {NULL};
+    int worst_tiles[nworst] = {0};
+    int worst_w[nworst][OPS_MAX_DIM] = {{0}};
+    int n_unblocked = 0;
+    for (unsigned int loop = 0; loop < ops_kernel_list.size(); loop++) {
+      int live_tiles = 0;
+      long long biggest_tile_vol = 0;
+      int biggest_tile_w[OPS_MAX_DIM] = {0};
+      for (int tile = 0; tile < total_tiles; tile++) {
+        int vol = 1;
+        int nom = 1;
+        bool live = true;
+        int w_all[OPS_MAX_DIM] = {0};
+        for (int d = 0; d < dims; d++) {
+          int w = tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 1] -
+                  tiled_ranges[loop][OPS_MAX_DIM * 2 * tile + 2 * d + 0];
+          if (w <= 0) {
+            live = false;
+            vol = 0;
+            break;
+          }
+          w_all[d] = w;
+          if (w > max_w[d]) {
+            max_w[d] = w;
+            max_w_name[d] = ops_kernel_list[loop]->name;
+          }
+          vol *= w;
+          int tw = tile_sizes[d] > 0 ? tile_sizes[d]
+                                     : (biggest_range[2 * d + 1] - biggest_range[2 * d]);
+          nom *= MAX(1, tw);
+        }
+        if (live) {
+          live_tiles++;
+          live_cells += vol;
+          nominal_cells += nom;
+          if (vol > biggest_tile_vol) {
+            biggest_tile_vol = vol;
+            for (int d = 0; d < dims; d++) biggest_tile_w[d] = w_all[d];
+          }
+        }
+      }
+      live_tiles_max = MAX(live_tiles_max, live_tiles);
+
+      double ratio = nominal_tile_vol > 0
+                         ? (double)biggest_tile_vol / (double)nominal_tile_vol
+                         : 0.0;
+      if (live_tiles == 1 && ratio > 1.5)
+        n_unblocked++;
+      for (int i = 0; i < nworst; i++) {
+        if (ratio > worst_ratio[i]) {
+          for (int j = nworst - 1; j > i; j--) {
+            worst_ratio[j] = worst_ratio[j - 1];
+            worst_name[j] = worst_name[j - 1];
+            worst_tiles[j] = worst_tiles[j - 1];
+            for (int d = 0; d < OPS_MAX_DIM; d++)
+              worst_w[j][d] = worst_w[j - 1][d];
+          }
+          worst_ratio[i] = ratio;
+          worst_name[i] = ops_kernel_list[loop]->name;
+          worst_tiles[i] = live_tiles;
+          for (int d = 0; d < OPS_MAX_DIM; d++) worst_w[i][d] = biggest_tile_w[d];
+          break;
+        }
+      }
+    }
+    printf2(instance,
+            "Proc %d tile skew: nominal %dx%dx%d, max live %dx%dx%d "
+            "(loops %s / %s / %s), live tiles %d/%d, overlap factor %.3f\n",
+            ops_get_proc(), tile_sizes[0], tile_sizes[1], tile_sizes[2],
+            max_w[0], max_w[1], max_w[2],
+            max_w_name[0] ? max_w_name[0] : "-",
+            max_w_name[1] ? max_w_name[1] : "-",
+            max_w_name[2] ? max_w_name[2] : "-",
+            live_tiles_max, total_tiles,
+            nominal_cells > 0 ? (double)live_cells / (double)nominal_cells : 0.0);
+    printf2(instance,
+            "Proc %d unblocked loops: %d/%d (1 live tile, >1.5x nominal)\n",
+            ops_get_proc(), n_unblocked, (int)ops_kernel_list.size());
+    if (worst_ratio[0] > 1.5) {
+      printf2(instance, "Proc %d biggest tiles vs nominal:", ops_get_proc());
+      for (int i = 0; i < nworst; i++)
+        if (worst_name[i])
+          printf2(instance, " %s %.1fx (%dx%dx%d, %d live tiles);",
+                  worst_name[i], worst_ratio[i], worst_w[i][0], worst_w[i][1],
+                  worst_w[i][2], worst_tiles[i]);
+      printf2(instance, "\n");
+    }
+  }
 
   // free local storage
   free(store_left_neighbour_end);   store_left_neighbour_end = nullptr;
@@ -1308,6 +1445,7 @@ void ops_execute(OPS_instance *instance) {
   for (unsigned int i = 0; i < ops_kernel_list.size(); i++) {
     if (ops_kernel_list[i]->startup_func) ops_kernel_list[i]->startup_func(ops_kernel_list[i]);
   }
+
   //Execute tiles
   for (int tile = 0; tile < total_tiles; tile++) {
     for (unsigned int i = 0; i < ops_kernel_list.size(); i++) {
@@ -1335,6 +1473,7 @@ void ops_execute(OPS_instance *instance) {
                ops_kernel_list[i]->range[4], ops_kernel_list[i]->range[5]);
       // This function call could potentially throw
       ops_kernel_list[i]->func(ops_kernel_list[i]);
+
     }
   }
 
@@ -1396,8 +1535,8 @@ void ops_execute(OPS_instance *instance) {
     ops_free(ops_kernel_list[i]);
     ops_kernel_list[i] = nullptr;
   }
-  ops_kernel_list.clear();
 
+  ops_kernel_list.clear();
 }
 
 void create_kerneldesc_and_enque(char const* kernel_name, ops_arg *args, int nargs, int index, int dim, int isdevice, int *range, ops_block block, void (*func)(struct ops_kernel_descriptor *desc))

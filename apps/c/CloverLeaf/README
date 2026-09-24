@@ -4,27 +4,23 @@ for the original version and more details.
 
 This version utilizes the OPS library and pre-processor. With OPS a single
 application code is transformed to enable it to be run with a number of
-parallelisations: OpenMP, CUDA, OpenCL, OpenACC and MPI and their
-combinations with MPI.
+parallelisations.
 
-Directory Structure
-===================
+Supported parallelisations (current):
 
-|
-`- ./  : Developer version that uses only a header file to get the application
-|       running as a sequential application and with unoptimized MPI. Used for application
-|       debugging before using the code generation tools of OPS.
-|
-`- MPI : MPI and sequential version, code generated through the OPS translator. This
-|        include platform specific optimisations such as verctorization
-|
-`- MPI_OpenMP : MPI+OpenMP parallelization, code generated through the OPS translator.
-|
-`- CUDA : CUDA parallelization (including MPI+CUDA), code generated through the OPS translator.
-|
-`- OpenCL : OpenCL parallelization (including MPI+OpenCL), code generated through the OPS translator.
-|
-`- OpenACC : OpenACC parallelization (including MPI+OpenACC), code generated through the OPS translator.
+- `Sequential` (developer/debug builds)
+- `MPI` (distributed-memory parallelism)
+- `OpenMP` (shared-memory CPU parallelism)
+- `OpenMP offload` (MPI + OpenMP offload for CPU/GPU targets)
+- `CUDA` (NVIDIA GPU backend)
+- `HIP` (AMD GPU backend; also supports NVIDIA on some configurations)
+- `SYCL` (Intel/hipSYCL-supported devices; recommended migration path for OpenCL)
+The primary code-generation path is via the `ops_translator` engine which
+produces C/C++/Fortran backends for the supported targets above.
+
+Note: OpenCL and OpenACC targets are legacy and are no longer supported in this release —
+they remain in the repository for historical/reference purposes but are unmaintained.
+Users should migrate OpenCL/OpenACC targets to SYCL, HIP or OpenMP-offload where possible.
 
 Building Cloverleaf
 ===================
@@ -53,8 +49,10 @@ Building Cloverleaf
    all: clean core seq openmp mpi #cuda
 
 
-3. Build the Cloverleaf applications. The following will build the developer version, MPI, MPI+OpenMP, 
-   CUDA, MPI+CUDA, OpenCL, OpenCL+MPI, OpenACC and OpenACC+MPI (if your compiler supports OpenACC)
+3. Build the Cloverleaf applications. The following will build the developer
+   version, MPI, MPI+OpenMP, CUDA and MPI+CUDA. OpenCL/OpenACC targets are
+   legacy and may not build or run; migrate to supported backends where
+   possible (SYCL/HIP/OpenMP-offload).
 
    cd ~/OPS/apps/Cloverleaf/
    make

@@ -121,16 +121,17 @@ echo "Testing Intel SYCL complier based applications ---- "
 cd $OPS_INSTALL_PATH/c
 source ../../scripts/$SOURCE_INTEL_SYCL
 make clean
-make sycl mpi_sycl
+SYCL_FAT_FLAGS="-fsycl -fsycl-targets=spir64,nvptx64-nvidia-cuda -D__INTEL_SYCL__"
+make SYCL_FLAGS="$SYCL_FAT_FLAGS" sycl mpi_sycl
 cd $OPS_INSTALL_PATH/../apps/c/poisson
 
 make clean
 rm -f .generated
 #make IEEE=1 -j
-make IEEE=1 poisson_sycl poisson_mpi_sycl poisson_mpi_sycl_tiled
+make IEEE=1 SYCL_FLAGS="$SYCL_FAT_FLAGS" poisson_sycl poisson_mpi_sycl poisson_mpi_sycl_tiled
 
 echo '============> Running SYCL on CPU'
-./poisson_sycl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1 > perf_out
+./poisson_sycl OPS_SYCL_DEVICE=cpu OPS_BLOCK_SIZE_X=512 OPS_BLOCK_SIZE_Y=1 > perf_out
 grep "Total error:" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
@@ -138,7 +139,7 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running MPI+SYCL on CPU'
-$MPI_INSTALL_PATH/bin/mpirun -np 20 ./poisson_mpi_sycl OPS_CL_DEVICE=0 OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 20 ./poisson_mpi_sycl OPS_SYCL_DEVICE=cpu OPS_BLOCK_SIZE_X=256 OPS_BLOCK_SIZE_Y=1 > perf_out
 grep "Total error:" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out
@@ -146,7 +147,31 @@ rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
 rm perf_out
 
 echo '============> Running MPI+SYCL Tiled on CPU'
-$MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_sycl_tiled OPS_CL_DEVICE=1 OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_sycl_tiled OPS_SYCL_DEVICE=cpu OPS_BLOCK_SIZE_X=32 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Total error:" perf_out
+grep "Total Wall time" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm perf_out
+
+echo '============> Running SYCL on GPU'
+./poisson_sycl OPS_SYCL_DEVICE=gpu OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Total error:" perf_out
+grep "Total Wall time" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm perf_out
+
+echo '============> Running MPI+SYCL on GPU'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_sycl OPS_SYCL_DEVICE=gpu OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
+grep "Total error:" perf_out
+grep "Total Wall time" perf_out
+grep "PASSED" perf_out
+rc=$?; if [[ $rc != 0 ]]; then echo "TEST FAILED";exit $rc; fi
+rm perf_out
+
+echo '============> Running MPI+SYCL Tiled on GPU'
+$MPI_INSTALL_PATH/bin/mpirun -np 2 ./poisson_mpi_sycl_tiled OPS_SYCL_DEVICE=gpu OPS_TILING OPS_TILING_MAXDEPTH=10 OPS_BLOCK_SIZE_X=64 OPS_BLOCK_SIZE_Y=4 > perf_out
 grep "Total error:" perf_out
 grep "Total Wall time" perf_out
 grep "PASSED" perf_out

@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name='ops',
-      version='dev',
+      version='2.0.0',
       description='OPS is an API with associated libraries and preprocessors to generate parallel executables for applications on mulit-block structured meshes.',
       author='Gihan Mudalige, Istvan Reguly, Mike Giles, and others',
       url='https://op-dsl.github.io/',

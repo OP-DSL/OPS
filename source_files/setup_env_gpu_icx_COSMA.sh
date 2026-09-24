@@ -39,4 +39,3 @@ export LD_LIBRARY_PATH=$HDF5_INSTALL_PATH/lib:$LD_LIBRARY_PATH
 
 # Python
 module load python/3.9.19
-source $OPS_INSTALL_PATH/../ops_translator/ops_venv/bin/activate
