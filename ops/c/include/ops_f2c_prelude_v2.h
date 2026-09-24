@@ -217,6 +217,14 @@ extern "C" {
 inline constexpr float exp(float x) { return fexp_float(&x); }
 inline constexpr double exp(double x) { return fexp_dble(&x); }
 
+//------------------------ ERF ---------------------
+extern "C" {
+    inline constexpr float ferf_float(float *x);
+    inline constexpr double ferf_dble(double *x);
+}
+inline constexpr float erf(float x) { return ferf_float(&x); }
+inline constexpr double erf(double x) { return ferf_dble(&x); }
+
 //------------------------ LOG ---------------------
 extern "C" {
     inline constexpr float flog_float(float *x);

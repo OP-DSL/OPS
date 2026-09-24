@@ -143,6 +143,9 @@ inline constexpr double cosh(double x) { return ::cosh(x); }
 inline constexpr float exp(float x) { return expf(x); }
 inline constexpr double exp(double x) { return ::exp(x); }
 
+inline constexpr float erf(float x) { return erff(x); }
+inline constexpr double erf(double x) { return ::erf(x); }
+
 inline constexpr float log(float x) { return logf(x); }
 inline constexpr double log(double x) { return ::log(x); }
 

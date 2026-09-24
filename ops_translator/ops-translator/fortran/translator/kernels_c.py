@@ -994,6 +994,8 @@ def translatePartRef(part_ref: f2003.Part_Ref, ctx: Context) -> str:
     array_type = ctx.lookupType(name)
 
     if array_type is None:
+        if(name == "erf"): # ERF intrinsic is available from Fortran 2008
+            return f"f2c::erf({subscript_list.children[0]})"
         ctx.error(f"Could not find type of part-ref", part_ref)
 
     if name in ctx.sub_info.types:
@@ -1070,6 +1072,7 @@ def translateIntrinsicFunctionReference(intrinsic_function_reference: f2003.Intr
         "cos":   "f2c::cos",
         "cosh":  "f2c::cosh",
         "exp":   "f2c::exp",
+        "erf":   "f2c::erf",
         "log":   "f2c::log",
         "log10": "f2c::log10",
         "sin":   "f2c::sin",
@@ -1085,6 +1088,7 @@ def translateIntrinsicFunctionReference(intrinsic_function_reference: f2003.Intr
         "dcos":  "f2c::cos",
         "dcosh": "f2c::cosh",
         "dexp":  "f2c::exp",
+        "derf":  "f2c::erf",
         "dint":  "f2c::int",
         "dsign": "f2c::copysign",
         "dsin":  "f2c::sin",

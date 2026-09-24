@@ -222,6 +222,24 @@ module math_functions
 
 !   ==============================================================================
 
+!   ERF function
+!   ------------
+    function ferf_float ( var ) BIND(C,name="ferf_float") result( res )
+        real(kind=4), intent(in) :: var
+        real(kind=4) :: res
+
+        res = ERF(var)
+    end function ferf_float
+
+    function ferf_dble ( var ) BIND(C,name="ferf_dble") result( res )
+        real(kind=8), intent(in) :: var
+        real(kind=8) :: res
+        !print *, "exp real*8 called"
+        res = ERF(var)
+    end function ferf_dble
+
+!   ==============================================================================
+
 !   LOG function
 !   -------------
     function flog_float ( var ) BIND(C,name="flog_float") result( res )
