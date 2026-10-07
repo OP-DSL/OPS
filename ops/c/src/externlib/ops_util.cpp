@@ -356,13 +356,13 @@ void fetch_loop_slab(char *buf, char *dat, const int *buf_size,
   // TODO: add OpenMP here if needed
 
 #if OPS_MAX_DIM > 4
-  for (int m = 0; m < buf_size[4]; m++) {
+  for (size_t m = 0; m < buf_size[4]; m++) {
 #endif
 #if OPS_MAX_DIM > 3
-    for (int l = 0; l < buf_size[3]; l++) {
+    for (size_t l = 0; l < buf_size[3]; l++) {
 #endif
-      for (int k = 0; k < buf_size[2]; k++) {
-        for (int j = 0; j < buf_size[1]; j++) {
+      for (size_t k = 0; k < buf_size[2]; k++) {
+        for (size_t j = 0; j < buf_size[1]; j++) {
           size_t buf_index{0}, dat_index{0};
           size_t moff_buf{0}, moff_dat{0}, loff_buf{0}, loff_dat{0};
 #if OPS_MAX_DIM > 4
@@ -376,7 +376,7 @@ void fetch_loop_slab(char *buf, char *dat, const int *buf_size,
                      dat_size[1] * dat_size[0];
 #endif
           if (OPS_instance::getOPSInstance()->OPS_soa == 1) {
-            for (int i = 0; i < buf_size[0]; i++) {
+            for (size_t i = 0; i < buf_size[0]; i++) {
               for (int d = 0; d < dat_dim; d++) {
                 const int type_bits{elem_size / dat_dim};
                 size_t doff_dat{static_cast<size_t>(d)};
