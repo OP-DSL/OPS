@@ -147,6 +147,11 @@ void _ops_set_args(OPS_instance *instance, const char *argv) {
     instance->ops_enable_tiling = 1;
     if (instance->is_root()) instance->ostream() << "\n Tiling enabled\n";
   }
+  pch = strstr(argv, "OPS_LAZY_QUEUE");
+  if (pch != NULL) {
+    instance->lazy_queue = 1;
+    if (instance->is_root()) instance->ostream() << "\n Lazy queueing enabled\n";
+  }
 	pch = strstr(argv, "OPS_TILING_MAXDEPTH=");
   if (pch != NULL) {
     snprintf(temp, 64, "%s", pch);

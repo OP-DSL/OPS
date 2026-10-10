@@ -38,6 +38,7 @@
   */
 #include <stdlib.h>
 #include "ops_lib_core.h"
+#include "ops_lazy_executor.h"
 #include "ops_hdf5.h"
 #include <ops_exceptions.h>
 
@@ -177,17 +178,163 @@ size_t ops_internal_get_cache_size(OPS_instance *instance) {
 }
 #endif
 
+static void ops_execute_tiled(OPS_instance *instance);
+
+/////////////////////////////////////////////////////////////////////////
+// Queue configuration and chain executors (ops_lazy_executor.h)
+/////////////////////////////////////////////////////////////////////////
+
+int ops_lazy_queue_enabled(OPS_instance *instance) {
+  return instance->ops_enable_tiling || instance->lazy_executor != NULL || instance->lazy_queue;
+}
+
+void ops_register_chain_executor(OPS_instance *instance, ops_chain_executor_fn fn, void *ctx) {
+  // Whatever was queued for the previous executor (or the stock path) runs before the switch.
+  ops_execute(instance);
+  instance->lazy_executor = fn;
+  instance->lazy_executor_ctx = ctx;
+}
+
+int ops_has_chain_executor(OPS_instance *instance) { return instance->lazy_executor != NULL; }
+
+void ops_set_lazy_queue(OPS_instance *instance, int enable) {
+  if (!enable) ops_execute(instance); // flush while the queue is still enabled
+  instance->lazy_queue = enable ? 1 : 0;
+}
+
+/////////////////////////////////////////////////////////////////////////
+// Per-loop runtime steps: what executing a loop means for OPS, apart from
+// running the kernel itself. Used by the stock eager path below, and
+// available to chain executors.
+/////////////////////////////////////////////////////////////////////////
+
+int ops_lazy_compute_local_range(ops_kernel_descriptor *desc, int *local_range) {
+  int start[OPS_MAX_DIM] = {0}, end[OPS_MAX_DIM] = {1}, arg_idx[OPS_MAX_DIM] = {0};
+  if (compute_ranges(desc->args, desc->nargs, desc->block, desc->orig_range, start, end, arg_idx) < 0)
+    return 0;
+  for (int d = 0; d < desc->block->dims; d++) {
+    local_range[2 * d + 0] = start[d];
+    local_range[2 * d + 1] = end[d];
+  }
+  return 1;
+}
+
+void ops_lazy_prepare(ops_kernel_descriptor *desc) {
+  OPS_instance *instance = desc->block->instance;
+  double t1 = 0, t2 = 0, c;
+  if (instance->OPS_diags > 1)
+    ops_timers_core(&c, &t1);
+
+  // Halo exchanges, and host/device coherence
+  if (desc->isdevice) ops_H_D_exchanges_device(desc->args, desc->nargs);
+  else ops_H_D_exchanges_host(desc->args, desc->nargs);
+  ops_halo_exchanges(desc->args, desc->nargs, desc->orig_range);
+  if (!desc->isdevice) ops_H_D_exchanges_host(desc->args, desc->nargs);
+
+  if (instance->OPS_diags > 1) {
+    ops_timers_core(&c, &t2);
+    instance->OPS_kernels[desc->index].mpi_time += t2 - t1;
+  }
+}
+
+void ops_lazy_finish(ops_kernel_descriptor *desc) {
+  if (desc->isdevice) ops_set_dirtybit_device(desc->args, desc->nargs);
+  else ops_set_dirtybit_host(desc->args, desc->nargs);
+  for (int arg = 0; arg < desc->nargs; arg++) {
+    if (desc->args[arg].argtype == OPS_ARG_DAT && desc->args[arg].acc != OPS_READ)
+      ops_set_halo_dirtybit3(&desc->args[arg], desc->orig_range);
+  }
+}
+
+double ops_lazy_transfer_bytes(ops_kernel_descriptor *desc, const int *local_range) {
+  int start[OPS_MAX_DIM] = {0}, end[OPS_MAX_DIM] = {1};
+  for (int d = 0; d < desc->block->dims; d++) {
+    start[d] = local_range[2 * d + 0];
+    end[d] = local_range[2 * d + 1];
+  }
+  double bytes = 0;
+  for (int arg = 0; arg < desc->nargs; arg++)
+    if (desc->args[arg].argtype == OPS_ARG_DAT)
+      bytes += ops_compute_transfer(desc->dim, start, end, &desc->args[arg]);
+  return bytes;
+}
+
+void ops_lazy_account(ops_kernel_descriptor *desc, double seconds, double bytes) {
+  OPS_instance *instance = desc->block->instance;
+  if (instance->OPS_diags > 1) {
+    // OPS_kernels[desc->index] was allocated when the descriptor was created
+    instance->OPS_kernels[desc->index].count++;
+    instance->OPS_kernels[desc->index].time += seconds;
+    instance->OPS_kernels[desc->index].transfer += (float)bytes;
+  }
+}
+
+void ops_lazy_block_disp(ops_block block, int *disp) {
+  int range[2 * OPS_MAX_DIM] = {0}, start[OPS_MAX_DIM] = {0}, end[OPS_MAX_DIM] = {0}, size[OPS_MAX_DIM] = {0};
+  for (int d = 0; d < OPS_MAX_DIM; d++) disp[d] = 0;
+  ops_get_abs_owned_range(block, range, start, end, disp, size);
+}
+
+int ops_lazy_soa(OPS_instance *instance) { return instance->OPS_soa; }
+
+// Calls the cleanup hook, then frees the argument copies and the descriptor.
+static void ops_free_kernel_descriptor(ops_kernel_descriptor *desc) {
+  if (desc->cleanup_func) desc->cleanup_func(desc);
+  for (int i = 0; i < desc->nargs; i++)
+    if (desc->args[i].argtype == OPS_ARG_GBL && desc->args[i].acc == OPS_READ) {
+      ops_free(desc->args[i].data);
+      desc->args[i].data = nullptr;
+    }
+  ops_free(desc->args);
+  desc->args = nullptr;
+  ops_free(desc->name);
+  desc->name = nullptr;
+  ops_free(desc->range);
+  desc->range = nullptr;
+  ops_free(desc->orig_range);
+  desc->orig_range = nullptr;
+  ops_free(desc);
+}
+
+// Executes one loop immediately with its stock (ahead-of-time generated) implementation.
+static void ops_lazy_execute_eager(ops_kernel_descriptor *desc) {
+  OPS_instance *instance = desc->block->instance;
+
+  // Prepare the local execution ranges. A loop that has nothing to do on this process is skipped.
+  int local[2 * OPS_MAX_DIM] = {0};
+  if (!ops_lazy_compute_local_range(desc, local)) return;
+  for (int d = 0; d < desc->block->dims; d++) {
+    desc->range[2 * d + 0] = local[2 * d + 0];
+    desc->range[2 * d + 1] = local[2 * d + 1];
+  }
+
+  // If not tiling, the halo exchanges are done here
+  ops_lazy_prepare(desc);
+  if (desc->startup_func) desc->startup_func(desc);
+
+  if (instance->OPS_diags > 4)
+    printf2(instance, "Proc %d Executing %s %d-%d %d-%d %d-%d\n", ops_get_proc(), desc->name,
+            desc->range[0], desc->range[1], desc->range[2], desc->range[3], desc->range[4], desc->range[5]);
+
+  // Run the kernel. This function call could potentially throw.
+  desc->func(desc);
+
+  ops_lazy_finish(desc);
+}
+
 /////////////////////////////////////////////////////////////////////////
 // Enqueueing loops
-// - if tiling enabled, add to the list
-// - if tiling disabled, execute immediately on CPU
+// - if tiling is enabled, a chain executor is registered or OPS_LAZY_QUEUE is
+//   set, add to the list, which ops_execute() runs
+// - otherwise execute immediately
 /////////////////////////////////////////////////////////////////////////
 
 void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
 
   OPS_instance *instance = desc->block->instance;
 
-  if (instance->ops_enable_tiling && instance->tiling_instance == NULL)
+  const bool queueing = ops_lazy_queue_enabled(instance) != 0;
+  if (queueing && instance->tiling_instance == NULL)
     instance->tiling_instance = new OPS_instance_tiling();
 
   //Check if lowdim treatment is needed
@@ -210,68 +357,11 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
   if (lowdim_treatment)
     ops_execute(instance);
 
-  if (instance->ops_enable_tiling && !lowdim_treatment) {
+  if (queueing && !lowdim_treatment) {
     ops_kernel_list.push_back(desc);
   } else {
-    //Prepare the local execution ranges
-    int start[OPS_MAX_DIM]={0}, end[OPS_MAX_DIM]={1}, arg_idx[OPS_MAX_DIM];
-    if (compute_ranges(desc->args, desc->nargs,desc->block, desc->range, start, end, arg_idx) < 0) return;
-    for (int d = 0; d < desc->block->dims; d++){
-      desc->range[2*d+0] = start[d];
-      desc->range[2*d+1] = end[d];
-    }
-    //If not tiling, I have to do the halo exchanges here
-    double t1=0,t2=0,c;
-    if (instance->OPS_diags > 1)
-      ops_timers_core(&c,&t1);
-
-    //Halo exchanges
-    if (desc->isdevice) ops_H_D_exchanges_device(desc->args,desc->nargs);
-    else ops_H_D_exchanges_host(desc->args,desc->nargs);
-    ops_halo_exchanges(desc->args,desc->nargs,desc->orig_range);
-    if (!desc->isdevice) ops_H_D_exchanges_host(desc->args,desc->nargs);
-
-    if (desc->startup_func) desc->startup_func(desc);
-
-    if (instance->OPS_diags > 1)
-      ops_timers_core(&c,&t2);
-
-    if (instance->OPS_diags > 4)
-        printf2(instance,"Proc %d Executing %s %d-%d %d-%d %d-%d\n", ops_get_proc(), desc->name,
-               desc->range[0], desc->range[1],
-               desc->range[2], desc->range[3],
-               desc->range[4], desc->range[5]);
-
-    //Run the kernel
-    // This function call could potentially throw
-    desc->func(desc);
-
-    //Dirtybits
-    if (desc->isdevice) ops_set_dirtybit_device(desc->args,desc->nargs);
-    else ops_set_dirtybit_host(desc->args,desc->nargs);
-    for (int arg = 0; arg < desc->nargs; arg++) {
-      if (desc->args[arg].argtype == OPS_ARG_DAT && desc->args[arg].acc != OPS_READ)
-        ops_set_halo_dirtybit3(&desc->args[arg], desc->orig_range);
-    }
-    if (instance->OPS_diags > 1)
-      instance->OPS_kernels[desc->index].mpi_time += t2-t1;
-
-    if (desc->cleanup_func) desc->cleanup_func(desc);
-    for (int i = 0; i < desc->nargs; i++)
-      if (desc->args[i].argtype == OPS_ARG_GBL && desc->args[i].acc == OPS_READ) {
-        ops_free(desc->args[i].data);
-        desc->args[i].data = nullptr;
-      }
-    ops_free(desc->args);
-    desc->args = nullptr;
-    ops_free(desc->name);
-    desc->name = nullptr;
-    ops_free(desc->range);
-    desc->range = nullptr;
-    ops_free(desc->orig_range);
-    desc->orig_range = nullptr;
-    ops_free(desc);
-    desc = nullptr;
+    ops_lazy_execute_eager(desc);
+    ops_free_kernel_descriptor(desc);
   }
 }
 
@@ -1382,16 +1472,9 @@ void ops_execute_block(ops_block block) {
     ops_execute(block->instance);
 }
 
-void ops_execute(OPS_instance *instance) {
-
-  if(instance == NULL)
-    instance = OPS_instance::getOPSInstance();
-
-  if (!instance->ops_enable_tiling) return;
-  if (instance->tiling_instance == NULL)
-    instance->tiling_instance = new OPS_instance_tiling();
-  if (ops_kernel_list.size() == 0)
-    return;
+// Executes the loops in ops_kernel_list with the tiling plan: one deep halo exchange, then
+// tile by tile all loops. Does not free the descriptors.
+static void ops_execute_tiled(OPS_instance *instance) {
 
   // Try to find an existing tiling plan for this sequence of loops which is
   // 
@@ -1514,34 +1597,66 @@ void ops_execute(OPS_instance *instance) {
     if (ops_kernel_list[i]->isdevice) ops_set_dirtybit_device(ops_kernel_list[i]->args,ops_kernel_list[i]->nargs);
     else ops_set_dirtybit_host(ops_kernel_list[i]->args,ops_kernel_list[i]->nargs);
   }
+}
 
-  for (unsigned int i = 0; i < ops_kernel_list.size(); i++) {
-    if (ops_kernel_list[i]->cleanup_func) ops_kernel_list[i]->cleanup_func(ops_kernel_list[i]);
-    for (int j = 0; j < ops_kernel_list[i]->nargs; j++) {
-      if (ops_kernel_list[i]->args[j].argtype == OPS_ARG_GBL &&
-          ops_kernel_list[i]->args[j].acc == OPS_READ) {
-        ops_free(ops_kernel_list[i]->args[j].data);
-        ops_kernel_list[i]->args[j].data = nullptr;
-      }
-    }
-    ops_free(ops_kernel_list[i]->args);
-    ops_kernel_list[i]->args = nullptr;
-    ops_free(ops_kernel_list[i]->name);
-    ops_kernel_list[i]->name = nullptr;
-    ops_free(ops_kernel_list[i]->range);
-    ops_kernel_list[i]->range = nullptr;
-    ops_free(ops_kernel_list[i]->orig_range);
-    ops_kernel_list[i]->orig_range = nullptr;
-    ops_free(ops_kernel_list[i]);
-    ops_kernel_list[i] = nullptr;
+void ops_lazy_execute_default(OPS_instance *instance, ops_kernel_descriptor **descs, int n) {
+  if (n <= 0) return;
+  if (instance->ops_enable_tiling) {
+    if (instance->tiling_instance == NULL)
+      instance->tiling_instance = new OPS_instance_tiling();
+    // The caller owns the descriptors: never leave them in the instance's list, even on an exception.
+    struct ClearList {
+      std::vector<ops_kernel_descriptor *> &v;
+      ~ClearList() { v.clear(); }
+    } clear_on_exit{ops_kernel_list};
+    ops_kernel_list.assign(descs, descs + n);
+    ops_execute_tiled(instance);
+  } else {
+    for (int i = 0; i < n; i++)
+      ops_lazy_execute_eager(descs[i]);
   }
+}
 
-  ops_kernel_list.clear();
+// Frees the descriptors of a queue once it has been executed (also if execution threw).
+namespace {
+struct DescriptorList {
+  std::vector<ops_kernel_descriptor *> list;
+  ~DescriptorList() {
+    for (ops_kernel_descriptor *d : list) ops_free_kernel_descriptor(d);
+  }
+};
+} // namespace
+
+void ops_execute(OPS_instance *instance) {
+
+  if(instance == NULL)
+    instance = OPS_instance::getOPSInstance();
+
+  if (!ops_lazy_queue_enabled(instance)) return;
+  if (instance->tiling_instance == NULL)
+    instance->tiling_instance = new OPS_instance_tiling();
+  if (ops_kernel_list.size() == 0)
+    return;
+
+  // Take the queue: loops enqueued from now on belong to the next one.
+  DescriptorList queue;
+  queue.list.swap(ops_kernel_list);
+
+  if (instance->lazy_executor)
+    instance->lazy_executor(instance, queue.list.data(), (int)queue.list.size(), instance->lazy_executor_ctx);
+  else
+    ops_lazy_execute_default(instance, queue.list.data(), (int)queue.list.size());
 }
 
 void create_kerneldesc_and_enque(char const* kernel_name, ops_arg *args, int nargs, int index, int dim, int isdevice, int *range, ops_block block, void (*func)(struct ops_kernel_descriptor *desc))
 {
+    create_kerneldesc_and_enque_jit(kernel_name, args, nargs, index, dim, isdevice, range, block, func, NULL);
+}
+
+void create_kerneldesc_and_enque_jit(char const* kernel_name, ops_arg *args, int nargs, int index, int dim, int isdevice, int *range, ops_block block, void (*func)(struct ops_kernel_descriptor *desc), const struct ops_jit_artifact *artifact)
+{
     ops_kernel_descriptor *desc = (ops_kernel_descriptor *)calloc(1,sizeof(ops_kernel_descriptor));
+    desc->jit_artifact = artifact;
 
     desc->name = (char*) calloc(strlen(kernel_name)+1, sizeof(char));
     strcpy(desc->name, kernel_name);       strcat(desc->name,"\0");
@@ -1587,26 +1702,8 @@ void create_kerneldesc_and_enque(char const* kernel_name, ops_arg *args, int nar
 // This funtion called from OPS_instance destructor
 void ops_exit_lazy(OPS_instance *instance) {
   if (instance->tiling_instance == NULL) return;
-  for (unsigned int i = 0; i < ops_kernel_list.size(); i++) {
-    if (ops_kernel_list[i]->cleanup_func) ops_kernel_list[i]->cleanup_func(ops_kernel_list[i]);
-    for (int j = 0; j < ops_kernel_list[i]->nargs; j++) {
-      if (ops_kernel_list[i]->args[j].argtype == OPS_ARG_GBL && 
-          ops_kernel_list[i]->args[j].acc == OPS_READ) {
-        ops_free(ops_kernel_list[i]->args[j].data);
-        ops_kernel_list[i]->args[j].data = nullptr;
-      }
-    }
-    ops_free(ops_kernel_list[i]->args);
-    ops_kernel_list[i]->args = nullptr;
-    ops_free(ops_kernel_list[i]->name);
-    ops_kernel_list[i]->name = nullptr;
-    ops_free(ops_kernel_list[i]->range);
-    ops_kernel_list[i]->range = nullptr;
-    ops_free(ops_kernel_list[i]->orig_range);
-    ops_kernel_list[i]->orig_range = nullptr;
-    ops_free(ops_kernel_list[i]);
-    ops_kernel_list[i] = nullptr;
-  }
+  for (unsigned int i = 0; i < ops_kernel_list.size(); i++)
+    ops_free_kernel_descriptor(ops_kernel_list[i]);
   ops_kernel_list.clear();
   delete instance->tiling_instance;
   instance->tiling_instance = nullptr;

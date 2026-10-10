@@ -164,6 +164,9 @@ void OPS_instance::init_globals() {
 	ops_tiling_mpidepth = -1;
 	ops_tiled_halo_exchange_time=0.0;
 	tiling_instance=NULL;
+	lazy_executor=NULL;
+	lazy_executor_ctx=NULL;
+	lazy_queue=0;
 	checkpointing_instance=NULL;
 	tilesize_x=-1;
 	tilesize_y=-1;

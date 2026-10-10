@@ -49,6 +49,15 @@ class OPS_instance_tiling;
 class OPS_instance_checkpointing;
 class OPS_instance_opencl;
 class OPS_instance_sycl;
+class OPS_instance;
+struct ops_kernel_descriptor;
+
+/**
+ * A chain executor receives the whole lazy queue (in program order) when it is flushed, and must
+ * execute every descriptor exactly once (see ops_lazy_executor.h).
+ */
+typedef void (*ops_chain_executor_fn)(OPS_instance *instance, ops_kernel_descriptor **descs,
+                                      int n, void *ctx);
 
 /**
  * This class encapsulates "global" scope data required for OPS instances.
@@ -364,6 +373,10 @@ class OPS_instance {
 	int ops_tiling_mpidepth;
 	double ops_tiled_halo_exchange_time;
 	OPS_instance_tiling *tiling_instance;
+	// Lazy execution without tiling: queue loops and hand them to an executor (ops_lazy_executor.h)
+	ops_chain_executor_fn lazy_executor;
+	void *lazy_executor_ctx;
+	int lazy_queue;
 	OPS_instance_checkpointing *checkpointing_instance;
   	int tilesize_x, tilesize_y, tilesize_z;
 
