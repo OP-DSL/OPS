@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <string>
 #include <fstream>
 #include <sstream>
@@ -119,12 +120,16 @@ static std::string trig_raw(Ctx &c, double g) {
 #ifndef OPS_MPI
 static std::string trig_print(Ctx &c, double g) {
   (void)g;
-  const char *file = "lazy_triggers_C.txt";
+  // One file per process: ctest runs the variants of this test at the same time in one directory.
+  std::string name = "lazy_triggers_C_" + std::to_string(getpid()) + ".txt";
+  const char *file = name.c_str();
   remove(file);
   ops_print_dat_to_txtfile(c.C, file);
   std::ifstream in(file);
   std::stringstream ss;
   ss << in.rdbuf();
+  in.close();
+  remove(file);
   check(ss.str().size() > 100, "print_dat_to_txtfile wrote the file");
   return ss.str();
 }
