@@ -1017,6 +1017,9 @@
 #   App: Poisson # Compiles OK
     add_subdirectory(poisson)
 
+#   App: lazy_triggers # Lazy-execution regression test (host-observation points flush the queue)
+    add_subdirectory(lazy_triggers)
+
 #   App: Laplace2d  # Compiles OK
     add_subdirectory(laplace2d_tutorial/step7)
 

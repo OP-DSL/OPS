@@ -2007,6 +2007,7 @@ void ops_dat_get_raw_metadata(ops_dat dat, int part, int *disp, int *size, int *
 }
 
 char* ops_dat_get_raw_pointer(ops_dat dat, int part, ops_stencil stencil, ops_memspace *memspace) {
+  ops_execute(dat->block->instance);
   ops_force_halo_exchange(dat, stencil);
   if (dat->dirty_hd == OPS_DEVICE || *memspace == OPS_DEVICE) {
     if(dat->data_d == NULL) {

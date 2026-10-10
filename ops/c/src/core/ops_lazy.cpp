@@ -82,8 +82,9 @@ struct tiling_plan {
 
 class OPS_instance_tiling {
 public:
-  OPS_instance_tiling() : TILE1D(-1), TILE2D(-1), TILE3D(-1), ops_dims_tiling_internal(1) {}
+  OPS_instance_tiling() : TILE1D(-1), TILE2D(-1), TILE3D(-1), ops_dims_tiling_internal(1), executing(false) {}
   std::vector<ops_kernel_descriptor *> ops_kernel_list;
+  bool executing; // a flush is running: nested flush requests (e.g. from a halo exchange) are no-ops
 
   // Tiling
   std::vector<std::vector<int> >
@@ -1635,8 +1636,16 @@ void ops_execute(OPS_instance *instance) {
   if (!ops_lazy_queue_enabled(instance)) return;
   if (instance->tiling_instance == NULL)
     instance->tiling_instance = new OPS_instance_tiling();
+  if (instance->tiling_instance->executing)
+    return;
   if (ops_kernel_list.size() == 0)
     return;
+
+  struct Busy {
+    bool &flag;
+    explicit Busy(bool &f) : flag(f) { flag = true; }
+    ~Busy() { flag = false; }
+  } busy(instance->tiling_instance->executing);
 
   // Take the queue: loops enqueued from now on belong to the next one.
   DescriptorList queue;

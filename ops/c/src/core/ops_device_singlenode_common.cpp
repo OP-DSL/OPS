@@ -261,6 +261,9 @@ void ops_dat_set_data_memspace(ops_dat dat, int part, char *data, ops_memspace m
 
 void ops_halo_transfer(ops_halo_group group) {
 
+  // The halos' source data may still have to be produced by queued loops
+  ops_execute(group->instance);
+
   if (group->nhalos == 0)
     return;
   int storage_type_size = group->halos[0]->from->type_size < group->halos[0]->to->type_size ? group->halos[0]->from->type_size : group->halos[0]->to->type_size;

@@ -1472,6 +1472,9 @@ void ops_timing_output_stdout() { ops_timing_output(std::cout); }
 
 void _ops_timing_output(OPS_instance *instance, std::ostream &stream) {
 
+  // Queued loops must be part of the statistics
+  ops_execute(instance);
+
   if (instance->OPS_diags > 1)
     if (instance->OPS_enable_checkpointing)
       ops_fprintf2(stream, "\nTotal time spent in checkpointing: %g seconds\n",
@@ -2369,6 +2372,8 @@ void ops_set_dirtybit_device_dat(ops_dat dat) {
 //
 
 void ops_get_data(ops_dat dat) {
+  // The data about to be read on the host may still have to be produced by queued loops
+  ops_execute(dat->block->instance);
   if (dat->dirty_hd == 2)
     dat->dirty_hd = 0;
   else

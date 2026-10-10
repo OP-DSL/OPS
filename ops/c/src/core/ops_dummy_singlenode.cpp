@@ -904,6 +904,7 @@ void ops_timers(double *cpu, double *et) {
 
 void _ops_exit(OPS_instance *instance) {
   if (instance->is_initialised == 0) return;
+  ops_execute(instance); // loops still queued are executed, not dropped
   if (instance->ops_halo_buffer!=NULL) ops_free(instance->ops_halo_buffer);
   if (instance->OPS_consts_bytes > 0) {
     ops_free(instance->OPS_consts_h);
