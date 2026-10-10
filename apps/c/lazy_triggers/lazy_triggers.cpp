@@ -138,7 +138,9 @@ static std::string trig_print(Ctx &c, double g) {
 // ops_halo_transfer copies column x=0 of C into the halo column x=-1 of B; k_shift reads it.
 static std::string trig_halo(Ctx &c, double g) {
   ops_halo_transfer(c.halos);
-  int col[] = {0, 1, 0, ny};
+  // The whole x range, not only column 0: with MPI tiling a loop that is empty on some ranks fails in OPS's halo
+  // depth analysis ("overpartitioning ... 2147483647-deep halo"), unrelated to what is tested here. Only x = 0 is checked.
+  int col[] = {0, nx, 0, ny};
   ops_par_loop(k_shift, "shift", c.block, 2, col,
                ops_arg_dat(c.B, 1, c.Sm10, "double", OPS_READ),
                ops_arg_dat(c.D, 1, c.S00, "double", OPS_WRITE));
