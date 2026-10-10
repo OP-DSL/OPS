@@ -26,7 +26,7 @@ extern {{const.typ}} *{{const.ptr}};
     {% endfor %}
 
 {% if jit %}
-extern void ops_jit_init();
+extern "C" void ops_jit_init(void);
 void ops_init_backend(){ ops_jit_init(); }
 {% else %}
 void ops_init_backend(){}
