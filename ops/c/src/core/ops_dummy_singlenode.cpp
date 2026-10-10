@@ -38,6 +38,7 @@
   */
 
 #include "ops_lib_core.h"
+#include "ops_lazy_executor.h"
 #include <ops_exceptions.h>
 #include "ops_util.h"
 #include <string>
@@ -516,6 +517,15 @@ bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, 
     //size[n] = ?
   }
   return true;
+}
+
+void ops_lazy_dat_shift(ops_dat dat, int *shift) {
+  for (int d = 0; d < OPS_MAX_DIM; d++) shift[d] = 0;
+  for (int d = 0; d < dat->block->dims; d++) shift[d] = -dat->base[d] - dat->d_m[d];
+}
+
+char *ops_lazy_reduction_slot(ops_kernel_descriptor *desc, int arg) {
+  return ((ops_reduction)desc->args[arg].data)->data;
 }
 
 /************* Functions only use in the Fortran Backend ************/

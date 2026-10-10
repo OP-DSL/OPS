@@ -71,6 +71,18 @@ void ops_lazy_block_disp(ops_block block, int *disp);
 /** Non-zero if OPS stores multi-component dats as structure of arrays. */
 int ops_lazy_soa(OPS_instance *instance);
 
+/** Layout of a dat in memory, for code that indexes dat->data (host) or dat->data_d (device) itself.
+ *  The element at local loop index i along dimension d (the indexing of ops_lazy_compute_local_range) is at
+ *  position i + shift[d] along d of the allocation, which has dat->size[d] elements along d; the first dimension is
+ *  the fastest. This is the same offset as dat->base_offset, split per dimension: -base - d_m, and under MPI
+ *  - d_im as well. Fills shift[0..OPS_MAX_DIM). */
+void ops_lazy_dat_shift(ops_dat dat, int *shift);
+
+/** Where loop `desc` accumulates the result of its reduction argument `arg` (an OPS_ARG_GBL argument with an access
+ *  other than OPS_READ): dim elements of the argument's type, which hold the value so far (a reduction combines
+ *  into it). Under MPI the handle keeps one slot per block. */
+char *ops_lazy_reduction_slot(ops_kernel_descriptor *desc, int arg);
+
 /** Registers a built-in executor that must not change any application's results, to test the executor
  *  interface with unmodified applications. mode: "split[,seed=N]" hands the queue to
  *  ops_lazy_execute_default() in pieces of 1 to 5 loops; "manual" runs each loop with the per-loop steps

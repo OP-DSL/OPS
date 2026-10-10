@@ -37,6 +37,7 @@
   */
 
 #include <ops_lib_core.h>
+#include <ops_lazy_executor.h>
 
 #include <mpi.h>
 #include <ops_mpi_core.h>
@@ -406,6 +407,17 @@ void ops_checkpointing_duplicate_data(ops_dat dat, int my_type, int my_nelems,
 
 void ops_get_dat_full_range(ops_dat dat, int **full_range) {
   *full_range = OPS_sub_dat_list[dat->index]->gbl_size;
+}
+
+void ops_lazy_dat_shift(ops_dat dat, int *shift) {
+  for (int d = 0; d < OPS_MAX_DIM; d++) shift[d] = 0;
+  sub_dat_list sd = OPS_sub_dat_list[dat->index];
+  for (int d = 0; d < dat->block->dims; d++) shift[d] = -dat->base[d] - dat->d_m[d] - sd->d_im[d];
+}
+
+char *ops_lazy_reduction_slot(ops_kernel_descriptor *desc, int arg) {
+  ops_reduction handle = (ops_reduction)desc->args[arg].data;
+  return handle->data + (size_t)handle->size * desc->block->index;
 }
 
 bool ops_get_abs_owned_range(ops_block block, int *range, int *start, int *end, int *disp, int *size) {
