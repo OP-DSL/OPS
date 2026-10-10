@@ -1,7 +1,7 @@
 #   Specifiy the cmake version range, currenty work under 3.18
     cmake_minimum_required(VERSION 3.18)
 
-    project(OPS C CXX Fortran)
+    project(OPS C CXX)
 
 #   if show the compiling process in detail
     option(OPS_VERBOSE_WARNING "Turn on verbose warning messages" OFF)
@@ -12,6 +12,11 @@
     option(BUILD_OPS_CXX "Build CXX version of OPS" ON)
     option(BUILD_OPS_FORTRAN "Build FORTRAN version of OPS" OFF)
     option(BUILD_OPS_APPS "Build Sample OPS applications" OFF)
+
+#   A Fortran compiler is only required for the Fortran API.
+    if(BUILD_OPS_FORTRAN)
+        enable_language(Fortran)
+    endif()
 
     if(NOT OPS_VERBOSE_WARNING)
         message(
