@@ -11,6 +11,7 @@ import cpp
 import fortran
 from fortran.translator.program import add_offload_directives, check_offload_pragma_required, check_repeated_kernels_fortran
 from jinja_utils import env
+import jit as jit_support
 from language import Lang
 from ops import OpsError, Type
 from scheme import Scheme
@@ -31,6 +32,8 @@ def main(argv=None) -> None:
     parser.add_argument("-o", "--out", help="Output directory", type=isDirPath)
     parser.add_argument("-c", "--config", help="Target configuration", type=json.loads, default="{}")
     parser.add_argument("-soa", "--force_soa", help="Force structs of arrays", action="store_true")
+
+    parser.add_argument("--jit", help="Also enqueue the MLIR JIT artifact of every kernel and write jit_kernels.json", action="store_true")
 
     parser.add_argument("--suffix", help="Add a suffix to genreated program translations", default="_ops")
 
@@ -107,6 +110,13 @@ def main(argv=None) -> None:
         exit(e)
 
     print("Code-gen : Parsing done for all files")
+
+    # The templates ask for the JIT calls through this global.
+    env.globals["jit"] = args.jit
+    if args.jit:
+        jit_path = Path(args.out, "jit_kernels.json")
+        jit_support.write_kernel_table(app, jit_path)
+        print(f"Code-gen : JIT kernel table written to {jit_path}")
 
     # Find out if declare pragma in case of openmp offload is required for constants or not
     app_consts = app.consts()

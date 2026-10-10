@@ -35,7 +35,12 @@ __constant__ {{const.typ}} *{{const.ptr}};
     {% endif %}
     {% endfor %}
 
+{% if jit %}
+extern void ops_jit_init();
+void ops_init_backend(){ ops_jit_init(); }
+{% else %}
 void ops_init_backend(){}
+{% endif %}
 
 void ops_decl_const_char(OPS_instance *instance, int dim, char const *type, int size, char *dat, char const *name) {
     ops_execute(instance);

@@ -25,7 +25,12 @@ extern {{const.typ}} *{{const.ptr}};
     {% endif %}
     {% endfor %}
 
+{% if jit %}
+extern void ops_jit_init();
+void ops_init_backend(){ ops_jit_init(); }
+{% else %}
 void ops_init_backend(){}
+{% endif %}
 {% endblock %}
 
 {% block header_includes %}
