@@ -129,7 +129,9 @@ def parseUnexposedFunction(node: Cursor) -> Union[Tuple[str, List[Cursor]], None
         name_token = list(first_child.get_children())[1]
         name = name_token.spelling
     elif first_child.kind == CursorKind.DECL_REF_EXPR:
-        name = list(first_child.get_tokens())[0].spelling
+        # A reference that comes from a macro expansion or is implicit has no tokens of its own: use the name it refers to.
+        tokens = list(first_child.get_tokens())
+        name = tokens[0].spelling if tokens else first_child.spelling
     else:
         return None
 
