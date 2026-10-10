@@ -17,10 +17,12 @@
 
 #define OPS_2D
 #include <ops_seq_v2.h>
+#include <ops_lazy_executor.h>
 #include "lazy_triggers_kernels.h"
 
 static int nx = 24, ny = 16;
 static double gval = 1.0;
+static double cval = 1.0; // a declared constant (not read by any kernel; only its registry entry is tested)
 
 struct Ctx {
   ops_block block;
@@ -195,6 +197,8 @@ int main(int argc, const char **argv) {
   ops_halo hl = ops_decl_halo(c.C, c.B, iter, from_base, to_base, dir, dir);
   c.halos = ops_decl_halo_group(1, &hl);
 
+  ops_decl_const("cval", 1, "double", &cval);
+
   ops_partition("");
 
   run_trigger(c, "ops_dat_fetch_data", trig_fetch, 1.0);
@@ -205,8 +209,41 @@ int main(int argc, const char **argv) {
 #endif
   run_trigger(c, "ops_halo_transfer", trig_halo, 5.0);
 
-  // Loops still queued at ops_exit must be executed, not dropped.
   int inner[] = {0, nx, 0, ny};
+
+  // Constants: the registry keeps a snapshot, and a changed value executes the loops queued so far.
+  {
+    OPS_instance *inst = OPS_instance::getOPSInstance();
+    const ops_const_entry *e = ops_find_const(inst, "cval");
+    check(e && e->dim == 1 && e->size == (int)sizeof(double) && *(const double *)e->snapshot == 1.0 &&
+              e->version == 1,
+          "constant is registered by ops_decl_const");
+    ops_update_const("cval", 1, "double", &cval); // same value: nothing changes
+    e = ops_find_const(inst, "cval");
+    check(e && e->version == 1, "updating a constant to the same value keeps its version");
+    check(ops_find_const(inst, "no_such_constant") == NULL, "unknown constant");
+
+    produce(c, 8.0);
+    ops_par_loop(k_copy, "copy to X", c.block, 2, inner,
+                 ops_arg_dat(c.C, 1, c.S00, "double", OPS_READ),
+                 ops_arg_dat(c.X, 1, c.S00, "double", OPS_WRITE));
+    cval = 2.0;
+    ops_update_const("cval", 1, "double", &cval); // must run the queued loops first
+    e = ops_find_const(inst, "cval");
+    check(e && *(const double *)e->snapshot == 2.0 && e->version == 2, "constant snapshot after the update");
+#ifndef OPS_MPI
+    if (check_exit) {
+      bool ok = true;
+      for (int j = 0; j < ny; j++)
+        for (int i = 0; i < nx; i++)
+          if (xdata[(i + 1) + (j + 1) * (nx + 2)] != expected_c(i, j, 8.0)) ok = false;
+      check(ok, "loops queued before ops_update_const were executed by it");
+      printf("%-24s %s\n", "ops_update_const", ok ? "ok" : "DIFFERS");
+    }
+#endif
+  }
+
+  // Loops still queued at ops_exit must be executed, not dropped.
   produce(c, 6.0);
   ops_par_loop(k_copy, "copy to X", c.block, 2, inner,
                ops_arg_dat(c.C, 1, c.S00, "double", OPS_READ),

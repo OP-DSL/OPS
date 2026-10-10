@@ -59,6 +59,9 @@ inline int omp_get_max_threads() {
 #endif
 
 #include <vector>
+#include <map>
+#include <string>
+#include <string.h>
 using namespace std;
 
 /////////////////////////////////////////////////////////////////////////
@@ -201,6 +204,103 @@ int ops_has_chain_executor(OPS_instance *instance) { return instance->lazy_execu
 void ops_set_lazy_queue(OPS_instance *instance, int enable) {
   if (!enable) ops_execute(instance); // flush while the queue is still enabled
   instance->lazy_queue = enable ? 1 : 0;
+}
+
+/////////////////////////////////////////////////////////////////////////
+// Test executors: run any application through the chain executor interface without
+// changing it (command-line flag OPS_LAZY_EXECUTOR_TEST=split|manual[,seed=N]).
+// They must not change the results of the application.
+/////////////////////////////////////////////////////////////////////////
+
+// Hands the queue to ops_lazy_execute_default() in pieces of 1..5 consecutive loops. For tiling
+// every piece gets its own tiling plan.
+static void ops_test_executor_split(OPS_instance *instance, ops_kernel_descriptor **descs, int n, void *ctx) {
+  unsigned *state = (unsigned *)ctx;
+  for (int i = 0; i < n;) {
+    *state = *state * 1664525u + 1013904223u;
+    int len = 1 + (int)((*state >> 16) % 5);
+    if (i + len > n) len = n - i;
+    ops_lazy_execute_default(instance, descs + i, len);
+    i += len;
+  }
+}
+
+// Executes every loop with the per-loop runtime steps of ops_lazy_executor.h and the stock kernel function.
+static void ops_test_executor_manual(OPS_instance *instance, ops_kernel_descriptor **descs, int n, void *ctx) {
+  (void)instance;
+  (void)ctx;
+  for (int i = 0; i < n; i++) {
+    ops_kernel_descriptor *desc = descs[i];
+    int local[2 * OPS_MAX_DIM] = {0};
+    if (!ops_lazy_compute_local_range(desc, local)) continue;
+    for (int d = 0; d < desc->block->dims; d++) {
+      desc->range[2 * d + 0] = local[2 * d + 0];
+      desc->range[2 * d + 1] = local[2 * d + 1];
+    }
+    ops_lazy_prepare(desc);
+    desc->func(desc);
+    ops_lazy_finish(desc);
+  }
+}
+
+void ops_lazy_enable_test_executor(OPS_instance *instance, const char *mode) {
+  static unsigned seed_state = 12345u;
+  const char *seed = strstr(mode, "seed=");
+  if (seed) seed_state = (unsigned)atol(seed + 5);
+  if (strncmp(mode, "split", 5) == 0)
+    ops_register_chain_executor(instance, ops_test_executor_split, &seed_state);
+  else if (strncmp(mode, "manual", 6) == 0)
+    ops_register_chain_executor(instance, ops_test_executor_manual, NULL);
+  else {
+    OPSException ex(OPS_INVALID_ARGUMENT);
+    ex << "Error: OPS_LAZY_EXECUTOR_TEST=" << mode << ": expected split or manual";
+    throw ex;
+  }
+  if (instance->is_root()) instance->ostream() << "\n Test chain executor: " << mode << '\n';
+}
+
+/////////////////////////////////////////////////////////////////////////
+// Constants
+/////////////////////////////////////////////////////////////////////////
+
+class OPS_instance_consts {
+public:
+  struct Entry {
+    std::string name, type;
+    std::vector<char> bytes;
+    ops_const_entry view;
+  };
+  std::map<std::string, Entry> entries;
+};
+
+void ops_register_const_char(OPS_instance *instance, int dim, char const *type, int size, char const *data,
+                             char const *name) {
+  if (instance->consts_instance == NULL) instance->consts_instance = new OPS_instance_consts();
+  const size_t bytes = (size_t)(dim > 0 ? dim : 1) * (size_t)size;
+  auto it = instance->consts_instance->entries.find(name);
+  const bool known = it != instance->consts_instance->entries.end();
+  const bool changed = known && (it->second.bytes.size() != bytes || memcmp(it->second.bytes.data(), data, bytes) != 0);
+  // Loops queued so far were enqueued with the old value: run them before it is replaced.
+  if (changed) ops_execute(instance);
+  if (known && !changed) return;
+
+  OPS_instance_consts::Entry &e = instance->consts_instance->entries[name];
+  const unsigned version = known ? e.view.version + 1 : 1;
+  e.name = name;
+  e.type = type;
+  e.bytes.assign(data, data + bytes);
+  e.view.name = e.name.c_str();
+  e.view.type = e.type.c_str();
+  e.view.dim = dim;
+  e.view.size = size;
+  e.view.snapshot = e.bytes.data();
+  e.view.version = version;
+}
+
+const ops_const_entry *ops_find_const(OPS_instance *instance, const char *name) {
+  if (instance->consts_instance == NULL) return NULL;
+  auto it = instance->consts_instance->entries.find(name);
+  return it == instance->consts_instance->entries.end() ? NULL : &it->second.view;
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -1710,6 +1810,8 @@ void create_kerneldesc_and_enque_jit(char const* kernel_name, ops_arg *args, int
 
 // This funtion called from OPS_instance destructor
 void ops_exit_lazy(OPS_instance *instance) {
+  delete instance->consts_instance;
+  instance->consts_instance = nullptr;
   if (instance->tiling_instance == NULL) return;
   for (unsigned int i = 0; i < ops_kernel_list.size(); i++)
     ops_free_kernel_descriptor(ops_kernel_list[i]);

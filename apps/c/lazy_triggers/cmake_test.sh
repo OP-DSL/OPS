@@ -16,6 +16,18 @@ elif [[ "$target" == "tiled" ]]; then
     echo "$exe OPS_TILING"
 elif [[ "$target" == "queue" ]]; then
     echo "$exe OPS_LAZY_QUEUE"
+elif [[ "$target" == "executor_split" ]]; then
+    echo "$exe OPS_LAZY_EXECUTOR_TEST=split"
+elif [[ "$target" == "executor_manual" ]]; then
+    echo "$exe OPS_LAZY_EXECUTOR_TEST=manual"
+elif [[ "$target" == "executor_split_tiled" ]]; then
+    echo "$exe OPS_LAZY_EXECUTOR_TEST=split OPS_TILING"
+elif [[ "$target" == "mpi_executor_split" ]]; then
+    echo "mpirun -np 6 --oversubscribe $exe OPS_LAZY_EXECUTOR_TEST=split"
+elif [[ "$target" == "mpi_executor_manual" ]]; then
+    echo "mpirun -np 6 --oversubscribe $exe OPS_LAZY_EXECUTOR_TEST=manual"
+elif [[ "$target" == "mpi_executor_split_tiled" ]]; then
+    echo "mpirun -np 6 --oversubscribe $exe OPS_LAZY_EXECUTOR_TEST=split OPS_TILING"
 elif [[ "$target" == "mpi" ]]; then
     echo "mpirun -np 6 --oversubscribe $exe"
 elif [[ "$target" == "mpi_openmp" ]]; then

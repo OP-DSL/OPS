@@ -167,6 +167,7 @@ void OPS_instance::init_globals() {
 	lazy_executor=NULL;
 	lazy_executor_ctx=NULL;
 	lazy_queue=0;
+	consts_instance=NULL;
 	checkpointing_instance=NULL;
 	tilesize_x=-1;
 	tilesize_y=-1;

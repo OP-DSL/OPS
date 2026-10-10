@@ -38,6 +38,7 @@
   */
 
 #include <ops_lib_core.h>
+#include <ops_lazy_executor.h>
 #include <ops_exceptions.h>
 #include <float.h>
 #include <limits.h>
@@ -147,6 +148,9 @@ void _ops_set_args(OPS_instance *instance, const char *argv) {
     instance->ops_enable_tiling = 1;
     if (instance->is_root()) instance->ostream() << "\n Tiling enabled\n";
   }
+  pch = strstr(argv, "OPS_LAZY_EXECUTOR_TEST=");
+  if (pch != NULL)
+    ops_lazy_enable_test_executor(instance, pch + strlen("OPS_LAZY_EXECUTOR_TEST="));
   pch = strstr(argv, "OPS_LAZY_QUEUE");
   if (pch != NULL) {
     instance->lazy_queue = 1;
@@ -274,6 +278,9 @@ void ops_init_core(OPS_instance *instance, const int argc, const char *const arg
   for (int n = 1; n < argc; n++) {
     _ops_set_args(instance, argv[n]);
   }
+  // The test executor can also be selected in the environment, to run unmodified test suites through it
+  if (instance->lazy_executor == NULL && getenv("OPS_LAZY_EXECUTOR_TEST") != NULL)
+    ops_lazy_enable_test_executor(instance, getenv("OPS_LAZY_EXECUTOR_TEST"));
 
   /*Initialize the double linked list to hold ops_dats*/
   TAILQ_INIT(&instance->OPS_dat_list);

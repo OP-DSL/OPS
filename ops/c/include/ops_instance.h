@@ -46,6 +46,7 @@
 #endif
 
 class OPS_instance_tiling;
+class OPS_instance_consts;
 class OPS_instance_checkpointing;
 class OPS_instance_opencl;
 class OPS_instance_sycl;
@@ -228,6 +229,7 @@ class OPS_instance {
            << " in OPS_instance::decl_const";
         throw ex;
       }
+      ops_register_const_char(this, dim, type, sizeof(T), (char const *)data, name);
       ops_decl_const_char(this, dim, type, sizeof(T), (char *)data, name);
     }
 
@@ -377,6 +379,7 @@ class OPS_instance {
 	ops_chain_executor_fn lazy_executor;
 	void *lazy_executor_ctx;
 	int lazy_queue;
+	OPS_instance_consts *consts_instance; // snapshots of declared constants (ops_lazy_executor.h)
 	OPS_instance_checkpointing *checkpointing_instance;
   	int tilesize_x, tilesize_y, tilesize_z;
 

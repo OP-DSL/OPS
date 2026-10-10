@@ -71,4 +71,30 @@ void ops_lazy_block_disp(ops_block block, int *disp);
 /** Non-zero if OPS stores multi-component dats as structure of arrays. */
 int ops_lazy_soa(OPS_instance *instance);
 
+/** Registers a built-in executor that must not change any application's results, to test the executor
+ *  interface with unmodified applications. mode: "split[,seed=N]" hands the queue to
+ *  ops_lazy_execute_default() in pieces of 1 to 5 loops; "manual" runs each loop with the per-loop steps
+ *  above. Selected on the command line with OPS_LAZY_EXECUTOR_TEST=<mode>. */
+void ops_lazy_enable_test_executor(OPS_instance *instance, const char *mode);
+
+/** Value of a global constant declared with ops_decl_const / ops_update_const. */
+typedef struct {
+  const char *name;
+  const char *type;     /**< type name as given to ops_decl_const, e.g. "double" or "field_type" */
+  int dim;              /**< number of elements */
+  int size;             /**< bytes per element */
+  const char *snapshot; /**< dim*size bytes: the value as of the last declaration/update; owned by OPS */
+  unsigned version;     /**< incremented whenever the value changes */
+} ops_const_entry;
+
+/** The constant `name`, or NULL if it was never declared. The pointer (and the snapshot) stay valid
+ *  until the constant changes again.
+ *
+ *  Constants must be changed through ops_update_const()/ops_decl_const() (the call may follow the
+ *  assignment to the variable). If the value changes while loops are queued, those loops are executed
+ *  before the new value is recorded, so a chain executor that reads the snapshot sees, for every
+ *  queued loop, the value the loop was enqueued with. (Stock generated CPU code reads the live
+ *  variable when the loop finally runs; only code that uses the snapshot gets enqueue-time values.) */
+const ops_const_entry *ops_find_const(OPS_instance *instance, const char *name);
+
 #endif /* __OPS_LAZY_EXECUTOR_H */

@@ -456,6 +456,8 @@ ops_dat ops_block_core::decl_dat(int data_size, int *block_size, int *base,
 #if !defined(OPS_CPP_API) || defined(OPS_INTERNAL_API)
 template <typename T>
 void ops_decl_const2(char const *name, int dim, char const *type, T *data) {
+  ops_register_const_char(OPS_instance::getOPSInstance(), dim, type, sizeof(T),
+                          (char const *)data, name);
   ops_decl_const_char(OPS_instance::getOPSInstance(), dim, type, sizeof(T),
                       (char *)data, name);
 }

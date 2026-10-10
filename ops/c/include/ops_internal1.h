@@ -97,6 +97,8 @@ ops_dat_core* ops_decl_dat_char(ops_block_core *, int, int *, int *, int *, int 
                           int, char const *, char const *);
 template <typename T> void ops_decl_const2(char const *, int, char const *, T *);
 void ops_decl_const_char(OPS_instance *, int, char const *, int, char *, char const *);
+/* Records the value of a constant (see ops_find_const in ops_lazy_executor.h); called for every declaration/update. */
+void ops_register_const_char(OPS_instance *, int dim, char const *type, int size, char const *data, char const *name);
 OPS_FTN_INTEROP
 void ops_reduction_result_char(ops_reduction_core *handle, int type_size, char *ptr);
 /*
