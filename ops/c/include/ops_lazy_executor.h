@@ -27,7 +27,7 @@
 #include "ops_internal2.h"
 #include "ops_jit_artifact.h"
 
-/** Registers the executor of this OPS instance (NULL removes it). Registering enables queueing. */
+/** Registers the executor of this OPS instance (NULL instance: the default one; NULL fn removes it). Registering enables queueing. */
 void ops_register_chain_executor(OPS_instance *instance, ops_chain_executor_fn fn, void *ctx);
 
 /** Non-zero if a chain executor is registered. */

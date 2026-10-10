@@ -193,6 +193,7 @@ int ops_lazy_queue_enabled(OPS_instance *instance) {
 }
 
 void ops_register_chain_executor(OPS_instance *instance, ops_chain_executor_fn fn, void *ctx) {
+  if (instance == NULL) instance = OPS_instance::getOPSInstance();
   // Whatever was queued for the previous executor (or the stock path) runs before the switch.
   ops_execute(instance);
   instance->lazy_executor = fn;
