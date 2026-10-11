@@ -111,7 +111,8 @@ typedef __half half;
 #include <sycl/sycl.hpp>
 namespace cl { namespace sycl = ::sycl; }
 typedef sycl::half half;
-#elif defined(__STDCPP_FLOAT16_T__) || defined(FLT16_MIN)
+#elif defined(__STDCPP_FLOAT16_T__) || defined(FLT16_MIN) || (defined(__clang__) && defined(__FLT16_MIN__))
+// (clang predefines __FLT16_MIN__ where _Float16 exists, without <float.h>'s FLT16_MIN, which C++ does not provide)
 typedef _Float16 half;
 #else
 typedef uint16_t half;
