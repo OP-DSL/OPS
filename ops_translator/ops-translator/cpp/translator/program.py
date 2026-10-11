@@ -42,8 +42,9 @@ def translateProgram(source: str, program: Program, app_consts: List[Const], for
     # 4. Update ops_init
     buffer.insert(0, '\nvoid ops_init_backend();\n')
 
-    if buffer.search(r'\s* ops_init\('):
-        index = buffer.search(r'\s* ops_init\(') + 1
+    # ops_init( at the start of a line (OpenSBLI) as well as indented
+    if buffer.search(r'(^|\s)ops_init\('):
+        index = buffer.search(r'(^|\s)ops_init\(') + 1
         buffer.insert(index, '\tops_init_backend();\n')
 
     # 5. Find the Global declarations of constant and add relevant OpenACC pragmas
