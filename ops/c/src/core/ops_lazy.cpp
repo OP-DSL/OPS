@@ -439,9 +439,11 @@ void ops_enqueue_kernel(ops_kernel_descriptor *desc) {
   if (queueing && instance->tiling_instance == NULL)
     instance->tiling_instance = new OPS_instance_tiling();
 
-  //Check if lowdim treatment is needed
+  //Check if lowdim treatment is needed. It exists for the halo exchanges of low-dimensional (edge) dats, which only
+  // happen with more than one process: on one process the loops stay queued (the dirty bits are only cleared by the
+  // MPI exchange code, so without this every loop reading an edge dat after a write to it would flush the queue).
   bool lowdim_treatment = false;
-  for (int arg = 0; arg < desc->nargs; arg++) {
+  for (int arg = 0; ops_num_procs() > 1 && arg < desc->nargs; arg++) {
     //I need to mark these dirty here, because normally they are only marked dirty once ops_execute is done
     // but the next if would not catch that in time
     if (desc->args[arg].argtype == OPS_ARG_DAT && desc->args[arg].dat->e_dat == 1 &&
