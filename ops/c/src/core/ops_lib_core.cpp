@@ -146,7 +146,11 @@ void _ops_set_args(OPS_instance *instance, const char *argv) {
   if (pch != NULL) {
     snprintf(temp, 64, "%s", pch);
     int mode = atoi(temp + strlen("OPS_AUTOTUNE_MODE="));
-    if (mode < 0 || mode > 6) mode = 1; // 0=default, 1=tune, 2=precomputed, 3=MLP, 4=XGBoost multi, 5=explore+train, 6=XGBoost single
+    if (mode >= 3 && mode <= 7) {
+      throw OPSException(OPS_INVALID_ARGUMENT,
+                         "OPS_AUTOTUNE_MODE 3 through 7 are no longer supported; use 0, 1 or 2");
+    }
+    if (mode < 0 || mode > 2) mode = 1; // 0=default, 1=tune, 2=precomputed
     instance->OPS_autotune_mode = mode;
     if (instance->is_root()) instance->ostream() << "\n OPS_autotune_mode = " << instance->OPS_autotune_mode << '\n';
   }
