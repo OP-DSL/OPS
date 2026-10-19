@@ -620,6 +620,26 @@ namespace {
   long long g_tuning_rows = 0;
   long long g_best_rows = 0;
 
+  // CSV logging level: 0=all CSVs, 1=best CSV only, 2=none (wall time only)
+  int get_csv_log_level() {
+    static int level = -1;
+    if (level < 0) {
+      const char* env = std::getenv("OPS_CSV_LOG_LEVEL");
+      level = env ? std::atoi(env) : 0;
+    }
+    return level;
+  }
+
+  // OPS_DISABLE_CSV_LOGS=1 → disable all CSV file creation (ofstreams stay closed)
+  static bool csv_logs_disabled() {
+    static int cached = -1;
+    if (cached < 0) {
+      const char* env = std::getenv("OPS_DISABLE_CSV_LOGS");
+      cached = (env && std::string(env) == "1") ? 1 : 0;
+    }
+    return cached == 1;
+  }
+
   // Cache for precomputed block sizes from CSV (mode=2)
   std::unordered_map<int, ops::dim3> g_precomputed_blocks;
   bool g_precomputed_loaded = false;
@@ -919,7 +939,9 @@ void ensure_dir_exists(const std::string &path) {
 }
 
   void ensure_log_open() {
+    if (get_csv_log_level() >= 1) return;  // level 1+ = skip tuning CSV
     std::call_once(g_log_once, [](){
+      if (csv_logs_disabled()) return;
       OPS_instance *inst = OPS_instance::getOPSInstance();
       bool autotune = is_autotune();
       std::string app_name = get_app_name();
@@ -964,7 +986,9 @@ void ensure_dir_exists(const std::string &path) {
   }
 
   void ensure_best_log_open() {
+    if (get_csv_log_level() >= 2) return;  // level 2 = skip all CSVs
     std::call_once(g_best_log_once, [](){
+      if (csv_logs_disabled()) return;
       OPS_instance *inst = OPS_instance::getOPSInstance();
       bool autotune = is_autotune();
       std::string app_name = get_app_name();
@@ -1000,7 +1024,9 @@ void ensure_dir_exists(const std::string &path) {
   std::once_flag g_arrays_log_once;
 
   void ensure_arrays_log_open() {
+    if (get_csv_log_level() >= 1) return;  // level 1+ = skip arrays CSV
     std::call_once(g_arrays_log_once, [](){
+      if (csv_logs_disabled()) return;
       bool autotune = is_autotune();
       const char* env_logs_dir = std::getenv("OPS_LOGS_DIR");
       std::string base_dir = env_logs_dir ? std::string(env_logs_dir) : "/home/kevin/OPS_LOGS";
@@ -1050,7 +1076,9 @@ void ensure_dir_exists(const std::string &path) {
   std::once_flag g_arrays_best_log_once;
 
   void ensure_arrays_best_log_open() {
+    if (get_csv_log_level() >= 2) return;  // level 2 = skip all CSVs
     std::call_once(g_arrays_best_log_once, [](){
+      if (csv_logs_disabled()) return;
       bool autotune = is_autotune();
       const char* env_logs_dir = std::getenv("OPS_LOGS_DIR");
       std::string base_dir = env_logs_dir ? std::string(env_logs_dir) : "/home/kevin/OPS_LOGS";
@@ -1376,7 +1404,7 @@ void ops_record_kernel_performance(int kernel_id, double seconds_total) {
 
 
   // CSV log: kernel_id,bx,by,bz,execution_time,mpi_time,mpi_fraction,points,gpoints_per_s
-  if (g_log.good()) {
+  if (get_csv_log_level() < 1 && g_log.good()) {
     g_log << kernel_id << ',' << bs.x << ',' << bs.y << ',' << bs.z;
     // 43 ML features (same order as enriched autotune CSVs)
     for (int fi = 0; fi < 43; ++fi) {

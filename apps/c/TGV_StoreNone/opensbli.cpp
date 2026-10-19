@@ -1,6 +1,7 @@
 #include <stdlib.h> 
 #include <string.h> 
 #include <math.h>
+#include <limits.h>
 #ifdef PROFILE_ITT
 #include <ittnotify.h>
 #endif
@@ -44,6 +45,20 @@ int main(int argc, char **argv)
   Delta1block0 = M_PI/(block0np1-1);
   Delta2block0 = M_PI/(block0np2-1);
   niter = 500;
+  // Preserve the historical three-argument interface.  A fourth, purely
+  // numeric argument overrides the timestep count; OPS options may still
+  // follow the mesh dimensions without being mistaken for this value.
+  if (argc >= 5) {
+    char *endptr = NULL;
+    long requested_niter = strtol(argv[4], &endptr, 10);
+    if (argv[4][0] != '\0' && endptr != NULL && *endptr == '\0') {
+      if (requested_niter < 1 || requested_niter > INT_MAX) {
+        printf("Error, iteration count must be a positive integer\n");
+        exit(-1);
+      }
+      niter = (int)requested_niter;
+    }
+  }
   double rkold[] = {1.0/4.0, 3.0/20.0, 3.0/5.0};
   double rknew[] = {2.0/3.0, 5.0/12.0, 3.0/5.0};
   dt = 0.005;
