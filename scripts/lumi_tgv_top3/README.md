@@ -5,8 +5,10 @@
 Run from any directory; OPS is located relative to the script. Override with `--ops-root`.
 
 ```bash
-bash /path/to/OPS/scripts/lumi_tgv_top3/run.sh --dry-run
+bash /path/to/OPS/scripts/lumi_tgv_top3/run.sh --dry-run --account project_XXXXXXXXX
 ```
+
+Results and preflight reports default to `/scratch/<account>/ops-decomposition/campaigns/TGV_TOP3_<stamp>/`, following the original LUMI app's campaign location. The account comes from `--account` or `SLURM_ACCOUNT`; no project ID or username is hardcoded. For a different server/filesystem or a local dry run, pass `--output-root /path/to/results` (the campaign is created directly below that directory). Without an account or an explicit output path, actions that create reports/results stop with an explanatory error. Help and `--validate` do not require an output path. An explicit `--campaign` continues to address existing campaigns, including those created at the previous location; existing results are not moved.
 
 The default input is `OPS/dataset-lumi/TOP3_DATASET.tar.gz` with its `.sha256` file. The launcher verifies the checksum, extracts once under a lock, verifies every packaged file, and reuses the validated folder. An existing folder with different contents is rejected. `--dataset /path/to/TOP3_DATASET` selects an already extracted package explicitly.
 
@@ -27,7 +29,6 @@ Execute on a LUMI login node using the new user's project account:
 bash scripts/lumi_tgv_top3/run.sh --analyze-resources \
   --account project_XXXXXXXXX \
   --nodes 6,8,10,12,16,20,24,32,40 \
-  --output-root /scratch/project_XXXXXXXXX/user/tgv-results \
   --date-stamp campaign01
 ```
 
@@ -68,7 +69,6 @@ bash scripts/lumi_tgv_top3/run.sh --submit \
   --account project_XXXXXXXXX \
   --nodes 6,8,10,12,16,20,24,32,40 \
   --env-file /path/to/lumi-env.sh \
-  --output-root /scratch/project_XXXXXXXXX/user/tgv-results \
   --date-stamp campaign01 \
   --time 01:00:00
 ```

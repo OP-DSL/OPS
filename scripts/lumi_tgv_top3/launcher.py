@@ -662,12 +662,22 @@ def collect(campaign):
     print(f'Collected {len(summaries)} cases; nodes without summaries: {absent}', flush=True)
 
 
+def campaign_directory(args):
+    if args.campaign:
+        return args.campaign.expanduser().resolve()
+    output = args.output_root
+    if output is None:
+        require(args.account, 'Specify --account (or SLURM_ACCOUNT) to use /scratch/<account>/ops-decomposition/campaigns, or provide --output-root explicitly.')
+        output = Path('/scratch') / args.account / 'ops-decomposition' / 'campaigns'
+    return output.expanduser().resolve() / f'TGV_TOP3_{args.date_stamp}'
+
+
 def parser():
     p = argparse.ArgumentParser(description=__doc__, epilog='No action prints help. --submit sends jobs; --dry-run and --analyze-resources never send jobs. Incomplete selected catalogs block execution.')
     p.add_argument('--ops-root', type=Path, default=HERE.parent.parent)
     p.add_argument('--dataset', type=Path, help='Extracted package; default: OPS_ROOT/dataset-lumi/TOP3_DATASET.tar.gz')
-    p.add_argument('--output-root', type=Path, help='New campaign results root; defaults to OPS_ROOT/lumi-results')
-    p.add_argument('--account', default=os.environ.get('SLURM_ACCOUNT', ''))
+    p.add_argument('--output-root', type=Path, help='Campaign parent directory; default: /scratch/<account>/ops-decomposition/campaigns')
+    p.add_argument('--account', default=os.environ.get('SLURM_ACCOUNT', ''), help='Slurm project account; defaults to SLURM_ACCOUNT; also determines the default output path')
     p.add_argument('--partition', default='standard-g', help='Production partition or auto (probe small-g for <=4 nodes and standard-g)')
     p.add_argument('--time', default='01:00:00', help='Allocation time for all cases AND compatibility smoke tests in each node job')
     p.add_argument('--nodes', default=','.join(map(str, NODES)))
@@ -724,6 +734,7 @@ def main(argv=None):
     for value in (args.time, args.build_time):
         require(re.fullmatch(r'(?:\d+-)?\d+:\d{2}:\d{2}', value), 'Use Slurm time [days-]HH:MM:SS')
     require(1 <= args.build_jobs <= 56, 'Invalid build concurrency')
+    campaign = campaign_directory(args) if not args.validate else None
     dataset, dataset_manifest = ensure_dataset(args.ops_root, args.dataset)
     cases, coverage = make_plan(dataset, args.nodes)
     incomplete = [c for c in coverage if c['status'] != 'COMPLETE']
@@ -732,8 +743,6 @@ def main(argv=None):
         require(not incomplete, f'Incomplete selected catalogs: {sorted({c["nodes"] for c in incomplete})}; see dataset missing_blocks.csv')
         print('PASS: selected dataset/catalogs. Target executable is not validated until build + runtime metadata smoke checks.')
         return 0
-    output = (args.output_root or args.ops_root / 'lumi-results').expanduser().resolve()
-    campaign = args.campaign.resolve() if args.campaign else output / f'TGV_TOP3_{args.date_stamp}'
     # Read-only analysis/dry run write their plan to a separate report directory.
     if args.analyze_resources or args.dry_run:
         report_dir = campaign / 'preflight'; report_dir.mkdir(parents=True, exist_ok=True)
