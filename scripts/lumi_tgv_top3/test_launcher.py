@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import tarfile
 import tempfile
 import unittest
@@ -102,6 +103,25 @@ class LauncherTests(unittest.TestCase):
         with patch.object(L,'query',return_value=dict(status='NOT_QUERIED')):
             report=L.analyze(args,[dict(nodes=6,status='COMPLETE')])
         with self.assertRaisesRegex(ValueError,'No successful'):L.select_partitions(report,args)
+
+    def test_query_on_running_python(self):
+        result = L.query([sys.executable, '-c', 'print("probe passed")'])
+        self.assertEqual(result['status'], 'OK')
+        self.assertEqual(result['stdout'].strip(), 'probe passed')
+
+    def test_translator_selects_newer_python(self):
+        def lookup(name):
+            return '/available/python3.8' if name == 'python3.8' else '/available/old-python'
+        def version(command, **kwargs):
+            return dict(status='OK' if command[0].endswith('python3.8') else 'ERROR')
+        with patch.object(L.shutil, 'which', side_effect=lookup), patch.object(L, 'query', side_effect=version):
+            self.assertEqual(L.translator_interpreter(), '/available/python3.8')
+            with self.assertRaisesRegex(ValueError, 'OPS translation requires Python >= 3.8'):
+                L.translator_interpreter('/explicit/old-python')
+
+    def test_translator_preserves_virtualenv_path(self):
+        with patch.object(L.shutil, 'which', return_value='/venv/bin/python3'), patch.object(L, 'query', return_value=dict(status='OK')):
+            self.assertEqual(L.translator_interpreter('/venv/bin/python3'), '/venv/bin/python3')
 
     def test_rank_worker_sets_gpu_and_correct_catalog(self):
         cat=self.catalog();run=self.root/'run';run.mkdir();(run/'ranks').mkdir()

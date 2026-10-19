@@ -1,6 +1,6 @@
 # TGV StoreNone Top 3 on LUMI
 
-`run.sh` prepares the bundled dataset, checks selected cases, probes Slurm and submits a build followed by one GPU job per node count. It does not run autotuning. It requires Bash and Python 3.9+.
+`run.sh` prepares the bundled dataset, checks selected cases, probes Slurm and submits a build followed by one GPU job per node count. It does not run autotuning. The launcher requires Bash and Python 3.6+. Compiling OPS additionally requires Python 3.8+ for its translator.
 
 Run from any directory; OPS is located relative to the script. Override with `--ops-root`.
 
@@ -50,6 +50,8 @@ export MPICH_GPU_SUPPORT_ENABLED=1
 ```
 
 The profile is copied into the campaign and sourced by build and compute jobs. It must provide `hipcc`, Cray `cc`/`CC`, `CRAY_MPICH_DIR`, and the AMD GPU transport library location. The launcher configures OPS/HIP/MPI flags itself.
+
+An older system Python (3.6 or 3.7) can run help, dataset validation, dry runs and Slurm orchestration. During compilation, the launcher looks for a Python 3.8+ interpreter on `PATH` to create the translator environment. If none is available, load a newer Python in your environment profile, or supply `--translator-python` pointing to an existing environment with the translator dependencies. To choose the launcher interpreter itself, set `OPS_LAUNCHER_PYTHON=/path/to/python3`.
 
 The launcher snapshots the relevant tracked OPS sources **including their current working-tree contents** into the result folder. This avoids concurrent builds or changing the user's checkout. The required existing local OPS changes are the TGV fourth argument for simulation steps and `OPS_DISABLE_CSV_LOGS`/`OPS_CSV_LOG_LEVEL` in the runtime. If they are absent, preparation stops. Carry these source changes when transferring OPS to another user; they are not supplied by the dataset archive.
 

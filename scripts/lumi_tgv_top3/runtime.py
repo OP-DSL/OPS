@@ -35,7 +35,7 @@ def shape_text(dims):
     return 'x'.join(map(str, dims))
 
 def gpu_preflight(exe):
-    result = subprocess.run(['ldd', str(exe)], capture_output=True, text=True)
+    result = subprocess.run(['ldd', str(exe)], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     require(result.returncode == 0 and 'libmpi_gtl_hsa' in result.stdout and 'not found' not in result.stdout,
             'GPU-aware Cray MPI linkage unavailable. Load the matching ROCm/Cray MPI environment; check ldd for libmpi_gtl_hsa.')
 
@@ -93,7 +93,8 @@ def rank_worker(spec_path, run):
     return 0 if good else 1
 
 def target_path(root, case):
-    label = f"tgvstorenone_hip_{shape_text(case['grid'])}_cfg1_comparison_{root.name.removeprefix('OPS_LOGS_')}"
+    stamp = root.name[len('OPS_LOGS_'):] if root.name.startswith('OPS_LOGS_') else root.name
+    label = f"tgvstorenone_hip_{shape_text(case['grid'])}_cfg1_comparison_{stamp}"
     return root / label / 'mode_1' / ('decomp' + shape_text(case['shape'])) / 'iter_1' / ('autotune_off' if case['mode'] == 0 else 'autotune_precomputed')
 
 def complete(run, case):

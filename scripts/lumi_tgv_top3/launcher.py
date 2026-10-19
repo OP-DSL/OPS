@@ -29,6 +29,17 @@ CPU_BIND = 'map_cpu:49,57,17,25,1,9,33,41'
 VERSION = 1
 
 
+def product(values):
+    result = 1
+    for value in values:
+        result *= value
+    return result
+
+
+def shell_join(command):
+    return ' '.join(shlex.quote(arg) for arg in command)
+
+
 def now():
     return datetime.now(timezone.utc).isoformat()
 
@@ -46,7 +57,11 @@ def lock(path):
 
 def contained(root, rel):
     path = root / rel
-    require(not Path(rel).is_absolute() and path.resolve().is_relative_to(root.resolve()), f'Path escapes package: {rel}')
+    require(not Path(rel).is_absolute(), f'Path escapes package: {rel}')
+    try:
+        path.resolve().relative_to(root.resolve())
+    except ValueError:
+        raise ValueError(f'Path escapes package: {rel}')
     return path
 
 
@@ -149,7 +164,7 @@ def catalog_check(folder, expected=None):
         require(values and len({v['kernel_id'] for v in values}) == len(values), 'Empty/duplicate kernels')
         for v in values:
             dims = [int(v[k]) for k in ('bx', 'by', 'bz')]
-            require(int(v['kernel_id']) >= 0 and min(dims) > 0 and math.prod(dims) <= 1024, 'Invalid block dimensions')
+            require(int(v['kernel_id']) >= 0 and min(dims) > 0 and product(dims) <= 1024, 'Invalid block dimensions')
     return m, missing
 
 
@@ -170,7 +185,7 @@ def make_plan(dataset, selected):
             require(row['global_grid'] == source['Global grid'].replace('×', 'x'), 'Grid differs from selections')
             field = 'Fixed baseline MPI decomposition' if role == 'C' else 'Tested MPI decomposition'
             require(row['mpi_decomposition'] == source[field].replace('×', 'x'), 'MPI differs from selections')
-            require(len(grid) == len(shape) == 3 and len(set(grid)) == 1 and math.prod(shape) == n * 8, 'Invalid cube/MPI')
+            require(len(grid) == len(shape) == 3 and len(set(grid)) == 1 and product(shape) == n * 8, 'Invalid cube/MPI')
             require(all(g % p == 0 for g, p in zip(grid, shape)), 'Indivisible grid')
             require(int(row['simulation_iterations']) == 500 and int(row['mpi_ranks']) == n * 8, 'Wrong ranks/steps')
             case = dict(nodes=n, ranks=n*8, grid=grid, shape=shape, niter=500, mode=2,
@@ -198,7 +213,7 @@ def query(command, timeout=15):
     if not shutil.which(command[0]):
         return dict(status='NOT_QUERIED', command=command, message=f'{command[0]} unavailable')
     try:
-        r = subprocess.run(command, text=True, capture_output=True, timeout=timeout)
+        r = subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout)
         return dict(status='OK' if r.returncode == 0 else 'ERROR', command=command,
                     returncode=r.returncode, stdout=r.stdout, stderr=r.stderr)
     except (OSError, subprocess.TimeoutExpired) as e:
@@ -277,10 +292,25 @@ def snapshot_ops(ops, campaign):
     app = (target / 'apps/c/TGV_StoreNone/opensbli.cpp').read_text()
     require('OPS_DISABLE_CSV_LOGS' in util and 'OPS_CSV_LOG_LEVEL' in util, 'OPS runtime lacks rank-selective CSV controls; use the prepared OPS checkout')
     require('requested_niter' in app, 'TGV must accept the fourth argument (iteration count) for compatibility smoke tests')
-    data = dict(commit=subprocess.check_output(['git', '-C', str(ops), 'rev-parse', 'HEAD'], text=True).strip(),
+    data = dict(commit=subprocess.check_output(['git', '-C', str(ops), 'rev-parse', 'HEAD'], universal_newlines=True).strip(),
                 source_files_sha256=copied, source_root=str(ops))
     atomic(campaign / 'source_snapshot.json', data)
     (campaign / 'source_changes.patch').write_bytes(subprocess.check_output(['git', '-C', str(ops), 'diff', 'HEAD', '--', *prefixes]))
+
+
+def translator_interpreter(explicit=None):
+    candidates = [explicit] if explicit else [sys.executable, 'python3'] + [f'python3.{minor}' for minor in range(14, 7, -1)]
+    for candidate in candidates:
+        executable = shutil.which(str(candidate))
+        if not executable:
+            continue
+        result = query([executable, '-c', 'import sys; sys.exit(0 if sys.version_info >= (3, 8) else 1)'])
+        if result['status'] == 'OK':
+            # Preserve virtualenv paths; resolving symlinks would discard that environment.
+            return str(Path(executable).absolute())
+    raise ValueError('OPS translation requires Python >= 3.8. Load a newer Python in --env-file, '
+                     'or pass --translator-python /path/to/venv/bin/python3 with the OPS translator dependencies. '
+                     'The launcher itself supports Python >= 3.6.')
 
 
 def build_binary(campaign):
@@ -300,26 +330,29 @@ def build_binary(campaign):
         require(shutil.which('CC') and shutil.which('cc'), 'Cray CC/cc wrappers are required')
         hip_root = Path(os.environ.get('HIP_INSTALL_PATH') or os.environ.get('ROCM_PATH') or str(Path(hipcc).resolve().parent.parent))
         mpi_lib = mpi_root / 'lib'
-        gtl = os.environ.get('PE_MPICH_GTL_DIR_amd_gfx90a', '').removeprefix('-L')
+        gtl = os.environ.get('PE_MPICH_GTL_DIR_amd_gfx90a', '')
+        if gtl.startswith('-L'):
+            gtl = gtl[2:]
         if not gtl:
             found = list(mpi_root.glob('gtl/lib/libmpi_gtl_hsa.so*'))
             if found:
                 gtl = str(found[0].parent)
         require(gtl and Path(gtl).is_dir(), 'Cannot locate libmpi_gtl_hsa; set PE_MPICH_GTL_DIR_amd_gfx90a in the environment profile')
         translator = config.get('translator_python')
+        python = translator_interpreter(translator)
         log = campaign / 'build/build.log'
         env = dict(os.environ)
         with log.open('a') as out:
             def run(cmd):
-                out.write(shlex.join(cmd) + '\n'); out.flush()
+                out.write(shell_join(cmd) + '\n'); out.flush()
                 subprocess.run(cmd, env=env, stdout=out, stderr=subprocess.STDOUT, check=True)
             if not translator:
                 venv = campaign / 'build/translator-env'
                 if not (venv / 'bin/python3').exists():
-                    run([sys.executable, '-m', 'venv', str(venv)])
+                    run([python, '-m', 'venv', str(venv)])
                 run([str(venv / 'bin/python3'), '-m', 'pip', 'install', '-r', str(target / 'ops_translator/requirements.txt')])
                 translator = str(venv / 'bin/python3')
-            translator = str(Path(translator).absolute())
+            translator = translator_interpreter(translator)
             # Wrapper fixes the exact interpreter used by Makefile.c_app's python3 command.
             shim = campaign / 'build/python-bin'; shim.mkdir(exist_ok=True)
             wrapper = shim / 'python3'
@@ -380,7 +413,7 @@ def validate_transfer(historical_log, current_log, blocks):
     for block in rows(blocks):
         kid = block['kernel_id']
         require(kid in new, f'Block references an unobserved kernel: {kid}')
-        require(math.prod(int(block[k]) for k in ('bx', 'by', 'bz')) <= float(new[kid]['max_threads']), f'Block exceeds current kernel limit: {kid}')
+        require(product(int(block[k]) for k in ('bx', 'by', 'bz')) <= float(new[kid]['max_threads']), f'Block exceeds current kernel limit: {kid}')
     return dict(status='PASS', kernels=len(new), fields_checked=list(fields),
                 missing_catalog_kernels=sorted(set(new) - {r['kernel_id'] for r in rows(blocks)}, key=int),
                 historical_log_sha256=sha(historical_log), smoke_log_sha256=sha(current_log),
@@ -420,7 +453,7 @@ def execute_case(campaign, case, exe, catalog, run, smoke=False):
         CAMPAIGN_ID=campaign.name, CASE_ID=c['case_id'], RUN_CLASS='SMOKE' if smoke else 'SCIENTIFIC',
         SCIENTIFIC_RESULT='NO' if smoke else 'YES', NITER=c['niter'], GPU_ARCH='gfx90a',
         EXECUTABLE_SHA256=sha(exe), DECOMPOSITION_MODE=1, GRID_X=c['grid'][0], GRID_Y=c['grid'][1], GRID_Z=c['grid'][2],
-        GRID_CONFIG='cfg1', TOTAL_CELLS=math.prod(c['grid']), NUM_NODES=c['nodes'], NUM_MPI_RANKS=c['ranks'],
+        GRID_CONFIG='cfg1', TOTAL_CELLS=product(c['grid']), NUM_NODES=c['nodes'], NUM_MPI_RANKS=c['ranks'],
         GPUS_PER_NODE=8, NUM_GPUS_USED=c['ranks'], RANKS_PER_GPU=1, DECOMP_PX=c['shape'][0],
         DECOMP_PY=c['shape'][1], DECOMP_PZ=c['shape'][2], OPS_AUTOTUNE_MODE=c['mode'], GPU_DIRECT='YES',
         MPICH_GPU_SUPPORT_ENABLED=1, RUN_ITERATION=1, TOP3_ROLES=','.join(c['roles']), CSV_LOG_RANKS='0',
@@ -536,7 +569,7 @@ def job_script(campaign, action, nodes=None):
     command = ['bash', str(campaign / 'launcher/run.sh'), action, '--campaign', str(campaign)]
     if nodes is not None:
         command += ['--node', str(nodes)]
-    return '#!/usr/bin/env bash\nset -euo pipefail\nsource ' + shlex.quote(str(campaign / 'environment.sh')) + '\n' + shlex.join(command) + '\n'
+    return '#!/usr/bin/env bash\nset -euo pipefail\nsource ' + shlex.quote(str(campaign / 'environment.sh')) + '\n' + shell_join(command) + '\n'
 
 
 def freeze_launcher(campaign, env_file):
@@ -579,7 +612,7 @@ def submit(campaign, args, config):
         for rel, digest in config['launcher_sha256'].items():
             require(sha(campaign / rel) == digest, f'Frozen launcher/profile changed: {rel}')
         def sbatch(command):
-            r = subprocess.run(command, text=True, capture_output=True)
+            r = subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             require(r.returncode == 0, f'sbatch failed: {r.stderr.strip()}')
             job = r.stdout.strip().split(';')[0]
             require(re.fullmatch('[0-9]+', job), f'Unexpected sbatch result: {r.stdout}')
@@ -660,7 +693,7 @@ def parser():
 def main(argv=None):
     p = parser()
     args = p.parse_args(argv)
-    require(sys.version_info >= (3, 9), 'Python 3.9 or newer is required')
+    require(sys.version_info >= (3, 6), 'Python 3.6 or newer is required for the launcher')
     if args.rank_spec:
         return runtime.rank_worker(args.rank_spec, args.rank_output)
     if args.internal_build:
