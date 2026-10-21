@@ -13,6 +13,7 @@ import sys
 import tarfile
 import tempfile
 import unittest
+import zipfile
 from unittest.mock import patch
 
 import launcher as L
@@ -71,6 +72,40 @@ class LauncherTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'libclang preflight failed'):
             L.configure_libclang(python, env, out)
         self.assertIn('missing-libclang.so', out.getvalue())
+
+    def test_translator_requirements_have_one_clang_provider(self):
+        requirements = (Path(__file__).resolve().parents[2] / 'ops_translator/requirements.txt').read_text()
+        packages = [line.split('==')[0].strip().lower() for line in requirements.splitlines()
+                    if line.strip() and not line.lstrip().startswith('#')]
+        self.assertIn('libclang', packages)
+        self.assertNotIn('clang', packages)
+
+    def test_real_clang_wheel_collision_is_detected(self):
+        wheel_dir = os.environ.get('OPS_TEST_CLANG_WHEELS')
+        if not wheel_dir:
+            self.skipTest('Set OPS_TEST_CLANG_WHEELS to downloaded clang/libclang 16.0.6 wheels')
+        python = os.environ.get('OPS_TEST_TRANSLATOR_PYTHON', sys.executable)
+        for label, packages in [('conflict', ['libclang', 'clang']), ('fixed', ['libclang'])]:
+            dest = self.root / label
+            for package in packages:
+                wheel = next(Path(wheel_dir).glob(package + '-16.0.6-*.whl'))
+                with zipfile.ZipFile(str(wheel)) as archive:
+                    for entry in archive.namelist():
+                        # Reproduce wheel installation into site-packages.
+                        relative = entry.split('.data/platlib/', 1)[-1]
+                        path = L.contained(dest, relative)
+                        path.parent.mkdir(parents=True, exist_ok=True)
+                        path.write_bytes(archive.read(entry))
+            env = dict(os.environ, PYTHONPATH=str(dest))
+            env.pop('LIBCLANG_PATH', None)
+            out = io.StringIO()
+            if label == 'conflict':
+                with self.assertRaisesRegex(ValueError, 'libclang preflight failed'):
+                    L.configure_libclang(python, env, out)
+                self.assertIn('Unknown template argument kind 280', out.getvalue())
+            else:
+                library = L.configure_libclang(python, env, out)
+                self.assertEqual(library, str(dest / 'clang/native/libclang.so'))
 
     def package(self):
         package = self.root / 'source/TOP3_DATASET'

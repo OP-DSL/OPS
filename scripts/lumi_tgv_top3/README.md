@@ -137,6 +137,8 @@ The source snapshot requires the tracked TGV Makefile and both application heade
 
 Before compiling, the launcher locates the translator environment's bundled `clang/native/libclang.so`, exports its full filename as `LIBCLANG_PATH`, and verifies native C++ parsing. An explicit `LIBCLANG_PATH` from the environment profile takes precedence and must point to a compatible library file. The selected path is recorded in `build_manifest.json`.
 
+Translator requirements use only `libclang==16.0.6`, which supplies both the native library and matching Python bindings. Do not install the separate `clang` package over it: both own the same Python files and the latter lacks cursor kind 280. Preflight traverses a bit-cast expression to detect this conflict. A retry repairs conflicting packages only in the campaign-owned virtual environment; user-supplied translator environments are validated without modification.
+
 After a source/build fix, update the checkout and submit a **new campaign**. Existing campaigns retain their frozen source snapshot and launcher; `--resume` does not apply code updates. Cancel any jobs left waiting on a failed build before replacing that campaign.
 
 ```bash

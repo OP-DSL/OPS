@@ -351,10 +351,16 @@ if library:
     ci.Config.set_library_file(library)
 index = ci.Index.create()
 unit = index.parse('ops_probe.cpp', args=['-xc++', '-std=c++11'],
-                   unsaved_files=[('ops_probe.cpp', 'int main() { return 0; }')])
+                   unsaved_files=[('ops_probe.cpp',
+                       'int bits(float x) { return __builtin_bit_cast(int, x); }')])
 errors = [str(d) for d in unit.diagnostics if d.severity >= ci.Diagnostic.Error]
 if errors:
     raise RuntimeError('C++ parser probe failed: ' + '; '.join(errors))
+# Parsing alone succeeds with the conflicting clang wheel. Traversal exposes
+# missing Python cursor enums, including BUILTIN_BIT_CAST_EXPR (280).
+kinds = [node.kind for node in unit.cursor.walk_preorder()]
+if not any(kind.value == 280 for kind in kinds):
+    raise RuntimeError('C++ parser probe did not produce the bit-cast expression')
 print(ci.conf.get_filename())
 '''
     result = subprocess.run([python, '-c', code], env=env, stdout=subprocess.PIPE,
@@ -364,6 +370,7 @@ print(ci.conf.get_filename())
     out.flush()
     require(result.returncode == 0,
             'Translator/libclang preflight failed; inspect build/build.log. '
+            'Use the libclang package without the conflicting clang package. '
             'LIBCLANG_PATH, if set, must name a compatible shared-library file (not a directory).')
     library = result.stdout.strip().splitlines()[-1]
     env['LIBCLANG_PATH'] = library
@@ -407,6 +414,11 @@ def build_binary(campaign):
                 venv = campaign / 'build/translator-env'
                 if not (venv / 'bin/python3').exists():
                     run([python, '-m', 'venv', str(venv)])
+                # Repair only the campaign-owned environment on a retry. Both
+                # distributions own clang/cindex.py, so remove both before
+                # reinstalling the one coherent package from requirements.
+                if query([str(venv / 'bin/python3'), '-m', 'pip', 'show', 'clang'])['status'] == 'OK':
+                    run([str(venv / 'bin/python3'), '-m', 'pip', 'uninstall', '-y', 'clang', 'libclang'])
                 run([str(venv / 'bin/python3'), '-m', 'pip', 'install', '-r', str(target / 'ops_translator/requirements.txt')])
                 translator = str(venv / 'bin/python3')
             translator = translator_interpreter(translator)

@@ -1,7 +1,6 @@
 fparser
 cached-property
 dataclasses
-clang==16.0.6
 jinja2
 pylint
 mypy
@@ -9,4 +8,6 @@ pcpp
 sympy
 numpy
 h5py
+# Includes the native library AND matching clang Python bindings. Installing
+# the separate clang wheel overwrites those bindings (e.g. missing kind 280).
 libclang==16.0.6
