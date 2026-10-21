@@ -53,6 +53,41 @@ class LauncherTests(unittest.TestCase):
                 L.snapshot_ops(ops, self.root)
         self.assertFalse((self.root / 'build/OPS').exists())
 
+    def test_rocm_host_compilers_and_real_make_plan(self):
+        ops = Path(__file__).resolve().parents[2]
+        L.snapshot_ops(ops, self.root)
+        snapshot = self.root / 'build/OPS'
+        for layout in ('llvm/bin', 'lib/llvm/bin'):
+            rocm = self.root / layout.replace('/', '_')
+            compiler_dir = rocm / layout
+            compiler_dir.mkdir(parents=True)
+            for name in ('clang', 'clang++'):
+                path = compiler_dir / name
+                path.write_text('#!/bin/sh\nexit 99\n')
+                path.chmod(0o755)
+            with patch.dict(os.environ, {'HIP_CLANG_PATH': ''}):
+                flags = L.rocm_compiler_flags('/rocm/hipcc', rocm)
+            commands = dict(flag.split('=', 1) for flag in flags)
+            self.assertEqual(commands['CXX'], str(compiler_dir / 'clang++'))
+            self.assertEqual(commands['MPICXX'], commands['CXX'])
+            result = subprocess.run(['make', '-n', '-C', str(snapshot / 'ops/c'),
+                'OPS_COMPILER=hip', 'OPS_INSTALL_PATH=' + str(snapshot / 'ops'),
+                'GPU_VENDOR=AMD', 'HIP_INSTALL_PATH=' + str(rocm),
+                'MPI_INSTALL_PATH=/cray/mpi', 'I_MPI_INC=-I/cray/mpi/include',
+                'CXXFLAGS=-O3 -fPIC -std=c++11', 'TARGETS=mpi_hip'] + flags + ['mpi_hip'],
+                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+            self.assertEqual(result.returncode, 0, result.stdout)
+            for source in ('ops_lib_core.cpp', 'ops_lazy.cpp', 'ops_util.cpp', 'ops_mpi_core.cpp',
+                           'ops_mpi_rt_support.cpp', 'ops_mpi_partition.cpp'):
+                lines = [line for line in result.stdout.splitlines() if ' -c ' in line and '/' + source in line]
+                self.assertEqual(len(lines), 1, result.stdout)
+                self.assertTrue(lines[0].startswith(commands['CXX'] + ' '), lines[0])
+            hip_lines = [line for line in result.stdout.splitlines() if ' -c ' in line and 'ops_mpi_rt_support_hip.cpp' in line]
+            self.assertTrue(hip_lines[0].startswith('/rocm/hipcc '))
+        with patch.dict(os.environ, {'HIP_CLANG_PATH': str(self.root / 'missing')}):
+            with self.assertRaisesRegex(ValueError, 'Cannot locate ROCm'):
+                L.rocm_compiler_flags('/rocm/hipcc', rocm)
+
     def test_libclang_bundled_library_parses_cpp_without_system_library(self):
         python = os.environ.get('OPS_TEST_TRANSLATOR_PYTHON', sys.executable)
         check = subprocess.run([python, '-c',

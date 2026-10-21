@@ -59,6 +59,8 @@ The launcher snapshots the relevant tracked OPS sources **including their curren
 
 One build job compiles OPS MPI+HIP and `TGV_StoreNone`, then freezes the executable and records its SHA256, source hashes, Git revision, compiler versions and environment. By default the build creates an isolated translator Python environment and installs `ops_translator/requirements.txt`; this requires package access. To use a prepared/offline environment, pass `--translator-python /path/to/venv/bin/python3`.
 
+Host objects use ROCm `clang`/`clang++`, and GPU objects and the executable use `hipcc`. This avoids Cray compiler-runtime references in objects linked directly by HIP. Cray MPICH headers, `libmpi`, the GPU transport library `libmpi_gtl_hsa`, and GPU Direct remain enabled. The launcher locates host compilers under the ROCm installation, or uses `HIP_CLANG_PATH` when explicitly set, and records all compiler commands in the build manifest.
+
 Choose an output path without whitespace: the upstream OPS Makefiles use this path during compilation.
 
 `--build` performs the same build in the current shell environment via the profile, without submitting jobs. `--submit` instead submits a single build job in `small-g` by default, and all measurement jobs depend on its success. Customize `--build-partition`, `--build-time` and `--build-jobs` as needed.

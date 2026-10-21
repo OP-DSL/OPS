@@ -377,6 +377,23 @@ print(ci.conf.get_filename())
     return library
 
 
+def rocm_compiler_flags(hipcc, hip_root):
+    # Link with hipcc and compile host objects with its ROCm toolchain too.
+    # Cray CC can inject compiler-runtime calls (__cray_*set_detect) that a
+    # direct hipcc link does not supply. MPI uses explicit Cray headers/libs.
+    override = os.environ.get('HIP_CLANG_PATH')
+    candidates = [Path(override)] if override else [
+        hip_root / 'llvm/bin', hip_root / 'lib/llvm/bin', hip_root / 'bin']
+    for directory in candidates:
+        cc, cxx = directory / 'clang', directory / 'clang++'
+        if all(p.is_file() and os.access(str(p), os.X_OK) for p in (cc, cxx)):
+            # Do not resolve clang++ symlinks: the executable name selects C++.
+            return [f'CC={cc}', f'CXX={cxx}', f'MPICC={cc}', f'MPICXX={cxx}',
+                    f'MPICPP={cxx}', f'HIPCC={hipcc}', f'HIPMPICXX={hipcc}']
+    raise ValueError('Cannot locate ROCm clang/clang++ for host compilation. '
+                     'Set HIP_CLANG_PATH to the compiler directory used by hipcc.')
+
+
 def build_binary(campaign):
     config = read_json(campaign / 'campaign.json')
     target = campaign / 'build/OPS'
@@ -391,8 +408,8 @@ def build_binary(campaign):
         hipcc = shutil.which('hipcc')
         mpi_root = Path(os.environ.get('CRAY_MPICH_DIR', ''))
         require(hipcc and (mpi_root / 'include/mpi.h').is_file(), 'Load ROCm and Cray MPICH via --env-file; hipcc or mpi.h missing')
-        require(shutil.which('CC') and shutil.which('cc'), 'Cray CC/cc wrappers are required')
         hip_root = Path(os.environ.get('HIP_INSTALL_PATH') or os.environ.get('ROCM_PATH') or str(Path(hipcc).resolve().parent.parent))
+        compiler_flags = rocm_compiler_flags(hipcc, hip_root)
         mpi_lib = mpi_root / 'lib'
         gtl = os.environ.get('PE_MPICH_GTL_DIR_amd_gfx90a', '')
         if gtl.startswith('-L'):
@@ -431,8 +448,7 @@ def build_binary(campaign):
                        HIP_INSTALL_PATH=str(hip_root), ROCM_PATH=str(hip_root), MPI_INSTALL_PATH=str(mpi_root),
                        MPICH_GPU_SUPPORT_ENABLED='1')
             configure_libclang(translator, env, out)
-            flags = ['OPS_COMPILER=hip', f'OPS_INSTALL_PATH={target / "ops"}', 'CC=cc', 'CXX=CC',
-                     'MPICC=cc', 'MPICXX=CC', 'MPICPP=CC', f'HIPCC={hipcc}', f'HIPMPICXX={hipcc}',
+            flags = ['OPS_COMPILER=hip', f'OPS_INSTALL_PATH={target / "ops"}', *compiler_flags,
                      f'HIP_INSTALL_PATH={hip_root}', f'MPI_INSTALL_PATH={mpi_root}', f'MPI_INC={mpi_root / "include"}',
                      f'MPI_LIB={mpi_lib}', f'I_MPI_INC=-I{mpi_root / "include"}', 'MPI_LINK=-lmpi',
                      f'MPI_HIP_LINK=-L{mpi_lib} -L{gtl} -lmpi -lmpi_gtl_hsa',
@@ -449,9 +465,11 @@ def build_binary(campaign):
         frozen = campaign / 'build/tgvstorenone_mpi_hip'
         shutil.copy2(exe, frozen)
         environment = {k: v for k, v in env.items() if k.startswith(('OPS_', 'HIP', 'ROCM', 'CRAY_', 'PE_', 'MPICH_', 'LOADEDMODULES', 'AMD_ARCH'))}
-        versions = {tool: query([tool, '--version']) for tool in ('hipcc', 'CC', 'cc')}
+        compiler_commands = dict(flag.split('=', 1) for flag in compiler_flags)
+        versions = {tool: query([tool, '--version']) for tool in sorted(set(compiler_commands.values()))}
         atomic(campaign / 'build/build_manifest.json', dict(executable=str(frozen.relative_to(campaign)),
-            sha256=sha(frozen), built_utc=now(), compiler_versions=versions, environment=environment,
+            sha256=sha(frozen), built_utc=now(), compiler_versions=versions,
+            compiler_commands=compiler_commands, environment=environment,
             translator_python=translator, libclang_path=env['LIBCLANG_PATH'],
             source_snapshot_sha256=sha(campaign / 'source_snapshot.json'),
             transfer_policy='Runtime metadata smoke checks required per decomposition; not historical-binary replay'))
