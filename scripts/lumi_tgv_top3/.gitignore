@@ -3,3 +3,4 @@
 !/test_launcher.py
 !/prepare_dataset.py
 !/test_dataset.py
+!/test_codegen.py

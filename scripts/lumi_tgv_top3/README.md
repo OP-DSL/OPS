@@ -146,8 +146,11 @@ bash -n scripts/lumi_tgv_top3/run.sh scripts/lumi_tgv_top3/environment.sh
 cd scripts/lumi_tgv_top3
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest -v test_launcher
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest -v test_dataset
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest -v test_codegen
 ```
 
 `test_dataset` requires the extracted version-2 dataset (or `OPS_TOP3_DATASET=/path/to/TOP3_DATASET`). It audits every catalog against the original sampled-rank best logs, then exercises the real rank worker and node workflow across every selected node count and rank, all 45 smoke runs and 57 measured cases, collection and resume. Slurm/application execution and GPU linkage are simulated; no real jobs are submitted. HIP compilation, GPU Direct and actual MPI behavior require validation on LUMI.
+
+`test_codegen` requires translator dependencies (optionally select their Python with `OPS_TEST_TRANSLATOR_PYTHON`) and a CPU C++ compiler. It translates a clean source snapshot, checks all 26 HIP wrappers for leftover CUDA calls, checks all 26 CUDA wrappers, and compiles the HIP block-selection fragments against actual OPS headers with minimal HIP API declarations. It catches API/type mismatches but does not replace compilation with ROCm or execution on LUMI.
 
 The package includes `prepare_dataset.py --validate-only` for the full checksum/catalog/provenance audit using Python 3.6+. The same script can rebuild into a new directory with `--source-package /path/to/verified/package --output-root /path/to/new/TOP3_DATASET`.
