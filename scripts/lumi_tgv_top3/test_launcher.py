@@ -27,6 +27,31 @@ class LauncherTests(unittest.TestCase):
     def tearDown(self):
         self.temp.cleanup()
 
+    def test_clean_snapshot_contains_tgv_build_inputs(self):
+        ops = Path(__file__).resolve().parents[2]
+        L.snapshot_ops(ops, self.root)
+        snapshot = self.root / 'build/OPS'
+        recorded = L.read_json(self.root / 'source_snapshot.json')['source_files_sha256']
+        for name in ('Makefile', 'opensbli.cpp', 'opensbliblock00_kernels.h', 'defdec_data_set.h'):
+            rel = 'apps/c/TGV_StoreNone/' + name
+            self.assertEqual(L.sha(snapshot / rel), recorded[rel])
+        result = subprocess.run(
+            ['make', '-n', '-C', str(snapshot / 'apps/c/TGV_StoreNone'),
+             'OPS_INSTALL_PATH=' + str(snapshot / 'ops'), 'OPS_COMPILER=hip',
+             'GPU_VENDOR=AMD', 'HIP_INSTALL_PATH=/unused/rocm', '.generated'],
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertIn('--file_paths opensbli.cpp', result.stdout)
+
+    def test_untracked_makefile_rejected_before_snapshot(self):
+        ops = Path(__file__).resolve().parents[2]
+        listing = subprocess.check_output(['git', '-C', str(ops), 'ls-files', '-z'])
+        listing = listing.replace(b'apps/c/TGV_StoreNone/Makefile\0', b'')
+        with patch.object(L.subprocess, 'check_output', return_value=listing):
+            with self.assertRaisesRegex(ValueError, 'missing or not tracked.*Makefile'):
+                L.snapshot_ops(ops, self.root)
+        self.assertFalse((self.root / 'build/OPS').exists())
+
     def package(self):
         package = self.root / 'source/TOP3_DATASET'
         package.mkdir(parents=True)

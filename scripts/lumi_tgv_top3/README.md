@@ -133,6 +133,10 @@ bash scripts/lumi_tgv_top3/run.sh --collect --campaign /path/to/TGV_TOP3_campaig
 
 ## Local validation
 
+The source snapshot requires the tracked TGV Makefile and both application headers before submission. The build generates translated sources before invoking the parallel MPI/HIP executable target, so a clean checkout needs no previously generated files.
+
+After a source/build fix, update the checkout and submit a **new campaign**. Existing campaigns retain their frozen source snapshot and launcher; `--resume` does not apply code updates. Cancel any jobs left waiting on a failed build before replacing that campaign.
+
 ```bash
 bash -n scripts/lumi_tgv_top3/run.sh scripts/lumi_tgv_top3/environment.sh
 cd scripts/lumi_tgv_top3

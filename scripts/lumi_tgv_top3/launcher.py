@@ -292,6 +292,12 @@ def snapshot_ops(ops, campaign):
     target = campaign / 'build/OPS'
     require(not target.exists(), 'Build snapshot already exists; use --resume')
     listing = subprocess.check_output(['git', '-C', str(ops), 'ls-files', '-z']).decode().split('\0')
+    required = ('apps/c/TGV_StoreNone/Makefile', 'apps/c/TGV_StoreNone/opensbli.cpp',
+                'apps/c/TGV_StoreNone/opensbliblock00_kernels.h', 'apps/c/TGV_StoreNone/defdec_data_set.h',
+                'makefiles/Makefile.c_app', 'makefiles/Makefile.hip', 'ops/c/Makefile',
+                'ops_translator/ops-translator/__main__.py', 'ops_translator/requirements.txt')
+    for rel in required:
+        require(rel in listing and (ops / rel).is_file(), f'Required build input is missing or not tracked by Git: {rel}. Update the OPS checkout before submitting.')
     prefixes = ('ops/c/', 'makefiles/', 'ops_translator/', 'apps/c/TGV_StoreNone/')
     copied = {}
     for rel in filter(None, listing):
@@ -386,6 +392,9 @@ def build_binary(campaign):
                      'CFLAGS=-O3 -fPIC', 'HIPFLAGS=-O3 -std=c++11 --offload-arch=gfx90a -D__HIP_PLATFORM_AMD__',
                      f'HIP_LINK=-L{hip_root / "lib"} -L{hip_root / "lib64"} -lamdhip64 -lrocm_smi64', 'TARGETS=mpi_hip']
             run(['make', '-C', str(target / 'ops/c'), '-j', str(config['build_jobs']), *flags, 'mpi_hip'])
+            # Generate sources first: Makefile.c_app lists generated .cpp files as
+            # link prerequisites but does not provide individual creation rules.
+            run(['make', '-C', str(target / 'apps/c/TGV_StoreNone'), *flags, '.generated'])
             run(['make', '-C', str(target / 'apps/c/TGV_StoreNone'), '-j', str(config['build_jobs']), *flags, 'opensbli_mpi_hip'])
         exe = target / 'apps/c/TGV_StoreNone/opensbli_mpi_hip'
         runtime.gpu_preflight(exe)
