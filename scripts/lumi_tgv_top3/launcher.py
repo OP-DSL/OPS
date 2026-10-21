@@ -636,24 +636,62 @@ def run_node(campaign, nodes):
             run.rename(final)
             results.append(dict(result, result_directory=str(final)))
             print('COMMITTED:', case['case_id'], flush=True)
-        summary = []
-        for r in results:
-            c = r['case']
-            summary.append(dict(nodes=nodes, roles=','.join(c['roles']), global_grid=shape_text(c['grid']),
-                mpi=shape_text(c['shape']), blocks='default' if c['mode'] == 0 else 'precomputed',
-                wall_time_s=r['app_wall_time_s'], kernel_time_s=r['kernel_time_s'], halo_time_s=r['halo_time_s'],
-                result_directory=r['result_directory']))
+        write_node_reports(root, nodes, results)
+
+
+def write_node_reports(root, nodes, results):
+    by_role = {role: r for r in results for role in r['case']['roles']}
+    default, default_precomputed = by_role.get('A'), by_role.get('C')
+    def wall(result):
+        return result['app_wall_time_s'] if result else 'NA'
+    def config_path(result):
+        return str(Path(result['result_directory']) / 'config.txt') if result else 'NA'
+    def ratio(a, b):
+        return a / b if isinstance(a, (int, float)) and isinstance(b, (int, float)) and b > 0 else 'NA'
+    for result in results:
+        # A is the default-MPI/default-block reference, not a measurement of
+        # default blocks at each tested MPI shape. Keep that distinction explicit.
+        precomputed = result if result['case']['mode'] == 2 else default_precomputed
+        fields = dict(
+            WALL_TIME_NO_AUTOTUNE=wall(default),
+            WALL_TIME_PRECOMPUTED=wall(precomputed),
+            WALL_TIME_DEFAULT_MPI_PRECOMPUTED=wall(default_precomputed),
+            SPEEDUP_PRECOMPUTED=ratio(wall(default), wall(precomputed)),
+            SPEEDUP_DEFAULT_MPI_PRECOMPUTED=ratio(wall(default_precomputed), wall(precomputed)),
+            NO_AUTOTUNE_REFERENCE='DEFAULT_MPI_DEFAULT_BLOCKS',
+            NO_AUTOTUNE_MPI=shape_text(default['case']['shape']) if default else 'NA',
+            PRECOMPUTED_MPI=shape_text(precomputed['case']['shape']) if precomputed else 'NA',
+            NO_AUTOTUNE_CONFIG=config_path(default),
+            DEFAULT_MPI_PRECOMPUTED_CONFIG=config_path(default_precomputed),
+            PRECOMPUTED_CONFIG=config_path(precomputed))
+        path = Path(result['result_directory']) / 'config.txt'
+        lines = [line for line in path.read_text().splitlines() if line.split('=', 1)[0] not in fields]
+        temp = path.with_name('config.txt.collect.tmp')
+        temp.write_text('\n'.join(lines) + '\n' + ''.join(f'{k}={v}\n' for k, v in fields.items()))
+        os.replace(str(temp), str(path))
+    summary = []
+    for r in results:
+        c = r['case']
+        summary.append(dict(nodes=nodes, roles=','.join(c['roles']), global_grid=shape_text(c['grid']),
+            mpi=shape_text(c['shape']), blocks='default' if c['mode'] == 0 else 'precomputed',
+            wall_time_s=r['app_wall_time_s'], kernel_time_s=r['kernel_time_s'], halo_time_s=r['halo_time_s'],
+            result_directory=r['result_directory']))
+    if summary:
         write_csv(root / 'summary.csv', summary)
-        comparisons = []
-        for metric in ('app_wall_time_s', 'kernel_time_s', 'halo_time_s'):
-            values = {role: r[metric] for r in results for role in r['case']['roles']}
-            for role in ('D_top1', 'D_top2', 'D_top3'):
-                comparisons.append(dict(nodes=nodes, metric=metric, role=role, C=values['C'], D=values[role],
-                    C_over_D=values['C']/values[role] if values[role] else '',
-                    A_over_D=values['A']/values[role] if values[role] else '', repetitions=1))
-        write_csv(root / 'comparisons.csv', comparisons)
-        atomic(root / 'comparisons.json', dict(comparisons=comparisons,
-            note='One measured execution per unique case. Smoke tests excluded. Kernel/halo are OPS rank means, not an additive wall-time breakdown.'))
+    comparisons = []
+    for metric in ('app_wall_time_s', 'kernel_time_s', 'halo_time_s'):
+        values = {role: r[metric] for r in results for role in r['case']['roles']}
+        for role in ('D_top1', 'D_top2', 'D_top3'):
+            if role not in values:
+                continue
+            comparisons.append(dict(nodes=nodes, metric=metric, role=role,
+                A=values.get('A', 'NA'), C=values.get('C', 'NA'), D=values[role],
+                C_over_D=ratio(values.get('C'), values[role]),
+                A_over_D=ratio(values.get('A'), values[role]), repetitions=1))
+    write_csv(root / 'comparisons.csv', comparisons,
+              ['nodes', 'metric', 'role', 'A', 'C', 'D', 'C_over_D', 'A_over_D', 'repetitions'])
+    atomic(root / 'comparisons.json', dict(comparisons=comparisons,
+        note='One measured execution per unique case. Smoke tests excluded. Kernel/halo are OPS rank means, not an additive wall-time breakdown.'))
 
 
 def job_script(campaign, action, nodes=None):
@@ -738,17 +776,31 @@ def submit(campaign, args, config):
 
 def collect(campaign):
     config = read_json(campaign / 'campaign.json')
+    build_path = campaign / 'build/build_manifest.json'
+    build = read_json(build_path) if build_path.exists() else {}
     summaries, comparisons, absent = [], [], []
     for n in config['nodes']:
         root = campaign / f'OPS_LOGS_{config["stamp"]}_n{n:03d}'
-        if (root / 'summary.csv').is_file() and (root / 'comparisons.csv').is_file():
-            summaries.extend(rows(root / 'summary.csv'))
-            comparisons.extend(rows(root / 'comparisons.csv'))
-        else:
+        if not root.is_dir() or not build:
             absent.append(n)
+            continue
+        with lock(root / '.node.lock'):
+            planned = [dict(c, executable_sha256=build['sha256']) for c in config['cases'] if c['nodes'] == n]
+            results = []
+            for case in planned:
+                path = runtime.target_path(root, case)
+                if runtime.complete(path, case):
+                    results.append(dict(read_json(path / 'result.json'), result_directory=str(path)))
+            if results:
+                write_node_reports(root, n, results)
+                summaries.extend(rows(root / 'summary.csv'))
+                comparisons.extend(rows(root / 'comparisons.csv'))
+            if len(results) != len(planned):
+                absent.append(n)
     if summaries:
         write_csv(campaign / 'summary_all_nodes.csv', summaries)
-        write_csv(campaign / 'comparisons_all_nodes.csv', comparisons)
+        write_csv(campaign / 'comparisons_all_nodes.csv', comparisons,
+                  ['nodes', 'metric', 'role', 'A', 'C', 'D', 'C_over_D', 'A_over_D', 'repetitions'])
     atomic(campaign / 'collection_status.json', dict(collected_utc=now(), missing_nodes=absent, complete=not absent))
     print(f'Collected {len(summaries)} cases; nodes without summaries: {absent}', flush=True)
 

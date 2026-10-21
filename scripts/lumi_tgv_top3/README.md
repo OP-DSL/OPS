@@ -126,6 +126,18 @@ These metadata checks **do not prove identical kernel arithmetic or numerical eq
 
 Main speedup is **C/D** for wall time, kernel time and halo time. Values above one favor tested MPI. A/D is also retained. With one measured repetition these are single ratios. Kernel/halo values are OPS rank means, not an additive decomposition of wall time.
 
+Each measured `config.txt` receives comparison fields after the node finishes, or when `--collect` rebuilds reports from committed results:
+
+- `WALL_TIME_NO_AUTOTUNE`: A, default blocks **at the baseline MPI decomposition**.
+- `WALL_TIME_DEFAULT_MPI_PRECOMPUTED`: C, precomputed blocks at baseline MPI.
+- `WALL_TIME_PRECOMPUTED`: this precomputed case's wall time; the A config refers to its corresponding C case.
+- `SPEEDUP_PRECOMPUTED`: A divided by that precomputed wall time.
+- `SPEEDUP_DEFAULT_MPI_PRECOMPUTED`: C divided by that precomputed wall time (the primary comparison).
+
+`NO_AUTOTUNE_MPI`, `PRECOMPUTED_MPI`, and the reference config paths identify exactly what is compared. The campaign does not measure default blocks at every tested MPI decomposition. `APP_WALL_TIME` remains the time of the individual execution. Missing reference runs are reported as `NA`. The comparison CSV also includes A explicitly for every metric.
+
+To add these fields to an existing campaign, run the updated checkout's `--collect --campaign /path/to/campaign` after its node jobs finish. This updates reports/config comparison fields without rerunning simulations or changing `result.json`; it refuses to collect a node while its execution lock is held.
+
 ```bash
 bash scripts/lumi_tgv_top3/run.sh --status --campaign /path/to/TGV_TOP3_campaign01
 bash scripts/lumi_tgv_top3/run.sh --collect --campaign /path/to/TGV_TOP3_campaign01
