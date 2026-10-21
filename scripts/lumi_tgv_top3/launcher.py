@@ -112,11 +112,15 @@ def ensure_dataset(ops_root, explicit=None):
                 require(rel.parts and rel.parts[0] == 'TOP3_DATASET' and '..' not in rel.parts and not rel.is_absolute(), 'Unsafe archive path')
                 require(entry.isfile() or entry.isdir(), f'Archive links/devices are not allowed: {entry.name}')
             identity = tar.extractfile('TOP3_DATASET/dataset_manifest.json').read()
+            replacement = json.loads(identity)
             if root.exists():
-                require((root / 'dataset_manifest.json').read_bytes() == identity, 'Extracted dataset differs from archive; use --dataset explicitly or move the old folder aside')
-                m = verify_package(root)
-                print(f'Reusing validated dataset: {root}', flush=True)
-                return root, m
+                if (root / 'dataset_manifest.json').read_bytes() == identity:
+                    m = verify_package(root)
+                    print(f'Reusing validated dataset: {root}', flush=True)
+                    return root, m
+                require(sha(root / 'dataset_manifest.json') in replacement.get('supersedes_manifest_sha256', []),
+                        'Extracted dataset is not a recognized previous version; use --dataset explicitly or move the old folder aside')
+                verify_package(root)
             stage = Path(tempfile.mkdtemp(prefix='.top3-extract-', dir=base))
             try:
                 for entry in members:
@@ -128,7 +132,18 @@ def ensure_dataset(ops_root, explicit=None):
                         with tar.extractfile(entry) as src, dest.open('wb') as out:
                             shutil.copyfileobj(src, out)
                 m = verify_package(stage / 'TOP3_DATASET')
-                (stage / 'TOP3_DATASET').rename(root)
+                backup = None
+                if root.exists():
+                    backup = Path(tempfile.mkdtemp(prefix='TOP3_DATASET.previous-', dir=base)) / 'TOP3_DATASET'
+                    root.rename(backup)
+                try:
+                    (stage / 'TOP3_DATASET').rename(root)
+                except OSError:
+                    if backup is not None:
+                        backup.rename(root)
+                    raise
+                if backup is not None:
+                    print(f'Dataset updated; previous package preserved at: {backup}', flush=True)
             finally:
                 shutil.rmtree(stage)
     print(f'Extracted and validated dataset: {root}', flush=True)
@@ -762,7 +777,7 @@ def main(argv=None):
             print('Dry run: no modules, build, scheduler probe or submission performed.')
         print('Report:', report_dir)
         return 0
-    require(not incomplete, f'Cannot build/submit selected campaign: missing blocks for nodes {sorted({c["nodes"] for c in incomplete})}. Explicitly select --nodes 6,8,10,12,16,20,24,32,40 to run the complete subset.')
+    require(not incomplete, f'Cannot build/submit selected campaign: missing blocks for nodes {sorted({c["nodes"] for c in incomplete})}. Update/repair the dataset; no selected nodes will be skipped.')
     require(args.env_file.is_file(), 'Missing environment profile')
     require(not re.search(r'\s', str(campaign)), 'OPS Makefiles require a campaign/build path without whitespace; choose another --output-root')
     resource = analyze(args, coverage) if args.submit else None

@@ -1,0 +1,38 @@
+TOP3_DATASET version 2 — validation, 2026-10-21
+
+Scope: all 12 node counts: 2,3,4,6,8,10,12,16,20,24,32,40.
+48 C/D roles; 45 unique precomputed catalogs; 57 unique measured cases with A.
+45/45 runtime catalogs complete; zero missing runtime block files.
+1,125 tuned kernel blocks traced to measured best logs (25 per catalog).
+585 packaged source files independently matched to original campaign files.
+Original selections.csv, grids, decompositions and tuning repetitions retained.
+
+Runtime input policy:
+  One shared blocks.csv per selected decomposition; all ranks load that file.
+  33 historical shared catalogs (6–40 nodes) are unchanged.
+  12 catalogs (2–4 nodes) are derived from retained rank 0/1 best logs using
+  the original app's deterministic shared_blocks consensus. This is a new
+  shared transfer policy, not reconstruction of missing historical ranks.
+  Historical timings do not measure this derived policy. New measurements
+  are required. No blocks or timings were fabricated. Initialization kernel
+  1 retains the original OPS default fallback; kernels 2–26 have precomputeds.
+
+Checks performed:
+  Full SHA256 manifest verification and original OPS catalog validation.
+  Recomputed shared_blocks for all 45 catalogs from their source best logs.
+  Checked every block against recorded kernel thread limits and stencil IDs.
+  20 launcher tests passed on Python 3.6.8 and Python 3.11.9.
+  Complete-package integration passed on Python 3.6.8: actual rank-worker,
+  node-workflow, block-file reads and metadata checks; Slurm/application/GPU
+  linkage mocked. 11,336 simulated rank executions across every node section,
+  45 smoke runs, 57 measured cases, 108 comparison rows, and full resume with
+  no duplicate launches. All runs required GPU Direct arguments/environment.
+  Known-package upgrade, old-package preservation and failed upgrades leaving
+  the prior package intact were tested; unknown/modified packages are rejected.
+
+Reproduce (from scripts/lumi_tgv_top3 after extracting the archive):
+  PYTHONDONTWRITEBYTECODE=1 python3 -m unittest -v test_launcher test_dataset
+  python3 ../../dataset-lumi/TOP3_DATASET/prepare_dataset.py --validate-only
+
+These checks cover the entire dataset/runtime contract. HIP compilation,
+physical GPU communication and real MPI/Slurm execution still require LUMI.

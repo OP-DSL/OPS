@@ -10,15 +10,16 @@ bash /path/to/OPS/scripts/lumi_tgv_top3/run.sh --dry-run --account project_XXXXX
 
 Results and preflight reports default to `/scratch/<account>/ops-decomposition/campaigns/TGV_TOP3_<stamp>/`, following the original LUMI app's campaign location. The account comes from `--account` or `SLURM_ACCOUNT`; no project ID or username is hardcoded. For a different server/filesystem or a local dry run, pass `--output-root /path/to/results` (the campaign is created directly below that directory). Without an account or an explicit output path, actions that create reports/results stop with an explanatory error. Help and `--validate` do not require an output path. An explicit `--campaign` continues to address existing campaigns, including those created at the previous location; existing results are not moved.
 
-The default input is `OPS/dataset-lumi/TOP3_DATASET.tar.gz` with its `.sha256` file. The launcher verifies the checksum, extracts once under a lock, verifies every packaged file, and reuses the validated folder. An existing folder with different contents is rejected. `--dataset /path/to/TOP3_DATASET` selects an already extracted package explicitly.
+The default input is `OPS/dataset-lumi/TOP3_DATASET.tar.gz` with its `.sha256` file. The launcher verifies the checksum, extracts under a lock, verifies every packaged file, and reuses the validated folder. When an updated archive explicitly supersedes the installed package, it validates both versions, preserves the old folder under `TOP3_DATASET.previous-*/TOP3_DATASET`, and activates the new one. Unknown or modified packages are rejected. `--dataset /path/to/TOP3_DATASET` selects an already extracted package explicitly. Existing campaigns remain tied to their recorded dataset identity; start a new campaign after a package upgrade.
 
 ## Current dataset coverage
 
-The package has complete catalogs for **6, 8, 10, 12, 16, 20, 24, 32 and 40 nodes**. Nodes **2, 3 and 4** are missing original rank files. A dry run lists these gaps; build/submission of a selection containing them stops before any jobs are sent. No nodes are silently skipped.
+Version 2 has complete runtime catalogs for **all 12 node counts: 2, 3, 4, 6, 8, 10, 12, 16, 20, 24, 32 and 40**: 48 roles and 45 unique precomputed catalogs. Every catalog contains one `blocks.csv` shared by all MPI ranks, with all 25 tuned kernel IDs (2–26). Initialization kernel 1 uses the existing OPS default fallback, as in the original logs.
+
+For 6–40 nodes the original shared catalog bytes are preserved. For 2–4 nodes, the original light exports retained only ranks 0 and 1 of per-rank catalogs. Their portable shared catalogs are now derived from the original best logs of those ranks, from the same selected tuning repetition, using the existing app's `shared_blocks` policy: most frequent block, then lowest measured best time, then block tuple. Every selected block was measured; this is not a recovery of missing per-rank measurements. Historical timings for 2–4 nodes do not measure the new shared policy. The new campaign measures it afresh. Original manifests and source logs are preserved, and `block_provenance.csv` traces all 1,125 selected blocks.
 
 ```bash
-bash scripts/lumi_tgv_top3/run.sh --validate \
-  --nodes 6,8,10,12,16,20,24,32,40
+bash scripts/lumi_tgv_top3/run.sh --validate
 ```
 
 ## Analyze actual LUMI resources
@@ -28,7 +29,7 @@ Execute on a LUMI login node using the new user's project account:
 ```bash
 bash scripts/lumi_tgv_top3/run.sh --analyze-resources \
   --account project_XXXXXXXXX \
-  --nodes 6,8,10,12,16,20,24,32,40 \
+  --nodes 2,3,4,6,8,10,12,16,20,24,32,40 \
   --date-stamp campaign01
 ```
 
@@ -62,18 +63,18 @@ Choose an output path without whitespace: the upstream OPS Makefiles use this pa
 
 `--build` performs the same build in the current shell environment via the profile, without submitting jobs. `--submit` instead submits a single build job in `small-g` by default, and all measurement jobs depend on its success. Customize `--build-partition`, `--build-time` and `--build-jobs` as needed.
 
-## Submit the complete subset
+## Submit the complete dataset
 
 ```bash
 bash scripts/lumi_tgv_top3/run.sh --submit \
   --account project_XXXXXXXXX \
-  --nodes 6,8,10,12,16,20,24,32,40 \
+  --nodes 2,3,4,6,8,10,12,16,20,24,32,40 \
   --env-file /path/to/lumi-env.sh \
   --date-stamp campaign01 \
   --time 01:00:00
 ```
 
-Only `--submit` sends jobs. The resource analysis and catalog validation happen before submission. The selected partition must pass its exact Slurm eligibility probe. In this example there are **one build job and nine measurement jobs**. With a complete 2–40-node dataset there would be one build job and twelve measurement jobs.
+Only `--submit` sends jobs. The resource analysis and catalog validation happen before submission. The selected partition must pass its exact Slurm eligibility probe. In this example there are **one build job and twelve measurement jobs**. Choose a subset with `--nodes`, for example `--nodes 2,3`.
 
 Each measurement allocation uses eight ranks and eight GPU GCDs per node, seven reserved CPU cores per rank, one OpenMP thread per process, and the LUMI CPU/GPU affinity map. Each rank selects its local GCD. GPU-aware Cray MPI and OPS `-gpudirect` are enabled; linkage and the runtime confirmation are checked.
 
@@ -83,7 +84,7 @@ The cases run sequentially inside the allocation:
 - C: recorded MPI reference, its precomputed blocks.
 - D_top1/2/3: selected MPI shapes, their recorded precomputed blocks.
 
-The reference MPI shape is forced from the dataset; it is not an observation of an automatic MPI choice. Identical precomputed cases are executed once and retain all their roles. The full plan has 57 unique measured executions; the currently complete subset has 42. Each measured case runs **once for 500 simulation steps**. Only rank 0 writes OPS diagnostic CSVs; all ranks read the correct block file and emit small status/log records.
+The reference MPI shape is forced from the dataset; it is not an observation of an automatic MPI choice. Identical precomputed cases are executed once and retain all their roles. The full plan has 57 unique measured executions. Each measured case runs **once for 500 simulation steps**. Only rank 0 writes OPS diagnostic CSVs; every rank reads the case's shared block file and emits a small status/log record.
 
 ## Recompiled executable and compatibility checks
 
@@ -136,6 +137,9 @@ bash scripts/lumi_tgv_top3/run.sh --collect --campaign /path/to/TGV_TOP3_campaig
 bash -n scripts/lumi_tgv_top3/run.sh scripts/lumi_tgv_top3/environment.sh
 cd scripts/lumi_tgv_top3
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest -v test_launcher
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest -v test_dataset
 ```
 
-Tests use local fake executables and mocked Slurm; they never submit real jobs. HIP compilation, GPU Direct and actual MPI behavior require validation on LUMI.
+`test_dataset` requires the extracted version-2 dataset (or `OPS_TOP3_DATASET=/path/to/TOP3_DATASET`). It audits every catalog against the original sampled-rank best logs, then exercises the real rank worker and node workflow across every selected node count and rank, all 45 smoke runs and 57 measured cases, collection and resume. Slurm/application execution and GPU linkage are simulated; no real jobs are submitted. HIP compilation, GPU Direct and actual MPI behavior require validation on LUMI.
+
+The package includes `prepare_dataset.py --validate-only` for the full checksum/catalog/provenance audit using Python 3.6+. The same script can rebuild into a new directory with `--source-package /path/to/verified/package --output-root /path/to/new/TOP3_DATASET`.

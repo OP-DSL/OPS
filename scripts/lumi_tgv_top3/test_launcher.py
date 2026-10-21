@@ -52,6 +52,47 @@ class LauncherTests(unittest.TestCase):
         ops,_,archive=self.package();archive.write_bytes(archive.read_bytes()+b'corrupt')
         with self.assertRaisesRegex(ValueError,'checksum'):L.ensure_dataset(ops)
 
+    def replace_package(self, source, archive, known):
+        m = L.read_json(source/'dataset_manifest.json')
+        m['supersedes_manifest_sha256'] = [known]
+        (source/'selections.csv').write_text('Nodes,Top rank\n6,2\n')
+        m['selection_sha256'] = L.sha(source/'selections.csv')
+        m['files']['selections.csv']['sha256'] = m['selection_sha256']
+        L.atomic(source/'dataset_manifest.json',m)
+        with tarfile.open(archive,'w:gz') as t: t.add(source,arcname='TOP3_DATASET')
+        (archive.parent/'TOP3_DATASET.tar.gz.sha256').write_text(L.sha(archive))
+
+    def test_known_dataset_upgrade_preserves_previous(self):
+        ops,source,archive=self.package()
+        old,_=L.ensure_dataset(ops)
+        old_bytes=(old/'selections.csv').read_bytes()
+        self.replace_package(source,archive,L.sha(old/'dataset_manifest.json'))
+        new,_=L.ensure_dataset(ops)
+        backups=list(archive.parent.glob('TOP3_DATASET.previous-*/TOP3_DATASET'))
+        self.assertEqual(len(backups),1)
+        self.assertEqual((backups[0]/'selections.csv').read_bytes(),old_bytes)
+        self.assertEqual((new/'selections.csv').read_bytes(),(source/'selections.csv').read_bytes())
+        L.ensure_dataset(ops)
+
+    def test_unknown_dataset_upgrade_is_rejected(self):
+        ops,source,archive=self.package()
+        old,_=L.ensure_dataset(ops)
+        old_bytes=(old/'selections.csv').read_bytes()
+        self.replace_package(source,archive,'0'*64)
+        with self.assertRaisesRegex(ValueError,'recognized previous'): L.ensure_dataset(ops)
+        self.assertEqual((old/'selections.csv').read_bytes(),old_bytes)
+
+    def test_failed_upgrade_does_not_replace_old(self):
+        ops,source,archive=self.package()
+        old,_=L.ensure_dataset(ops)
+        old_bytes=(old/'selections.csv').read_bytes()
+        self.replace_package(source,archive,L.sha(old/'dataset_manifest.json'))
+        (source/'selections.csv').write_text('corrupt new data')
+        with tarfile.open(archive,'w:gz') as t: t.add(source,arcname='TOP3_DATASET')
+        (archive.parent/'TOP3_DATASET.tar.gz.sha256').write_text(L.sha(archive))
+        with self.assertRaisesRegex(ValueError,'Invalid dataset file'): L.ensure_dataset(ops)
+        self.assertEqual((old/'selections.csv').read_bytes(),old_bytes)
+
     def test_archive_rejects_traversal_and_links(self):
         for filename,link in [('../escape',False),('TOP3_DATASET/link',True)]:
             base=self.root/('link' if link else 'traversal')/'dataset-lumi';base.mkdir(parents=True)
