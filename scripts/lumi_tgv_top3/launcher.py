@@ -334,6 +334,42 @@ def translator_interpreter(explicit=None):
                      'The launcher itself supports Python >= 3.6.')
 
 
+def configure_libclang(python, env, out):
+    # The clang and libclang wheels share a Python package. Depending on pip's
+    # installation order, cindex may search for libclang-16.so even though the
+    # matching bundled library is named clang/native/libclang.so.
+    code = '''import os
+from pathlib import Path
+import clang.cindex as ci
+import jinja2, fparser, pcpp, numpy, sympy, h5py
+library = os.environ.get('LIBCLANG_PATH')
+if not library:
+    bundled = Path(ci.__file__).resolve().parent / 'native/libclang.so'
+    if bundled.is_file():
+        library = str(bundled)
+if library:
+    ci.Config.set_library_file(library)
+index = ci.Index.create()
+unit = index.parse('ops_probe.cpp', args=['-xc++', '-std=c++11'],
+                   unsaved_files=[('ops_probe.cpp', 'int main() { return 0; }')])
+errors = [str(d) for d in unit.diagnostics if d.severity >= ci.Diagnostic.Error]
+if errors:
+    raise RuntimeError('C++ parser probe failed: ' + '; '.join(errors))
+print(ci.conf.get_filename())
+'''
+    result = subprocess.run([python, '-c', code], env=env, stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE, universal_newlines=True)
+    out.write('Checking translator dependencies and native libclang C++ parsing\n')
+    out.write(result.stdout + result.stderr)
+    out.flush()
+    require(result.returncode == 0,
+            'Translator/libclang preflight failed; inspect build/build.log. '
+            'LIBCLANG_PATH, if set, must name a compatible shared-library file (not a directory).')
+    library = result.stdout.strip().splitlines()[-1]
+    env['LIBCLANG_PATH'] = library
+    return library
+
+
 def build_binary(campaign):
     config = read_json(campaign / 'campaign.json')
     target = campaign / 'build/OPS'
@@ -382,7 +418,7 @@ def build_binary(campaign):
             env.update(OPS_INSTALL_PATH=str(target / 'ops'), OPS_COMPILER='hip', AMD_ARCH='gfx90a',
                        HIP_INSTALL_PATH=str(hip_root), ROCM_PATH=str(hip_root), MPI_INSTALL_PATH=str(mpi_root),
                        MPICH_GPU_SUPPORT_ENABLED='1')
-            run([translator, '-c', 'import clang.cindex, jinja2, fparser, pcpp, numpy, sympy, h5py'])
+            configure_libclang(translator, env, out)
             flags = ['OPS_COMPILER=hip', f'OPS_INSTALL_PATH={target / "ops"}', 'CC=cc', 'CXX=CC',
                      'MPICC=cc', 'MPICXX=CC', 'MPICPP=CC', f'HIPCC={hipcc}', f'HIPMPICXX={hipcc}',
                      f'HIP_INSTALL_PATH={hip_root}', f'MPI_INSTALL_PATH={mpi_root}', f'MPI_INC={mpi_root / "include"}',
@@ -404,7 +440,8 @@ def build_binary(campaign):
         versions = {tool: query([tool, '--version']) for tool in ('hipcc', 'CC', 'cc')}
         atomic(campaign / 'build/build_manifest.json', dict(executable=str(frozen.relative_to(campaign)),
             sha256=sha(frozen), built_utc=now(), compiler_versions=versions, environment=environment,
-            translator_python=translator, source_snapshot_sha256=sha(campaign / 'source_snapshot.json'),
+            translator_python=translator, libclang_path=env['LIBCLANG_PATH'],
+            source_snapshot_sha256=sha(campaign / 'source_snapshot.json'),
             transfer_policy='Runtime metadata smoke checks required per decomposition; not historical-binary replay'))
         print(f'Built once: {frozen}', flush=True)
 

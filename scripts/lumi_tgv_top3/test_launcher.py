@@ -52,6 +52,26 @@ class LauncherTests(unittest.TestCase):
                 L.snapshot_ops(ops, self.root)
         self.assertFalse((self.root / 'build/OPS').exists())
 
+    def test_libclang_bundled_library_parses_cpp_without_system_library(self):
+        python = os.environ.get('OPS_TEST_TRANSLATOR_PYTHON', sys.executable)
+        check = subprocess.run([python, '-c',
+            'import clang.cindex, jinja2, fparser, pcpp, numpy, sympy, h5py'],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if check.returncode:
+            self.skipTest('Translator dependencies unavailable; set OPS_TEST_TRANSLATOR_PYTHON')
+        env = dict(os.environ)
+        env.pop('LIBCLANG_PATH', None)
+        out = io.StringIO()
+        library = L.configure_libclang(python, env, out)
+        self.assertEqual(env['LIBCLANG_PATH'], library)
+        self.assertTrue(library)
+        # An explicit configuration must be honored and validated, not silently
+        # replaced by the bundled wheel when it is invalid.
+        env['LIBCLANG_PATH'] = str(self.root / 'missing-libclang.so')
+        with self.assertRaisesRegex(ValueError, 'libclang preflight failed'):
+            L.configure_libclang(python, env, out)
+        self.assertIn('missing-libclang.so', out.getvalue())
+
     def package(self):
         package = self.root / 'source/TOP3_DATASET'
         package.mkdir(parents=True)

@@ -135,6 +135,8 @@ bash scripts/lumi_tgv_top3/run.sh --collect --campaign /path/to/TGV_TOP3_campaig
 
 The source snapshot requires the tracked TGV Makefile and both application headers before submission. The build generates translated sources before invoking the parallel MPI/HIP executable target, so a clean checkout needs no previously generated files.
 
+Before compiling, the launcher locates the translator environment's bundled `clang/native/libclang.so`, exports its full filename as `LIBCLANG_PATH`, and verifies native C++ parsing. An explicit `LIBCLANG_PATH` from the environment profile takes precedence and must point to a compatible library file. The selected path is recorded in `build_manifest.json`.
+
 After a source/build fix, update the checkout and submit a **new campaign**. Existing campaigns retain their frozen source snapshot and launcher; `--resume` does not apply code updates. Cancel any jobs left waiting on a failed build before replacing that campaign.
 
 ```bash
