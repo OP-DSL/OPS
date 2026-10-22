@@ -68,6 +68,19 @@ void hipSafeCall(std::ostream &, int);
                 '-I' + str(snapshot / 'ops/c/include'), str(probe)],
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
             self.assertEqual(result.returncode, 0, result.stdout)
+            # Check the actual make target enables the lazy wrappers. The empty
+            # archive is only a prerequisite placeholder for make -n, not a link.
+            archive = snapshot/'ops/c/lib/hip/libops_mpi_hip.a'
+            archive.parent.mkdir(parents=True, exist_ok=True); archive.touch()
+            (app/'.generated').touch()
+            plan = subprocess.run(['make', '-n', '-C', str(app),
+                'OPS_INSTALL_PATH=' + str(snapshot/'ops'), 'OPS_COMPILER=hip',
+                'GPU_VENDOR=AMD', 'HIP_INSTALL_PATH=/unused/rocm',
+                'HIPMPICXX=hipcc', 'TARGETS=mpi_hip_tiled', L.build_target({'tiled': True})],
+                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+            self.assertEqual(plan.returncode, 0, plan.stdout)
+            self.assertIn('-DOPS_LAZY', plan.stdout)
+            self.assertIn('-o opensbli_mpi_hip_tiled', plan.stdout)
 
 
 if __name__ == '__main__':

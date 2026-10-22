@@ -27,6 +27,7 @@ HERE = Path(__file__).resolve().parent
 NODES = (2, 3, 4, 6, 8, 10, 12, 16, 20, 24, 32, 40)
 CPU_BIND = 'map_cpu:49,57,17,25,1,9,33,41'
 VERSION = 1
+TILING = dict(max_depth=6, tile_size=[8000, 8000, 8000])
 
 
 def product(values):
@@ -394,8 +395,13 @@ def rocm_compiler_flags(hipcc, hip_root):
                      'Set HIP_CLANG_PATH to the compiler directory used by hipcc.')
 
 
+def build_target(config):
+    return 'opensbli_mpi_hip_tiled' if config.get('tiled') else 'opensbli_mpi_hip'
+
+
 def build_binary(campaign):
     config = read_json(campaign / 'campaign.json')
+    app_target = build_target(config)
     target = campaign / 'build/OPS'
     with lock(campaign / 'build/.lock'):
         if (campaign / 'build/build_manifest.json').is_file():
@@ -459,17 +465,17 @@ def build_binary(campaign):
             # Generate sources first: Makefile.c_app lists generated .cpp files as
             # link prerequisites but does not provide individual creation rules.
             run(['make', '-C', str(target / 'apps/c/TGV_StoreNone'), *flags, '.generated'])
-            run(['make', '-C', str(target / 'apps/c/TGV_StoreNone'), '-j', str(config['build_jobs']), *flags, 'opensbli_mpi_hip'])
-        exe = target / 'apps/c/TGV_StoreNone/opensbli_mpi_hip'
+            run(['make', '-C', str(target / 'apps/c/TGV_StoreNone'), '-j', str(config['build_jobs']), *flags, app_target])
+        exe = target / 'apps/c/TGV_StoreNone' / app_target
         runtime.gpu_preflight(exe)
-        frozen = campaign / 'build/tgvstorenone_mpi_hip'
+        frozen = campaign / 'build' / app_target.replace('opensbli', 'tgvstorenone')
         shutil.copy2(exe, frozen)
         environment = {k: v for k, v in env.items() if k.startswith(('OPS_', 'HIP', 'ROCM', 'CRAY_', 'PE_', 'MPICH_', 'LOADEDMODULES', 'AMD_ARCH'))}
         compiler_commands = dict(flag.split('=', 1) for flag in compiler_flags)
         versions = {tool: query([tool, '--version']) for tool in sorted(set(compiler_commands.values()))}
         atomic(campaign / 'build/build_manifest.json', dict(executable=str(frozen.relative_to(campaign)),
             sha256=sha(frozen), built_utc=now(), compiler_versions=versions,
-            compiler_commands=compiler_commands, environment=environment,
+            compiler_commands=compiler_commands, environment=environment, build_target=app_target,
             translator_python=translator, libclang_path=env['LIBCLANG_PATH'],
             source_snapshot_sha256=sha(campaign / 'source_snapshot.json'),
             transfer_policy='Runtime metadata smoke checks required per decomposition; not historical-binary replay'))
@@ -487,7 +493,7 @@ def first_kernel_rows(path):
     return out
 
 
-def validate_transfer(historical_log, current_log, blocks):
+def validate_transfer(historical_log, current_log, blocks, tiling=None):
     old, new = first_kernel_rows(historical_log), first_kernel_rows(current_log)
     require(old.keys() == new.keys(), 'Smoke kernel IDs do not match historical IDs')
     fields = ('stencil_sig', 'nstencil_args', 'dim', 'elem_size', 'size_x', 'size_y', 'size_z',
@@ -495,17 +501,29 @@ def validate_transfer(historical_log, current_log, blocks):
               'num_read', 'num_write', 'num_rw', 'grid_x', 'grid_y', 'grid_z',
               'n_args_x_offset', 'n_args_y_offset', 'n_args_z_offset', 'max_radius_x', 'max_radius_y', 'max_radius_z',
               'total_offset_points')
+    geometry = ('size_x', 'size_y', 'size_z', 'd_m_x', 'd_m_y', 'd_m_z',
+                'd_p_x', 'd_p_y', 'd_p_z', 'grid_x', 'grid_y', 'grid_z')
+    changes = []
     for kid in old:
         for field in fields:
             require(field in old[kid] and field in new[kid], f'Missing metadata field: {field}')
             a, b = old[kid][field], new[kid][field]
             equal = a == b if field == 'stencil_sig' else math.isclose(float(a), float(b), rel_tol=1e-6, abs_tol=1e-8)
+            if tiling and field in geometry:
+                require(math.isfinite(float(b)), f'Invalid tiled geometry: kernel {kid} {field}')
+                if field.startswith(('size_', 'grid_')):
+                    require(float(b) > 0, f'Nonpositive tiled geometry: kernel {kid} {field}')
+                if not equal:
+                    changes.append(dict(kernel_id=kid, field=field, historical=a, tiled=b))
+                continue
             require(equal, f'Kernel {kid} changed {field}: {a} -> {b}')
     for block in rows(blocks):
         kid = block['kernel_id']
         require(kid in new, f'Block references an unobserved kernel: {kid}')
         require(product(int(block[k]) for k in ('bx', 'by', 'bz')) <= float(new[kid]['max_threads']), f'Block exceeds current kernel limit: {kid}')
     return dict(status='PASS', kernels=len(new), fields_checked=list(fields),
+                equality_fields=[field for field in fields if not tiling or field not in geometry],
+                tiling=tiling, geometry_changes=changes,
                 missing_catalog_kernels=sorted(set(new) - {r['kernel_id'] for r in rows(blocks)}, key=int),
                 historical_log_sha256=sha(historical_log), smoke_log_sha256=sha(current_log),
                 limitation='Checks runtime IDs, stencil/array metadata, local geometry and block limits; does not prove identical kernel arithmetic or binary equivalence.')
@@ -553,6 +571,9 @@ def execute_case(campaign, case, exe, catalog, run, smoke=False):
         RUN_EXIT_CODE=0 if good else (rc or 1), RUN_STATUS='OK' if good else 'FAILED',
         VALIDATION_STATUS='PASS' if good else 'FAIL', COMMIT_STATUS='COMMITTED' if good and not smoke else 'UNCOMMITTED',
         KERNEL_TOTAL_TIME=result.get('kernel_time_s', 'NA'), HALO_TOTAL_TIME=result.get('halo_time_s', 'NA'))
+    if c.get('tiling'):
+        fields.update(OPS_TILING='YES', OPS_TILING_MAXDEPTH=c['tiling']['max_depth'], OPS_DIAGS=2,
+                      **{'OPS_TILESIZE_' + axis: size for axis, size in zip('XYZ', c['tiling']['tile_size'])})
     (run / 'config.txt').write_text(''.join(f'{k}={v}\n' for k, v in fields.items()))
     write_csv(run / 'mpi_rank_metrics.csv', metrics,
               ['rank_id', 'local_rank', 'gpu_id', 'hostname', 'rank_wall_time_s', 'app_reported_wall_time_s', 'rank_status', 'precomputed_loaded'])
@@ -587,6 +608,7 @@ def run_node(campaign, nodes):
             if report_path.exists():
                 report = read_json(report_path)
                 require(report['executable_sha256'] == build['sha256'] and report['source_set_id'] == m['set_id'] and report['status'] == 'PASS', 'Stale compatibility report')
+                require(report.get('tiling') == case.get('tiling'), 'Compatibility tiling settings differ')
                 require(sha(contained(root, report['smoke_log'])) == report['smoke_log_sha256'], 'Smoke metadata changed')
             else:
                 smoke.mkdir(parents=True, exist_ok=True)
@@ -596,7 +618,7 @@ def run_node(campaign, nodes):
                 candidates = list((attempt / 'rank_0').glob('*/ops_blocksize_tuning_logmod.csv'))
                 require(len(candidates) == 1, 'Smoke did not emit kernel metadata')
                 blockfile = original / ('blocks.csv' if m['schema_version'] == 2 else 'rank_0/blocks.csv')
-                report = validate_transfer(historical, candidates[0], blockfile)
+                report = validate_transfer(historical, candidates[0], blockfile, case.get('tiling'))
                 report.update(executable_sha256=build['sha256'], historical_executable_sha256=m['context']['EXECUTABLE_SHA256'],
                               source_set_id=m['set_id'], checked_utc=now(), smoke_log=str(candidates[0].relative_to(root)))
                 atomic(report_path, report)
@@ -611,6 +633,8 @@ def run_node(campaign, nodes):
                     shutil.copyfile(original / 'manifest.json', stage / 'original_manifest.json')
                     derived = dict(m, context=dict(m['context'], EXECUTABLE_SHA256=build['sha256']),
                                    source_set_id=m['set_id'], transfer_validation_sha256=sha(report_path))
+                    if case.get('tiling'):
+                        derived['tiling'] = case['tiling']
                     derived.pop('set_id')
                     derived['set_id'] = hashlib.sha256(json.dumps(derived, sort_keys=True).encode()).hexdigest()
                     atomic(stage / 'manifest.json', derived)
@@ -620,6 +644,7 @@ def run_node(campaign, nodes):
                     if stage.exists(): shutil.rmtree(stage)
             checked, missing = catalog_check(replay, case)
             require(not missing and checked['context']['EXECUTABLE_SHA256'] == build['sha256'] and checked['source_set_id'] == m['set_id'], 'Invalid replay catalog')
+            require(checked.get('tiling') == case.get('tiling'), 'Replay catalog tiling settings differ')
         results = []
         for case in planned:
             final = runtime.target_path(root, case)
@@ -812,7 +837,8 @@ def campaign_directory(args):
     if output is None:
         require(args.account, 'Specify --account (or SLURM_ACCOUNT) to use /scratch/<account>/ops-decomposition/campaigns, or provide --output-root explicitly.')
         output = Path('/scratch') / args.account / 'ops-decomposition' / 'campaigns'
-    return output.expanduser().resolve() / f'TGV_TOP3_{args.date_stamp}'
+    prefix = 'TGV_TOP3_TILED' if getattr(args, 'tiled', False) else 'TGV_TOP3'
+    return output.expanduser().resolve() / f'{prefix}_{args.date_stamp}'
 
 
 def parser():
@@ -830,6 +856,7 @@ def parser():
     p.add_argument('--build-partition', default='small-g')
     p.add_argument('--build-time', default='00:30:00')
     p.add_argument('--build-jobs', type=int, default=4)
+    p.add_argument('--tiled', action='store_true', help='Build OPS_LAZY executable; tiling depth 6, tiles 8000x8000x8000')
     p.add_argument('--resume', action='store_true', help='Reuse an existing identical campaign; never duplicate submitted job IDs')
     p.add_argument('--campaign', type=Path, help='Existing campaign directory for status/collect/internal steps')
     actions = p.add_mutually_exclusive_group()
@@ -880,6 +907,9 @@ def main(argv=None):
     campaign = campaign_directory(args) if not args.validate else None
     dataset, dataset_manifest = ensure_dataset(args.ops_root, args.dataset)
     cases, coverage = make_plan(dataset, args.nodes)
+    if args.tiled:
+        cases = [dict(case, tiling=dict(TILING)) for case in cases]
+        print('Tiled experiment: opensbli_mpi_hip_tiled; depth=6; tile=8000x8000x8000; GPU Direct; OPS_DIAGS=2.')
     incomplete = [c for c in coverage if c['status'] != 'COMPLETE']
     print(f'Plan: {len(args.nodes)} node sections; {len(cases)} unique measured cases; {len(incomplete)} incomplete roles.', flush=True)
     if args.validate:
@@ -891,7 +921,7 @@ def main(argv=None):
         report_dir = campaign / 'preflight'; report_dir.mkdir(parents=True, exist_ok=True)
         atomic(report_dir / 'plan.json', dict(cases=cases, coverage=coverage, dataset=str(dataset),
             measured_repetitions=1, simulation_steps=500, compatibility_smoke_steps=1,
-            output_campaign=str(campaign), would_submit=False))
+            output_campaign=str(campaign), build_target=build_target(vars(args)), would_submit=False))
         write_csv(report_dir / 'coverage.csv', coverage)
         if args.analyze_resources:
             resource = analyze(args, coverage)
@@ -935,7 +965,7 @@ def main(argv=None):
         else:
             freeze_launcher(campaign, args.env_file.resolve())
             snapshot_ops(args.ops_root, campaign)
-            config = dict(version=VERSION, stamp=args.date_stamp, nodes=args.nodes, cases=cases,
+            config = dict(version=VERSION, stamp=args.date_stamp, nodes=args.nodes, cases=cases, tiled=args.tiled,
                 dataset=str(dataset), dataset_manifest_sha256=sha(dataset / 'dataset_manifest.json'),
                 ops_root=str(args.ops_root), account=args.account, partitions=partitions, time=args.time,
                 build_partition=args.build_partition, build_time=args.build_time, build_jobs=args.build_jobs,

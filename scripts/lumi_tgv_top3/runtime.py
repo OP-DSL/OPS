@@ -68,6 +68,10 @@ def rank_worker(spec_path, run):
     args = [spec['executable']] + list(map(str, case['grid'] + [case['niter']]))
     args += [f'OPS_FORCE_DECOMP_{a}={v}' for a, v in zip('XYZ', case['shape'])]
     args += ['-gpudirect', '-OPS_DIAGS=2', f"-OPS_AUTOTUNE_MODE={case['mode']}"]
+    if case.get('tiling'):
+        args += ['OPS_TILING', 'OPS_TILING_MAXDEPTH=' + str(case['tiling']['max_depth'])]
+        args += ['OPS_TILESIZE_' + axis + '=' + str(size)
+                 for axis, size in zip('XYZ', case['tiling']['tile_size'])]
     if case['mode'] == 0:
         args += ['OPS_BLOCK_SIZE_X=32', 'OPS_BLOCK_SIZE_Y=4', 'OPS_BLOCK_SIZE_Z=1']
     start = time.monotonic()
@@ -86,6 +90,12 @@ def rank_worker(spec_path, run):
     good = rc == 0 and loaded and not re.search(r'considered FAILED|validation.*failed|nan detected', text, re.I)
     if rank == 0:
         good = good and 'GPU Direct enabled' in text
+        if case.get('tiling'):
+            good = good and 'Tiling enabled' in text
+            good = good and bool(re.search(r'Max tiling depth across processes\s*=\s*' +
+                str(case['tiling']['max_depth']) + r'\b', text))
+            good = good and all(re.search(r'Tile size in ' + axis + r'\s*=\s*' + str(size) + r'\b', text)
+                               for axis, size in zip('XYZ', case['tiling']['tile_size']))
     atomic(run / 'ranks' / f'status_{rank}.json', dict(rank_id=rank, local_rank=local, gpu_id=local,
            hostname=os.uname().nodename, rank_wall_time_s=elapsed,
            app_reported_wall_time_s=float(reported[-1]) if reported else None,

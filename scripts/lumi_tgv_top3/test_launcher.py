@@ -362,7 +362,7 @@ print('Total Wall time 1.25')
         with self.assertRaisesRegex(ValueError,'current kernel limit'):
             L.validate_transfer(old,new,catalog/'blocks.csv')
 
-    def test_node_pipeline_smokes_results_transfer_and_resume(self):
+    def test_node_pipeline_smokes_results_transfer_and_resume(self, tiling=None):
         dataset = self.root/'dataset'; dataset.mkdir()
         (dataset/'selections.csv').write_text('fixture\n')
         campaign = self.root/'campaign'; (campaign/'build').mkdir(parents=True)
@@ -386,6 +386,8 @@ print('Total Wall time 1.25')
                 catalog_path=rel,source_run_path=source,source_set_id=manifest['set_id'],
                 original_executable_sha256='historical-binary',case_id=f'n006_case{index}'))
         cases.insert(0,dict(cases[0],mode=0,roles=['A'],catalog_path='',source_set_id='',case_id='n006_default'))
+        if tiling:
+            cases = [dict(case, tiling=tiling) for case in cases]
         files = {str(f.relative_to(dataset)):dict(sha256=L.sha(f)) for f in dataset.rglob('*') if f.is_file()}
         L.atomic(dataset/'dataset_manifest.json',dict(application='tgvstorenone',files=files,selection_sha256=L.sha(dataset/'selections.csv')))
         original_hashes = {name:spec['sha256'] for name,spec in files.items()}
@@ -415,6 +417,13 @@ print('Total Wall time 1.25')
             replay=L.read_json(root/'precomputed_blocks/decomp4x4x3/manifest.json')
             self.assertEqual(replay['context']['EXECUTABLE_SHA256'],L.sha(exe))
             self.assertEqual(replay['source_set_id'],cases[1]['source_set_id'])
+            self.assertEqual(replay.get('tiling'), tiling)
+            if tiling:
+                for case in cases:
+                    fields = dict(line.split('=',1) for line in (R.target_path(root,case)/'config.txt').read_text().splitlines())
+                    self.assertEqual(fields['OPS_TILING_MAXDEPTH'], '6')
+                    self.assertEqual(fields['OPS_TILESIZE_X'], '8000')
+                    self.assertEqual(fields['OPS_DIAGS'], '2')
             config['resume']=True; L.atomic(campaign/'campaign.json',config)
             L.run_node(campaign,6)
             self.assertEqual(len(calls),7)

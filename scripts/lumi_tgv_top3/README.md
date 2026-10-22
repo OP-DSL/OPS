@@ -147,6 +147,10 @@ bash scripts/lumi_tgv_top3/run.sh --collect --campaign /path/to/TGV_TOP3_campaig
 
 ## Local validation
 
+For the separate tiled experiment (depth 6, tiles 8000³), use
+[`scripts/ops_tiled/run_tgv_top3.sh`](../ops_tiled/README.md). It enables `--tiled`
+and uses separate `TGV_TOP3_TILED_*` campaign directories.
+
 The source snapshot requires the tracked TGV Makefile and both application headers before submission. The build generates translated sources before invoking the parallel MPI/HIP executable target, so a clean checkout needs no previously generated files.
 
 Before compiling, the launcher locates the translator environment's bundled `clang/native/libclang.so`, exports its full filename as `LIBCLANG_PATH`, and verifies native C++ parsing. An explicit `LIBCLANG_PATH` from the environment profile takes precedence and must point to a compatible library file. The selected path is recorded in `build_manifest.json`.
