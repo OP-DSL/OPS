@@ -400,8 +400,9 @@ print('Total Wall time 1.25')
             spec = L.read_json(Path(command[command.index('--rank-spec')+1]))
             case=spec['case']; run=Path(spec['workdir']); calls.append(case['niter'])
             wall = 10.0 if case['mode'] == 0 else {'n006_case0': 8.0, 'n006_case1': 4.0, 'n006_case2': 2.0}[case['case_id']]
+            halo_label = 'Total tiled halo exchange time' if tiling else 'Total halo exchange time'
             for rank in range(case['ranks']):
-                (run/'ranks'/f'rank_{rank}.log').write_text('Total kernel time: 2.0\nTotal halo exchange time: 0.5\n')
+                (run/'ranks'/f'rank_{rank}.log').write_text('Total kernel time: 2.0\n' + halo_label + ': 0.5\n')
                 L.atomic(run/'ranks'/f'status_{rank}.json',dict(rank_id=rank,rank_status='OK',
                     rank_wall_time_s=wall+1,app_reported_wall_time_s=wall,precomputed_loaded=True))
             self.metadata(run/'rank_0/autotune_on/ops_blocksize_tuning_logmod.csv')

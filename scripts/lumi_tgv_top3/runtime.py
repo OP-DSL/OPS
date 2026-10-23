@@ -126,7 +126,9 @@ def complete(run, case):
 def ops_totals(log):
     text = log.read_text(errors='replace')
     result = {}
-    for key, label in [('kernel_time_s', 'Total kernel time'), ('halo_time_s', 'Total halo exchange time')]:
+    # OPS timing output selects one of these halo labels depending on whether
+    # the tiled exchange timer is nonzero (ops_timing_output in ops_lib_core.cpp).
+    for key, label in [('kernel_time_s', 'Total kernel time'), ('halo_time_s', 'Total (?:tiled )?halo exchange time')]:
         found = re.findall(r'^\s*' + label + r':\s*([0-9.Ee+-]+)\s*$', text, re.M)
         require(len(found) == 1, f'Expected exactly one {label} in {log}')
         value = float(found[0])

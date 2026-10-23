@@ -15,6 +15,22 @@ import runtime as R
 
 
 class TiledTests(unittest.TestCase):
+    def test_real_tiled_halo_output_and_invalid_totals(self):
+        with tempfile.TemporaryDirectory(prefix='tgv_tiled_metrics_') as temp:
+            log = Path(temp)/'run.log'
+            for label in ('Total tiled halo exchange time', 'Total halo exchange time'):
+                log.write_text('Total kernel time: 0.320326\n' + label +
+                               ': 2.38419e-06\nTotal user halo exchange time: 0.12\n'
+                               'Total Wall time 0.346961\n')
+                self.assertEqual(R.ops_totals(log), dict(kernel_time_s=0.320326, halo_time_s=2.38419e-06))
+            for halo_lines in ('', 'Total tiled halo exchange time: -1\n',
+                               'Total tiled halo exchange time: 1e999\n',
+                               'Total tiled halo exchange time: 0.2\nTotal halo exchange time: 0.3\n',
+                               'Total tiled halo exchange time: 0.2\nTotal tiled halo exchange time: 0.3\n'):
+                log.write_text('Total kernel time: 0.320326\n' + halo_lines)
+                with self.assertRaises(ValueError):
+                    R.ops_totals(log)
+
     def test_all_nodes_keep_default_and_precomputed_baselines(self):
         dataset = L.HERE.parents[1] / 'dataset-lumi/TOP3_DATASET'
         cases, coverage = L.make_plan(dataset, L.NODES)

@@ -580,7 +580,8 @@ def execute_case(campaign, case, exe, catalog, run, smoke=False):
     shutil.copyfile(run / 'ranks/rank_0.log', run / 'run.log') if (run / 'ranks/rank_0.log').exists() else None
     if catalog:
         shutil.copyfile(catalog / 'manifest.json', run / 'precomputed_manifest.json')
-    require(good, f'Execution failed: inspect {run}')
+    detail = ': ' + result['error'] if result.get('error') else ''
+    require(good, f'Execution failed{detail}; inspect {run}')
     return result
 
 
