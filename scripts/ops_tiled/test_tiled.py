@@ -75,8 +75,8 @@ if not Path('omit_tiling_confirmation').exists():
                 for steps in (1, 500):
                     run = root/('run_%d_%d' % (mode, steps)); (run/'ranks').mkdir(parents=True)
                     case = dict(grid=[1008]*3, shape=[4,2,2], niter=steps, mode=mode, tiling=L.TILING)
-                    R.atomic(run/'spec.json', dict(case=case, executable=str(binary), workdir=str(run), catalog=str(catalog)))
-                    with patch.dict(os.environ, SLURM_PROCID='0', SLURM_LOCALID='0'):
+                    R.atomic(run/'spec.json', dict(case=case, executable=str(binary), workdir=str(run), catalog=str(catalog), compatibility_smoke=steps == 1))
+                    with patch.dict(os.environ, SLURM_PROCID='0', SLURM_LOCALID='0', OPS_TILING_TRACE='1'):
                         self.assertEqual(R.rank_worker(run/'spec.json', run), 0)
                     args = json.loads((run/'arguments.json').read_text())
                     for arg in ('-gpudirect', '-OPS_DIAGS=2', 'OPS_TILING', 'OPS_TILING_MAXDEPTH=6',
@@ -84,11 +84,52 @@ if not Path('omit_tiling_confirmation').exists():
                         self.assertIn(arg, args)
                     env = json.loads((run/'environment.json').read_text())
                     self.assertEqual(env['MPICH_GPU_SUPPORT_ENABLED'], '1')
+                    self.assertEqual(env['OPS_TILING_TRACE'], '1' if steps == 1 else '0')
                     self.assertEqual('OPS_BLOCKSIZE_CSV' in env, mode == 2)
                     self.assertEqual('OPS_BLOCK_SIZE_X=32' in args, mode == 0)
             (run/'omit_tiling_confirmation').touch()
             with patch.dict(os.environ, SLURM_PROCID='0', SLURM_LOCALID='0'):
                 self.assertEqual(R.rank_worker(run/'spec.json', run), 1)
+
+    def test_all_catalogs_with_empty_rank_zero_boundaries(self):
+        dataset = L.HERE.parents[1] / 'dataset-lumi/TOP3_DATASET'
+        cases, _ = L.make_plan(dataset, L.NODES)
+        tested = 0
+        with tempfile.TemporaryDirectory(prefix='tgv_empty_boundary_') as temp:
+            current, trace = Path(temp)/'current.csv', Path(temp)/'rank_0.log'
+            for case in cases:
+                if case['mode'] != 2:
+                    continue
+                historical = dataset/case['source_run_path']/'rank_0/autotune_on/ops_blocksize_tuning_logmod.csv'
+                old = L.first_kernel_rows(historical)
+                # TGV high-face kernels have empty rank-zero ranges on split axes.
+                # This simulates planner evidence; production uses actual ranges.
+                absent = {str(kid) for kid, parts in zip((3, 5, 7), case['shape']) if parts > 1}
+                self.assertTrue(absent <= set(old))
+                L.write_csv(current, [row for kid, row in old.items() if kid not in absent])
+                trace.write_text(''.join('[OPS] Tiled range kernel_id=' + kid +
+                                        ' dim=3 range=0,0,0,10,0,10\n' for kid in absent))
+                blocks = dataset/case['catalog_path']/'blocks.csv'
+                before = L.sha(blocks)
+                report = L.validate_transfer(historical, current, blocks, L.TILING, trace)
+                self.assertEqual(report['rank0_empty_kernel_ids'], sorted(absent, key=int))
+                self.assertFalse(absent & set(report['block_limits_checked_kernel_ids']))
+                self.assertEqual(L.sha(blocks), before)
+                with self.assertRaisesRegex(ValueError, 'missing without empty-range evidence'):
+                    L.validate_transfer(historical, current, blocks, L.TILING)
+                tested += 1
+            self.assertEqual(tested, 45)
+            # A single executed tile invalidates an otherwise empty-kernel excuse.
+            with trace.open('a') as f:
+                f.write('[OPS] Tiled range kernel_id=3 dim=3 range=0,1,0,10,0,10\n')
+            with self.assertRaisesRegex(ValueError, 'missing without empty-range evidence=3'):
+                L.validate_transfer(historical, current, blocks, L.TILING, trace)
+            trace.write_text('[OPS] Tiled range kernel_id=3 dim=3 range=1,0,0,10,0,10\n')
+            with self.assertRaisesRegex(ValueError, 'Negative tiled range'):
+                L.validate_transfer(historical, current, blocks, L.TILING, trace)
+            trace.write_text('[OPS] Tiled range kernel_id=3 dim=3 range=0,0\n')
+            with self.assertRaisesRegex(ValueError, 'Invalid tiled range dimensions'):
+                L.validate_transfer(historical, current, blocks, L.TILING, trace)
 
     def test_transfer_records_geometry_but_rejects_changed_stencil(self):
         # Reuse the non-tiled regression fixture for all required metadata fields.

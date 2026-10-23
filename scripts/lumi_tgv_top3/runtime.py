@@ -51,6 +51,7 @@ def rank_worker(spec_path, run):
                OPS_CSV_LOG_LEVEL='0' if rank == 0 else '2')
     for key in ('OPS_BLOCKSIZE_CSV', 'HIP_VISIBLE_DEVICES', 'CUDA_VISIBLE_DEVICES', 'GPU_DEVICE_ORDINAL'):
         env.pop(key, None)
+    env['OPS_TILING_TRACE'] = '1' if rank == 0 and case.get('tiling') and spec.get('compatibility_smoke') else '0'
     env['OMP_NUM_THREADS'] = '1'
     if rank == 0:
         logs = run / 'rank_0'

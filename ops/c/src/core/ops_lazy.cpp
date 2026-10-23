@@ -898,9 +898,20 @@ void ops_execute(OPS_instance *instance) {
   for (unsigned int i = 0; i < ops_kernel_list.size(); i++) {
     if (ops_kernel_list[i]->startup_func) ops_kernel_list[i]->startup_func(ops_kernel_list[i]);
   }
+  // Optional rank-zero evidence for compatibility probes. Disabled for timed runs.
+  const char *trace_env = getenv("OPS_TILING_TRACE");
+  const bool trace_ranges = trace_env && strcmp(trace_env, "1") == 0 && ops_get_proc() == 0;
   //Execute tiles
   for (int tile = 0; tile < total_tiles; tile++) {
     for (unsigned int i = 0; i < ops_kernel_list.size(); i++) {
+      if (trace_ranges && ops_kernel_list[i]->index >= 0) {
+        ops_printf2(instance, "[OPS] Tiled range kernel_id=%d dim=%d range=",
+                    ops_kernel_list[i]->index, ops_dims_tiling_internal);
+        for (int d = 0; d < 2 * ops_dims_tiling_internal; ++d)
+          ops_printf2(instance, "%s%d", d ? "," : "",
+                      tiled_ranges[i][OPS_MAX_DIM * 2 * tile + d]);
+        ops_printf2(instance, "\n");
+      }
 
       if (tiled_ranges[i][OPS_MAX_DIM * 2 * tile + 1] -
                   tiled_ranges[i][OPS_MAX_DIM * 2 * tile + 0] ==

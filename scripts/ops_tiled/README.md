@@ -42,3 +42,12 @@ ranges: these geometry differences are recorded in the compatibility report,
 instead of requiring equality with the untiled run. They do not prove numerical
 equivalence or that historical Top 3 rankings remain optimal. GPU execution and
 full ROCm compilation must be checked on LUMI.
+
+During the one-step smoke only, rank 0 sets `OPS_TILING_TRACE=1` to record the
+actual local ranges chosen by the tiling planner. A historical kernel may be
+absent from rank 0's CSV only when every traced tile for that kernel is empty.
+Unexplained missing kernels, new IDs, and changed stencil metadata still fail.
+The report lists `rank0_empty_kernel_ids`; those kernels have no rank-zero
+metadata or runtime block-limit check. Their catalog entries remain intact for
+other ranks. Timed runs disable the trace. Changing this validation requires a
+new campaign/build because campaigns freeze both launcher and OPS sources.

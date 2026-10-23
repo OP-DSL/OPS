@@ -493,9 +493,31 @@ def first_kernel_rows(path):
     return out
 
 
-def validate_transfer(historical_log, current_log, blocks, tiling=None):
+def tiled_range_evidence(log):
+    empty, executed = set(), set()
+    for line in log.read_text(errors='replace').splitlines():
+        if not line.startswith('[OPS] Tiled range '):
+            continue
+        match = re.fullmatch(r'\[OPS\] Tiled range kernel_id=(\d+) dim=(\d+) range=([-\d,]+)', line)
+        require(match is not None, 'Malformed tiled range evidence')
+        kid, dim, ranges = match.groups()
+        dim, ranges = int(dim), list(map(int, ranges.split(',')))
+        require(1 <= dim <= 3 and len(ranges) == 2 * dim, 'Invalid tiled range dimensions')
+        widths = [ranges[2*d+1] - ranges[2*d] for d in range(dim)]
+        require(all(w >= 0 for w in widths), 'Negative tiled range extent')
+        (empty if 0 in widths else executed).add(kid)
+    return empty, executed
+
+
+def validate_transfer(historical_log, current_log, blocks, tiling=None, execution_log=None):
     old, new = first_kernel_rows(historical_log), first_kernel_rows(current_log)
-    require(old.keys() == new.keys(), 'Smoke kernel IDs do not match historical IDs')
+    missing, unexpected = set(old) - set(new), set(new) - set(old)
+    empty, executed = tiled_range_evidence(execution_log) if tiling and execution_log else (set(), set())
+    justified = empty - executed
+    require(not unexpected and (not missing or (tiling and missing <= justified)),
+            'Smoke kernel IDs do not match historical IDs: missing=' + ','.join(sorted(missing, key=int)) +
+            '; unexpected=' + ','.join(sorted(unexpected, key=int)) +
+            '; missing without empty-range evidence=' + ','.join(sorted(missing - justified, key=int)))
     fields = ('stencil_sig', 'nstencil_args', 'dim', 'elem_size', 'size_x', 'size_y', 'size_z',
               'd_m_x', 'd_m_y', 'd_m_z', 'd_p_x', 'd_p_y', 'd_p_z',
               'num_read', 'num_write', 'num_rw', 'grid_x', 'grid_y', 'grid_z',
@@ -504,7 +526,7 @@ def validate_transfer(historical_log, current_log, blocks, tiling=None):
     geometry = ('size_x', 'size_y', 'size_z', 'd_m_x', 'd_m_y', 'd_m_z',
                 'd_p_x', 'd_p_y', 'd_p_z', 'grid_x', 'grid_y', 'grid_z')
     changes = []
-    for kid in old:
+    for kid in new:
         for field in fields:
             require(field in old[kid] and field in new[kid], f'Missing metadata field: {field}')
             a, b = old[kid][field], new[kid][field]
@@ -519,20 +541,25 @@ def validate_transfer(historical_log, current_log, blocks, tiling=None):
             require(equal, f'Kernel {kid} changed {field}: {a} -> {b}')
     for block in rows(blocks):
         kid = block['kernel_id']
+        if tiling and kid in missing:
+            continue  # Proven empty on rank zero; no runtime metadata to compare.
         require(kid in new, f'Block references an unobserved kernel: {kid}')
         require(product(int(block[k]) for k in ('bx', 'by', 'bz')) <= float(new[kid]['max_threads']), f'Block exceeds current kernel limit: {kid}')
     return dict(status='PASS', kernels=len(new), fields_checked=list(fields),
                 equality_fields=[field for field in fields if not tiling or field not in geometry],
                 tiling=tiling, geometry_changes=changes,
+                rank0_empty_kernel_ids=sorted(missing, key=int),
+                block_limits_checked_kernel_ids=sorted({r['kernel_id'] for r in rows(blocks)} & set(new), key=int),
+                execution_log_sha256=sha(execution_log) if execution_log else None,
                 missing_catalog_kernels=sorted(set(new) - {r['kernel_id'] for r in rows(blocks)}, key=int),
                 historical_log_sha256=sha(historical_log), smoke_log_sha256=sha(current_log),
-                limitation='Checks runtime IDs, stencil/array metadata, local geometry and block limits; does not prove identical kernel arithmetic or binary equivalence.')
+                limitation='Checks observed rank-zero runtime metadata and block limits. Proven empty kernels have no rank-zero metadata or block-limit check; catalogs are preserved for other ranks. Does not prove arithmetic or binary equivalence.')
 
 
 def execute_case(campaign, case, exe, catalog, run, smoke=False):
     run.mkdir(parents=True, exist_ok=True)
     (run / 'ranks').mkdir(exist_ok=True)
-    spec = dict(case=case, executable=str(exe), workdir=str(run), catalog=str(catalog) if catalog else '')
+    spec = dict(case=case, executable=str(exe), workdir=str(run), catalog=str(catalog) if catalog else '', compatibility_smoke=smoke)
     atomic(run / 'execution.json', spec)
     command = ['srun', f'--nodes={case["nodes"]}', f'--ntasks={case["ranks"]}', '--ntasks-per-node=8',
                '--kill-on-bad-exit=1', '--cpu-bind=' + CPU_BIND, 'bash', str(campaign / 'launcher/run.sh'),
@@ -611,6 +638,8 @@ def run_node(campaign, nodes):
                 require(report['executable_sha256'] == build['sha256'] and report['source_set_id'] == m['set_id'] and report['status'] == 'PASS', 'Stale compatibility report')
                 require(report.get('tiling') == case.get('tiling'), 'Compatibility tiling settings differ')
                 require(sha(contained(root, report['smoke_log'])) == report['smoke_log_sha256'], 'Smoke metadata changed')
+                if report.get('execution_log_sha256'):
+                    require(sha(contained(root, report['execution_log'])) == report['execution_log_sha256'], 'Smoke range evidence changed')
             else:
                 smoke.mkdir(parents=True, exist_ok=True)
                 attempt = Path(tempfile.mkdtemp(prefix='attempt_', dir=smoke))
@@ -619,9 +648,11 @@ def run_node(campaign, nodes):
                 candidates = list((attempt / 'rank_0').glob('*/ops_blocksize_tuning_logmod.csv'))
                 require(len(candidates) == 1, 'Smoke did not emit kernel metadata')
                 blockfile = original / ('blocks.csv' if m['schema_version'] == 2 else 'rank_0/blocks.csv')
-                report = validate_transfer(historical, candidates[0], blockfile, case.get('tiling'))
+                execution_log = attempt / 'ranks/rank_0.log'
+                report = validate_transfer(historical, candidates[0], blockfile, case.get('tiling'), execution_log)
                 report.update(executable_sha256=build['sha256'], historical_executable_sha256=m['context']['EXECUTABLE_SHA256'],
-                              source_set_id=m['set_id'], checked_utc=now(), smoke_log=str(candidates[0].relative_to(root)))
+                              source_set_id=m['set_id'], checked_utc=now(), smoke_log=str(candidates[0].relative_to(root)),
+                              execution_log=str(execution_log.relative_to(root)))
                 atomic(report_path, report)
             # New campaign manifest links to, but never modifies, the historical manifest.
             replay = root / 'precomputed_blocks' / f'decomp{shape_text(case["shape"])}'

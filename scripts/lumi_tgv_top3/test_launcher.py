@@ -373,6 +373,9 @@ print('Total Wall time 1.25')
             rel = f'n006/catalog{index}'
             folder = dataset/rel; folder.mkdir(parents=True)
             (folder/'blocks.csv').write_text('kernel_id,bx,by,bz\n2,128,1,2\n')
+            if tiling:
+                with (folder/'blocks.csv').open('a') as f:
+                    f.write('3,32,4,1\n')
             ctx = dict(APP_NAME='tgvstorenone', GPU_ARCH='gfx90a', shape=L.shape_text(shape),
                        ACTIVE_NUM_RANKS='48', GRID_X='24', GRID_Y='24', GRID_Z='24',
                        APP_ARGS='24 24 24 500', EXECUTABLE_SHA256='historical-binary')
@@ -381,6 +384,10 @@ print('Total Wall time 1.25')
             L.atomic(folder/'manifest.json',manifest)
             source = f'n006/source{index}'
             self.metadata(dataset/source/'rank_0/autotune_on/ops_blocksize_tuning_logmod.csv')
+            if tiling:
+                historical = dataset/source/'rank_0/autotune_on/ops_blocksize_tuning_logmod.csv'
+                row = L.rows(historical)[0]
+                L.write_csv(historical, [row, dict(row, kernel_id='3')])
             cases.append(dict(nodes=6,ranks=48,grid=[24]*3,shape=shape,niter=500,mode=2,
                 roles=['C','D_top1'] if index == 0 else [f'D_top{index+1}'],
                 catalog_path=rel,source_run_path=source,source_set_id=manifest['set_id'],
@@ -405,6 +412,9 @@ print('Total Wall time 1.25')
                 (run/'ranks'/f'rank_{rank}.log').write_text('Total kernel time: 2.0\n' + halo_label + ': 0.5\n')
                 L.atomic(run/'ranks'/f'status_{rank}.json',dict(rank_id=rank,rank_status='OK',
                     rank_wall_time_s=wall+1,app_reported_wall_time_s=wall,precomputed_loaded=True))
+            if tiling and spec['compatibility_smoke']:
+                with (run/'ranks/rank_0.log').open('a') as f:
+                    f.write('[OPS] Tiled range kernel_id=3 dim=3 range=0,0,0,10,0,10\n')
             self.metadata(run/'rank_0/autotune_on/ops_blocksize_tuning_logmod.csv')
             return subprocess.CompletedProcess(command,0)
         with patch.dict(os.environ,SLURM_JOB_NUM_NODES='6'), patch.object(R,'gpu_preflight'), patch.object(L.subprocess,'run',side_effect=fake_srun):
@@ -420,6 +430,9 @@ print('Total Wall time 1.25')
             self.assertEqual(replay['source_set_id'],cases[1]['source_set_id'])
             self.assertEqual(replay.get('tiling'), tiling)
             if tiling:
+                report = L.read_json(root/'_compatibility/n006_case0/compatibility.json')
+                self.assertEqual(report['rank0_empty_kernel_ids'], ['3'])
+                self.assertEqual(len(L.rows(root/'precomputed_blocks/decomp4x4x3/blocks.csv')), 2)
                 for case in cases:
                     fields = dict(line.split('=',1) for line in (R.target_path(root,case)/'config.txt').read_text().splitlines())
                     self.assertEqual(fields['OPS_TILING_MAXDEPTH'], '6')
