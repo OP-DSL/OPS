@@ -181,25 +181,44 @@ The package includes `prepare_dataset.py --validate-only` for the full checksum/
 with GPU Direct, no tiling, no build and no autotuning. This measures transfer
 of the fixed blocks to a new geometry; it does not claim they are optimal there.
 
-Use the frozen executable and `precomputed_blocks/decomp8x4x4/blocks.csv` from
-the 16-node campaign. Check the plan locally first (no files or jobs created):
+The script resolves the reference campaign, executable, blocks and output path
+itself. From the OPS checkout on a LUMI login node:
+
+```bash
+# Validate inputs and print the resolved paths without creating files or jobs:
+bash scripts/lumi_tgv_top3/compare_yz_n016.sh --dry-run
+
+# Validate first, then submit:
+bash scripts/lumi_tgv_top3/compare_yz_n016.sh --submit
+```
+
+This experiment defaults to account `project_465003260` (an existing
+`SLURM_JOB_ACCOUNT` or `SLURM_ACCOUNT` takes precedence). Use `--account` to
+select another project explicitly. The reference is
+`/scratch/<account>/ops-decomposition/campaigns/TGV_TOP3_20261022_083420`;
+the script also checks the corresponding `/pfs/lustrep1/scratch` and
+`/pfs/lustrep2/scratch` paths. It uses that campaign's frozen
+`build/tgvstorenone_mpi_hip` and
+`OPS_LOGS_20261022_083420_n016/precomputed_blocks/decomp8x4x4/blocks.csv`.
+There is no dependency on a shell variable such as `campana`.
+
+Output defaults to
+`/scratch/<account>/ops-decomposition/campaigns/TGV_YZ_N016_<timestamp>/`.
+The Slurm log is alongside that directory as `TGV_YZ_N016_<timestamp>-<jobid>.out`.
+The resolved input/output paths are passed explicitly to the submitted job.
+Missing files or invalid catalogs stop submission before requesting nodes.
+
+If the reference campaign was moved, only its directory needs overriding:
 
 ```bash
 bash scripts/lumi_tgv_top3/compare_yz_n016.sh \
-  --executable /path/to/campaign/build/tgvstorenone_mpi_hip \
-  --blocks /path/to/campaign/OPS_LOGS_STAMP_n016/precomputed_blocks/decomp8x4x4/blocks.csv \
-  --output /path/to/new/TGV_YZ_N016 --dry-run
+  --campaign /actual/path/TGV_TOP3_20261022_083420 --submit
 ```
 
-Then, on LUMI, submit explicitly with your project account:
-
-```bash
-sbatch --account=project_XXXXXXXXX scripts/lumi_tgv_top3/compare_yz_n016.sh \
-  --ops-root /path/to/OPS \
-  --executable /path/to/campaign/build/tgvstorenone_mpi_hip \
-  --blocks /path/to/campaign/OPS_LOGS_STAMP_n016/precomputed_blocks/decomp8x4x4/blocks.csv \
-  --output /path/to/new/TGV_YZ_N016
-```
+`--executable`, `--blocks`, `--output`, `--ops-root` and `--env-file` remain
+available as overrides. With no action, a login-node invocation only validates
+and prints the plan. Direct `sbatch` remains supported, but `--submit` is
+recommended because it checks inputs before allocating nodes.
 
 The script requests 16 nodes, 128 ranks/GCDs and one hour in `standard-g`.
 An optional `--env-file` selects a pinned LUMI module profile compatible with

@@ -3,6 +3,7 @@ import csv
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -130,6 +131,51 @@ for rank in range(1,128):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn('exactly 16 nodes', result.stderr)
         self.assertFalse(self.output.exists())
+
+    def test_campaign_resolves_inputs_and_automatic_output(self):
+        campaign = self.root / 'reference'
+        exe = campaign / 'build/tgvstorenone_mpi_hip'
+        blocks = campaign / 'OPS_LOGS_20261022_083420_n016/precomputed_blocks/decomp8x4x4/blocks.csv'
+        exe.parent.mkdir(parents=True)
+        blocks.parent.mkdir(parents=True)
+        shutil.copy2(self.exe, exe)
+        shutil.copy2(self.blocks, blocks)
+        result = subprocess.run(['bash', str(SCRIPT), '--ops-root', str(HERE.parents[1]),
+            '--campaign', str(campaign), '--account', 'project_yz_test', '--dry-run'],
+            env=self.env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        plan = json.loads(result.stdout)
+        self.assertEqual(plan['executable_source'], str(exe))
+        self.assertEqual(plan['blocks_source'], str(blocks))
+        self.assertTrue(plan['output_directory'].startswith(
+            '/scratch/project_yz_test/ops-decomposition/campaigns/TGV_YZ_N016_'))
+        self.assertFalse(Path(plan['output_directory']).exists())
+
+    def test_submit_validates_before_sbatch_and_freezes_resolved_arguments(self):
+        self.env.pop('SLURM_JOB_ID')
+        self.env.pop('SLURM_JOB_NUM_NODES')
+        self.env['PATH'] = str(self.bin) + os.pathsep + self.env['PATH']
+        capture = self.root / 'sbatch_args.json'
+        self.env['MOCK_SBATCH_CAPTURE'] = str(capture)
+        self.make_executable('sbatch', '''#!/usr/bin/env python3
+import json, os, sys
+from pathlib import Path
+Path(os.environ['MOCK_SBATCH_CAPTURE']).write_text(json.dumps(sys.argv[1:]))
+print('Submitted batch job 456')
+''')
+        result = self.run_script('--submit', '--account', 'project_yz_test')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        sent = json.loads(capture.read_text())
+        self.assertIn('--account=project_yz_test', sent)
+        self.assertEqual(sent[sent.index('--executable')+1], str(self.exe))
+        self.assertEqual(sent[sent.index('--blocks')+1], str(self.blocks))
+        self.assertEqual(sent[sent.index('--output')+1], str(self.output))
+        self.assertFalse(self.output.exists())
+        capture.unlink()
+        self.exe.unlink()
+        result = self.run_script('--submit')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse(capture.exists())
 
 
 if __name__ == '__main__':

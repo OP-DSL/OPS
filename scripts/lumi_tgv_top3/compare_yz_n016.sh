@@ -18,6 +18,7 @@ export PYTHONDONTWRITEBYTECODE=1
 exec "${OPS_LAUNCHER_PYTHON:-python3}" - "$@" <<'PY'
 import argparse
 import csv
+from datetime import datetime
 import hashlib
 import importlib.util
 import json
@@ -30,12 +31,16 @@ import subprocess
 import sys
 
 parser = argparse.ArgumentParser(description='TGV StoreNone: 16 nodes, 2016^3, MPI 8x4x4 vs 2x8x8; fixed blocks, GPU Direct, no tuning.')
-parser.add_argument('--executable', required=True, type=Path, help='Existing TGV StoreNone MPI+HIP executable supporting the fourth argument (steps)')
-parser.add_argument('--blocks', required=True, type=Path, help='Shared blocks.csv from the 16-node 8x4x4 precomputed catalog')
-parser.add_argument('--output', required=True, type=Path, help='New output directory; existing directories are rejected')
+parser.add_argument('--account', default=os.environ.get('SLURM_JOB_ACCOUNT') or os.environ.get('SLURM_ACCOUNT') or 'project_465003260', help='Slurm project; defaults to this experiment\'s project_465003260, or the Slurm environment')
+parser.add_argument('--campaign', type=Path, help='Reference campaign; defaults to TGV_TOP3_20261022_083420 in the project campaign directory')
+parser.add_argument('--executable', type=Path, help='Override the executable from the reference campaign')
+parser.add_argument('--blocks', type=Path, help='Override the shared 8x4x4 blocks.csv from the reference campaign')
+parser.add_argument('--output', type=Path, help='Override the automatic TGV_YZ_N016_<timestamp> output directory')
 parser.add_argument('--ops-root', type=Path, default=Path(os.environ['OPS_YZ_DEFAULT_ROOT']), help='OPS checkout (default: checkout containing script, or Slurm submission directory)')
 parser.add_argument('--env-file', type=Path, help='Site module profile; defaults to lumi_tgv_top3/environment.sh')
-parser.add_argument('--dry-run', action='store_true', help='Validate inputs and print plan; no files, GPU execution or submission')
+action = parser.add_mutually_exclusive_group()
+action.add_argument('--dry-run', action='store_true', help='Validate inputs and print plan; no files, GPU execution or submission')
+action.add_argument('--submit', action='store_true', help='Validate inputs on the login node, then submit the 16-node job')
 args = parser.parse_args()
 
 def require(ok, message):
@@ -61,10 +66,24 @@ def write_csv(path, rows):
 
 root = args.ops_root.resolve()
 helpers = root / 'scripts/lumi_tgv_top3'
-exe, blocks, output = args.executable.resolve(), args.blocks.resolve(), args.output.resolve()
+require(args.account and '/' not in args.account and not any(c.isspace() for c in args.account), 'Invalid Slurm account')
+campaigns = Path('/scratch') / args.account / 'ops-decomposition/campaigns'
+reference_name = 'TGV_TOP3_20261022_083420'
+blocks_relative = Path('OPS_LOGS_20261022_083420_n016/precomputed_blocks/decomp8x4x4/blocks.csv')
+if args.campaign:
+    campaign = args.campaign.resolve()
+else:
+    candidates = [campaigns / reference_name] + [
+        Path(mount) / args.account / 'ops-decomposition/campaigns' / reference_name
+        for mount in ('/pfs/lustrep1/scratch', '/pfs/lustrep2/scratch')]
+    campaign = next((p for p in candidates if (p / 'build/tgvstorenone_mpi_hip').is_file()
+                    and (p / blocks_relative).is_file()), candidates[0]).resolve()
+exe = (args.executable or campaign / 'build/tgvstorenone_mpi_hip').resolve()
+blocks = (args.blocks or campaign / blocks_relative).resolve()
+output = (args.output or campaigns / ('TGV_YZ_N016_' + datetime.now().strftime('%Y%m%d_%H%M%S_%f'))).resolve()
 profile = (args.env_file or helpers / 'environment.sh').resolve()
-require(exe.is_file() and os.access(str(exe), os.X_OK), 'Executable missing or not executable: ' + str(exe))
-require(blocks.is_file(), 'Missing blocks.csv: ' + str(blocks))
+require(exe.is_file() and os.access(str(exe), os.X_OK), 'Executable missing or not executable: ' + str(exe) + '; use --campaign if the reference campaign was moved')
+require(blocks.is_file(), 'Missing blocks.csv: ' + str(blocks) + '; use --campaign if the reference campaign was moved')
 require(profile.is_file() and (helpers / 'runtime.py').is_file(), 'Missing environment/runtime; supply --ops-root and optionally --env-file')
 require(not output.exists(), 'Output already exists: ' + str(output))
 with blocks.open() as f:
@@ -82,6 +101,7 @@ shapes = {'8x4x4': [8, 4, 4], '2x8x8': [2, 8, 8]}
 order = [(rep, shape) for rep in (1, 2, 3)
          for shape in (['8x4x4', '2x8x8'] if rep % 2 else ['2x8x8', '8x4x4'])]
 plan = dict(grid=[2016]*3, nodes=16, ranks=128, steps=500, repetitions=3,
+            account=args.account, reference_campaign=str(campaign), output_directory=str(output),
             shapes=shapes, order=order, smoke_steps=1, gpu_direct=True,
             executable_source=str(exe), executable_sha256=digest(exe),
             blocks_source=str(blocks), blocks_sha256=digest(blocks),
@@ -92,7 +112,21 @@ plan = dict(grid=[2016]*3, nodes=16, ranks=128, steps=500, repetitions=3,
 print(json.dumps(plan, indent=2), flush=True)
 if args.dry_run:
     sys.exit(0)
-require(os.environ.get('SLURM_JOB_ID'), 'Run through sbatch, or use --dry-run')
+if args.submit:
+    require(not os.environ.get('SLURM_JOB_ID'), 'Use --submit from a login node, outside an existing job')
+    require(shutil.which('sbatch'), 'sbatch not found')
+    output.parent.mkdir(parents=True, exist_ok=True)
+    log_path = output.parent / (output.name + '-%j.out')
+    command = ['sbatch', '--account=' + args.account, '--output=' + str(log_path),
+               os.environ['OPS_YZ_SOURCE_SCRIPT'], '--account', args.account,
+               '--ops-root', str(root), '--campaign', str(campaign), '--executable', str(exe),
+               '--blocks', str(blocks), '--output', str(output), '--env-file', str(profile)]
+    print('Slurm log: ' + str(log_path), flush=True)
+    subprocess.run(command, check=True)
+    sys.exit(0)
+if not os.environ.get('SLURM_JOB_ID'):
+    print('Inputs validated. Add --submit to send this experiment to Slurm.')
+    sys.exit(0)
 require(int(os.environ.get('SLURM_JOB_NUM_NODES', os.environ.get('SLURM_NNODES', '0'))) == 16,
         'Expected an allocation of exactly 16 nodes')
 require(shutil.which('srun'), 'srun not found')
