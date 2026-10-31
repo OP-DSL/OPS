@@ -173,20 +173,29 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest -v test_codegen
 
 The package includes `prepare_dataset.py --validate-only` for the full checksum/catalog/provenance audit using Python 3.6+. The same script can rebuild into a new directory with `--source-package /path/to/verified/package --output-root /path/to/new/TOP3_DATASET`.
 
-## Small 16-node experiment: redistribute MPI along Y and Z
+## Small 16-node experiment: autotune each new MPI configuration
 
-`compare_yz_n016.sh` keeps the **global input `2016x2016x2016`**, 16 nodes,
-128 ranks/GCDs, 500 steps, GPU Direct and the existing shared precomputed blocks.
-By default it measures only MPI **`2x8x8`**, once, as in the original Top3
-campaign. The resulting local domain is `1008x252x252`; this is not a change
-to the application's global input arguments.
+`compare_yz_n016.sh` runs **all three MPI shapes `2x8x8`, `4x4x8`, `2x16x4`**
+with unchanged global input **`2016x2016x2016`**, 16 nodes, 128 MPI ranks/GCDs,
+GPU Direct, no tiling, and 500 simulation steps per execution.
 
-**MPI `8x4x4` is never rerun.** The script reads its existing default-block (A)
-and precomputed-block (C) `config.txt` files from `TGV_TOP3_20261022_083420`.
-It checks their grid, steps, ranks, successful status and executable hash before
-submission. Every comparison is explicitly marked `REFERENCE_KIND=HISTORICAL`.
-In particular, C/D compares the historical precomputed wall time (170.818726 s
-in that campaign) with the new measurement. This is not a simultaneous control.
+For each shape it runs this sequence:
+
+1. `autotune_on`: sample ranks **0 and 1** in `OPS_AUTOTUNE_MODE=1`; the other
+   ranks execute mode 0, as in the original sampled tuning campaign.
+2. Generate that shape's `precomputed_blocks/decomp<shape>/blocks.csv` from its
+   own sampled best logs. Preserve the existing shared-catalog policy: most
+   frequent block per kernel; ties use lowest measured `best_time`, then the
+   block tuple. Validate both samples, kernel coverage and thread limits.
+3. `autotune_precomputed`: run **all 128 ranks in mode 2** with that shape's
+   newly generated catalog. Every rank must confirm loading all 25 tuned IDs.
+   Initialization kernel 1 retains the established default fallback.
+
+Thus the default job has **six main executions: three tuning + three replay**,
+in shape order, with no extra smoke runs. The catalog of historical MPI
+`8x4x4` is never transferred into the new shapes. MPI `8x4x4` itself is never
+rerun: its existing successful A/default-block and C/precomputed `config.txt`
+files supply the historical comparison times.
 
 From the OPS checkout on a LUMI login node:
 
@@ -195,92 +204,104 @@ bash scripts/lumi_tgv_top3/compare_yz_n016.sh --dry-run
 bash scripts/lumi_tgv_top3/compare_yz_n016.sh --submit
 ```
 
-Paths are resolved inside the script; no shell variable such as `campana` is
-needed. This specific experiment defaults to `project_465003260`; the Slurm
-account environment takes precedence, and `--account` overrides both.
-The reference campaign is found under
-`/scratch/<account>/ops-decomposition/campaigns/TGV_TOP3_20261022_083420`
-(or its corresponding `/pfs/lustrep1/scratch` or `/pfs/lustrep2/scratch` path).
-The executable comes from `build/tgvstorenone_mpi_hip`, and the shared catalog
-from `OPS_LOGS_20261022_083420_n016/precomputed_blocks/decomp8x4x4/blocks.csv`.
+No shell variables or input paths are required in the normal case. The script
+resolves the reference campaign, executable and output location itself. It
+uses project `project_465003260` by default (Slurm account environment takes
+precedence; `--account` overrides it). The reference is
+`/scratch/<account>/ops-decomposition/campaigns/TGV_TOP3_20261022_083420`, also
+checking corresponding `/pfs/lustrep1/scratch` and `/pfs/lustrep2/scratch` paths.
+If it was moved, pass `--campaign /actual/path/TGV_TOP3_20261022_083420`.
+The existing executable is `build/tgvstorenone_mpi_hip` inside that campaign.
+The historical reference contexts and executable hash must match before
+submission; there is no build or copy of the executable into the new output.
 
 Output defaults to
 `/scratch/<account>/ops-decomposition/campaigns/TGV_YZ_N016_<timestamp>/`.
-The Slurm log is beside it as `TGV_YZ_N016_<timestamp>-<jobid>.out`.
-The script validates inputs before calling `sbatch` and passes resolved paths
-to the job. With no action, a login-node invocation only prints the validated
-plan. Use `--campaign /actual/path/TGV_TOP3_20261022_083420` if the reference
-was moved. `--output`, `--ops-root` and `--env-file` can also be overridden.
-Explicit `--executable`/`--blocks` paths must match the reference hashes.
+The Slurm log is alongside it as `TGV_YZ_N016_<timestamp>-<jobid>.out`.
+An existing output directory is rejected. `--output`, `--ops-root`,
+`--executable` and `--env-file` allow explicit overrides. Python 3.6+ is required.
+The environment defaults to the same `lumi_tgv_top3/environment.sh`, with the
+existing LUMI CPU/GCD affinity and Cray GPU-aware MPI linkage checks. The job
+requests one hour on 16 `standard-g` nodes. Local/dry-run checks do not prove
+GPU runtime behavior or numerical equivalence.
 
-Additional MPI choices require an explicit argument, for example:
-
-```bash
-bash scripts/lumi_tgv_top3/compare_yz_n016.sh \
-  --decompositions 4x4x8,2x16x4 --submit
-```
-
-Every shape must have 128 ranks and divide the unchanged `2016^3` input evenly.
-`8x4x4` is rejected to prevent rerunning the historical reference. To request
-more than the default single measured execution, use `--repetitions 3`;
-individual results remain under `iter_1`, `iter_2`, `iter_3` with no hidden
-aggregation. The block catalog is held fixed: these are transfer experiments,
-not autotuning runs or claims that the selected MPI is optimal.
-
-The script requests one hour in `standard-g`, with eight ranks/GCDs per node,
-seven CPU cores per rank and the existing LUMI affinity map. It uses the same
-`environment.sh` (or the supplied `--env-file`) and requires Python 3.6+.
-There is no build, autotuning or tiling. One separate one-step launch/catalog
-check per new MPI shape precedes measurement; these checks do not certify
-numerical equivalence and are excluded from scientific summaries.
-
-The output follows the existing Top3 directory and config/CSV conventions:
+**Output is restricted to the agreed config/log/CSV structure:**
 
 ```text
 TGV_YZ_N016_<stamp>/
-  config.txt
-  environment.sh
-  launcher/compare_yz_n016.sh
-  build/tgvstorenone_mpi_hip
   OPS_LOGS_<stamp>_n016/
-    references/A_config.txt
-    references/C_config.txt
-    precomputed_blocks/decomp2x8x8/blocks.csv
-    precomputed_blocks/decomp2x8x8/config.txt
-    _compatibility/...
+    precomputed_blocks/
+      decomp2x8x8/blocks.csv
+      decomp4x4x8/blocks.csv
+      decomp2x16x4/blocks.csv
     tgvstorenone_hip_2016x2016x2016_cfg1_comparison_<stamp>_n016/
-      mode_1/decomp2x8x8/iter_1/autotune_precomputed/
-        config.txt
-        run.log
-        srun.log
-        command.txt
-        mpi_rank_metrics.csv
-        rank_0/autotune_on/*.csv
-        ranks/rank_<rank>.log
-        ranks/status_<rank>.csv
+      mode_1/decomp<shape>/iter_1/
+        autotune_on/
+          config.txt
+          run.log
+          mpi_rank_metrics.csv
+          rank_0/autotune_on/*.csv
+          rank_1/autotune_on/*.csv
+          ranks/rank_<rank>.log
+        autotune_precomputed/
+          config.txt
+          run.log
+          mpi_rank_metrics.csv
+          rank_0/autotune_on/*.csv
+          ranks/rank_<rank>.log
     summary.csv
     comparisons.csv
-    rank0_grids.csv
 ```
 
-**No JSON files are generated.** `config.txt` records the existing fields:
-global grid, MPI shape, block mode, GPU Direct, wall/kernel/halo times,
-status, reference paths and `SPEEDUP_DEFAULT_MPI_PRECOMPUTED`. It exists from
-the start of each run and records failure instead of silently omitting that
-run. Failed runs never enter the successful summary. Initialization kernel 1
-retains the original default fallback; IDs 2–26 load the frozen shared catalog.
-Every rank must report successful catalog loading, and rank 0 must confirm
-GPU Direct. Logs and hashes preserve provenance; existing output directories
-are never overwritten. Reference config snapshots are copies, not new runs.
+No JSON, separate plan/command/status files, root config, copied reference
+folders, launcher/build copies, compatibility folders or derived grid CSVs
+are generated. Rank completion records are embedded in the existing rank logs
+and collected into `mpi_rank_metrics.csv`. `run.log` contains rank-0 output
+and any Slurm launch diagnostics. The native OPS CSVs retain actual grid data.
+The directory `mode_1` denotes MPI decomposition, while `OPS_AUTOTUNE_MODE`
+in each config distinguishes training (1) and replay (2).
 
-Wall time is the maximum application-reported time among reporting ranks;
-kernel/halo totals use the existing OPS rank-mean convention. `rank0_grids.csv`
-records the first logged range per kernel on rank 0, not all ranks or calls.
-`summary.csv` preserves the existing columns and adds iteration/reference kind;
-`comparisons.csv` preserves A/C/D ratios and adds MPI, iteration and historical
-reference labeling. No new shape is assigned a historical Top 1–3 rank.
+Every run writes `config.txt` before launching and records success or failure,
+input grid, MPI shape, block mode, hashes, sample ranks and wall/kernel/halo
+times. Replay records `PRECOMPUTED_SOURCE_CONFIG` pointing to the matching
+training execution, `BLOCKS_SOURCE_MPI`, and the catalog SHA256 in
+`PRECOMPUTED_SET_ID` (`PRECOMPUTED_SET_ID_KIND=BLOCKS_SHA256`). The tuning config
+records the sampled best-log hashes. A failed/incomplete tuning phase prevents
+catalog export and replay. A missing, swapped or incompatible replay catalog
+stops execution; it never falls back to the historical reference catalog.
 
-Local validation (Slurm and GPU execution simulated):
+`summary.csv` includes separate dynamic and precomputed rows for every shape.
+`comparisons.csv` includes **only replay measurements**, compared to historical
+A/C references, with `REFERENCE_KIND=HISTORICAL` in configs and
+`reference_kind=HISTORICAL` in summaries. `WALL_TIME_AUTOTUNE` remains distinct
+from `WALL_TIME_PRECOMPUTED`. Wall time is the maximum application-reported
+value across reporting ranks, and kernel/halo totals preserve OPS rank means.
+The historical 170.818726 s reference is not a simultaneously measured control.
+
+To reuse **compatible catalogs generated for each specific shape**, optionally
+provide an existing node-level `OPS_LOGS` directory:
+
+```bash
+bash scripts/lumi_tgv_top3/compare_yz_n016.sh \
+  --precomputed-source /path/to/OPS_LOGS_<stamp>_n016 --submit
+```
+
+The script requires the matching shape's `iter_1/autotune_on/config.txt`, both
+sampled best/tuning CSVs, all rank metrics, and `precomputed_blocks/decomp<shape>/blocks.csv`.
+It rechecks application/grid/MPI/executable context, regenerates the selection
+from those measurements and compares catalog bytes. Existing incompatible
+catalogs are rejected. Shapes missing from that source train afresh. Reused
+catalogs retain their original tuning config path rather than copying fake
+training executions into the new output. Catalogs from the earlier fixed-block
+transfer version of this script do **not** satisfy these requirements.
+
+`--decompositions` restricts the explicitly selected shapes, and
+`--repetitions N` requests N replay measurements (`iter_1` ... `iter_N`) after
+one tuning execution per shape. Neither option changes the global input.
+There is no single `--blocks` option that could apply one catalog to every MPI
+shape. Previously generated outputs are never deleted or relabeled.
+
+Local checks (Slurm and GPU application simulated, real rank worker executed):
 
 ```bash
 bash -n scripts/lumi_tgv_top3/compare_yz_n016.sh
