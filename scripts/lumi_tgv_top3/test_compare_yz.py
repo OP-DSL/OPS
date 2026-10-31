@@ -44,7 +44,7 @@ shape = 'x'.join(next(a.split('=')[1] for a in sys.argv if a.startswith('OPS_FOR
 assert shape in ['2x8x8','4x4x8','2x16x4'], 'Unexpected/default decomposition'
 rank = int(os.environ['SLURM_PROCID'])
 phase = 1 if Path.cwd().name == 'autotune_on' else 2
-mode = 1 if phase == 1 and rank in (0,1) else (0 if phase == 1 else 2)
+mode = 1 if phase == 1 and rank == 0 else (0 if phase == 1 else 2)
 assert '-OPS_AUTOTUNE_MODE='+str(mode) in sys.argv
 assert os.environ['OPS_AUTOTUNE_MODE'] == str(mode)
 if phase == 1:
@@ -53,12 +53,12 @@ else:
  assert '/decomp'+shape+'/blocks.csv' in os.environ['OPS_BLOCKSIZE_CSV']
  with open(os.environ['OPS_BLOCKSIZE_CSV']) as f: blocks = list(csv.DictReader(f))
  assert len(blocks) == 25
- expected = {'2x8x8':(32,4,4),'4x4x8':(128,1,4),'2x16x4':(32,2,4)}[shape]
+ expected = {'2x8x8':(64,2,8),'4x4x8':(128,1,4),'2x16x4':(64,1,4)}[shape]
  for r in blocks:
   k = int(r['kernel_id'])
   assert tuple(int(r[a]) for a in ['bx','by','bz']) == ((1,128,2) if k == 2 else expected), 'Wrong shape-specific blocks'
  print('Loaded %d precomputed block sizes from %s' % (24 if os.environ.get('MOCK_BAD_LOAD') else 25, os.environ['OPS_BLOCKSIZE_CSV']))
-logging = rank in (0,1) if phase == 1 else rank == 0
+logging = rank == 0
 if logging:
  assert os.environ['OPS_DISABLE_CSV_LOGS'] == '0'
  logs = Path(os.environ['OPS_LOGS_DIR'])/'autotune_on'; logs.mkdir(parents=True)
@@ -72,12 +72,12 @@ if logging:
   for k in range(1,27):
    g=[1,local[1]+2,local[2]+2] if k == 2 else local
    w.writerow([k]+g+list(b[:3])+['stencil_'+str(k),1024])
- if phase == 1 and not (os.environ.get('MOCK_MISSING_SAMPLE') and rank == 1):
+ if phase == 1 and not (os.environ.get('MOCK_MISSING_SAMPLE') and rank == 0):
   with (logs/'ops_blocksize_best_logmod.csv').open('w') as f:
    w=csv.writer(f); w.writerow(['kernel_id','bx','by','bz','best_time'])
    w.writerow([1,32,4,1,1e300])
    for k in range(2,27):
-    # Same block consensus for kernel 2, competing blocks/times for others.
+    # Export the rank-0 best block without any cross-rank consensus.
     w.writerow([k]+([1,128,2,1.0] if k == 2 else list(b)))
    w.writerow([3,32,4,1,99.0])  # Worse duplicate observation must not win.
    w.writerow(['Autotune -- 1','','','',''])
@@ -158,7 +158,7 @@ for rank in range(128):
         self.assertEqual(p['APP_ARGS'],'2016 2016 2016 500')
         self.assertEqual(p['DECOMPOSITIONS'],','.join(SHAPES))
         self.assertEqual(p['AUTOTUNE_MODES'],'1 2')
-        self.assertEqual(p['AUTOTUNE_SAMPLE_RANKS'],'0 1')
+        self.assertEqual(p['AUTOTUNE_SAMPLE_RANKS'],'0')
         self.assertEqual(p['MAIN_EXECUTIONS'],'6')
         self.assertEqual(p['REFERENCE_RERUN'],'NO')
         self.assertTrue(p['OUTPUT_DIRECTORY'].startswith('/scratch/project_yz_test/ops-decomposition/campaigns/TGV_YZ_N016_'))
@@ -194,12 +194,11 @@ for rank in range(128):
                                 GRID_X='2016',GRID_Y='2016',GRID_Z='2016',REFERENCE_RERUN='NO',GPU_DIRECT='YES').items():
                     self.assertEqual(fields[k],v)
                 allowed={'config.txt','run.log','mpi_rank_metrics.csv','ranks','rank_0'}
-                if run==tuned: allowed.add('rank_1')
                 self.assertEqual({p.name for p in run.iterdir()},allowed)
                 self.assertEqual({p.suffix for p in (run/'ranks').iterdir()},{'.log'})
                 self.assertEqual(len(table(run/'mpi_rank_metrics.csv')),128)
             modes=table(tuned/'mpi_rank_metrics.csv')
-            self.assertEqual([r['rank_id'] for r in modes if r['autotune_mode']=='1'],['0','1'])
+            self.assertEqual([r['rank_id'] for r in modes if r['autotune_mode']=='1'],['0'])
         self.assertEqual(len(set(hashes)),3,'Each shape must retain its independently generated catalog')
         self.assertEqual(list(self.output.rglob('*.json')),[])
         again=self.run_script(); self.assertNotEqual(again.returncode,0); self.assertIn('Output already exists',again.stderr)

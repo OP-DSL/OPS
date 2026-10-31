@@ -69,48 +69,37 @@ def write_csv(path, values):
             w.writerows(values)
 
 
-# Exactly the existing sampled-rank policy: best observation per kernel/rank,
-# most frequent block, then smallest measured best_time, then block tuple.
-def shared_catalog(run):
-    sampled, metadata = {}, {}
-    for rank in (0, 1):
-        source = run / ('rank_%d/autotune_on' % rank)
-        best = {}
-        for row in rows(source / 'ops_blocksize_best_logmod.csv'):
-            kid = (row.get('kernel_id') or '').strip()
-            if not kid or kid.startswith(('Autotune --', 'total of rows --', 'app name --',
-                                          'default total time --', 'best total time --')):
-                continue
-            k = int(kid)
-            if k == 1:  # One-time initialization retains the established fallback.
-                continue
-            b = tuple(int(row[a]) for a in ('bx', 'by', 'bz'))
-            t = float(row['best_time'])
-            require(k in range(2, 27) and all(v > 0 for v in b) and b[0]*b[1]*b[2] <= 1024
-                    and math.isfinite(t) and 0 < t < 1e299, 'Invalid/unmeasured tuned block in ' + str(source))
-            if k not in best or t < best[k][0]:
-                best[k] = (t, b)
-        require(set(best) == set(range(2, 27)), 'Missing tuned kernel IDs 2..26 in ' + str(source))
-        sampled[rank] = best
-        meta = {}
-        with (source / 'ops_blocksize_tuning_logmod.csv').open() as f:
-            for row in csv.DictReader(f):
-                if (row.get('kernel_id') or '').isdigit():
-                    meta.setdefault(int(row['kernel_id']), row)
-                if set(range(2, 27)) <= set(meta):
-                    break
-        require(set(range(2, 27)) <= set(meta), 'Missing tuning metadata in ' + str(source))
-        metadata[rank] = meta
+# Export rank 0's best measured block for each kernel, without cross-rank voting.
+def rank0_catalog(run):
+    source = run / 'rank_0/autotune_on'
+    best = {}
+    for row in rows(source / 'ops_blocksize_best_logmod.csv'):
+        kid = (row.get('kernel_id') or '').strip()
+        if not kid or kid.startswith(('Autotune --', 'total of rows --', 'app name --',
+                                      'default total time --', 'best total time --')):
+            continue
+        k = int(kid)
+        if k == 1:  # One-time initialization retains the established fallback.
+            continue
+        b = tuple(int(row[a]) for a in ('bx', 'by', 'bz'))
+        t = float(row['best_time'])
+        require(k in range(2, 27) and all(v > 0 for v in b) and b[0]*b[1]*b[2] <= 1024
+                and math.isfinite(t) and 0 < t < 1e299, 'Invalid/unmeasured rank-0 block in ' + str(source))
+        if k not in best or t < best[k][0]:
+            best[k] = (t, b)
+    require(set(best) == set(range(2, 27)), 'Missing tuned kernel IDs 2..26 in ' + str(source))
+    metadata = {}
+    with (source / 'ops_blocksize_tuning_logmod.csv').open() as f:
+        for row in csv.DictReader(f):
+            if (row.get('kernel_id') or '').isdigit():
+                metadata.setdefault(int(row['kernel_id']), row)
+            if set(range(2, 27)) <= set(metadata):
+                break
+    require(set(range(2, 27)) <= set(metadata), 'Missing rank-0 tuning metadata in ' + str(source))
     selected = []
     for k in range(2, 27):
-        candidates = {}
-        for rank in (0, 1):
-            t, b = sampled[rank][k]
-            count, best_time = candidates.get(b, (0, t))
-            candidates[b] = (count+1, min(t, best_time))
-        b = min(candidates, key=lambda b: (-candidates[b][0], candidates[b][1], b))
-        require(metadata[0][k]['stencil_sig'] == metadata[1][k]['stencil_sig'], 'Sample rank stencil mismatch')
-        require(all(b[0]*b[1]*b[2] <= float(metadata[r][k]['max_threads']) for r in (0, 1)), 'Block exceeds kernel thread limit')
+        b = best[k][1]
+        require(b[0]*b[1]*b[2] <= float(metadata[k]['max_threads']), 'Block exceeds kernel thread limit')
         selected.append(dict(kernel_id=k, bx=b[0], by=b[1], bz=b[2]))
     return selected
 
@@ -132,8 +121,8 @@ c = dict(line.split('=',1) for line in path.read_text().splitlines() if '=' in l
 rank, local = int(os.environ['SLURM_PROCID']), int(os.environ['SLURM_LOCALID'])
 if not (0 <= rank < 128 and 0 <= local < 8): raise SystemExit('Invalid MPI rank/GCD')
 phase = int(c['OPS_AUTOTUNE_MODE'])
-mode = 1 if phase == 1 and rank in (0,1) else (0 if phase == 1 else 2)
-logging = (rank in (0,1)) if phase == 1 else (rank == 0)
+mode = 1 if phase == 1 and rank == 0 else (0 if phase == 1 else 2)
+logging = rank == 0
 env = dict(os.environ, ROCR_VISIBLE_DEVICES=str(local), MPICH_GPU_SUPPORT_ENABLED='1',
            OMP_NUM_THREADS='1', OPS_AUTOTUNE_MODE=str(mode), OPS_AUTOTUNE_LOGS='1' if logging else '0',
            OPS_DISABLE_CSV_LOGS='0' if logging else '1', OPS_CSV_LOG_LEVEL='0' if logging else '2')
@@ -186,7 +175,7 @@ def collect_ranks(run, phase):
     write_csv(run / 'mpi_rank_metrics.csv', values)
     require(len(values) == 128 and {int(s['rank_id']) for s in values} == set(range(128)), 'Missing MPI rank status')
     for s in values:
-        expected = 1 if phase == 1 and int(s['rank_id']) in (0,1) else (0 if phase == 1 else 2)
+        expected = 1 if phase == 1 and int(s['rank_id']) == 0 else (0 if phase == 1 else 2)
         require(s['rank_status'] == 'OK' and s['returncode'] == '0' and int(s['autotune_mode']) == expected
                 and (phase == 1 or s['precomputed_loaded'] == 'True'), 'Rank failed or ran the wrong mode')
     return values
@@ -251,12 +240,12 @@ def main():
     def validate_source(config_path, shape, expected_hash=None):
         c = read_config(config_path)
         expected = dict(common, DECOMP_PX=str(shapes[shape][0]), DECOMP_PY=str(shapes[shape][1]), DECOMP_PZ=str(shapes[shape][2]),
-                        OPS_AUTOTUNE_MODE='1', SAMPLED_AUTOTUNE='YES', AUTOTUNE_SAMPLE_RANKS='0 1', COMMIT_STATUS='COMMITTED')
+                        OPS_AUTOTUNE_MODE='1', SAMPLED_AUTOTUNE='YES', AUTOTUNE_SAMPLE_RANKS='0', COMMIT_STATUS='COMMITTED')
         require(all(c.get(k) == v for k,v in expected.items()), 'Catalog tuning context mismatch: ' + str(config_path))
         metrics = rows(config_path.parent / 'mpi_rank_metrics.csv')
         require(len(metrics) == 128 and {r['rank_id'] for r in metrics} == {str(r) for r in range(128)}
                 and all(r['rank_status'] == 'OK' for r in metrics), 'Incomplete tuning rank metrics')
-        data = catalog_bytes(shared_catalog(config_path.parent))
+        data = catalog_bytes(rank0_catalog(config_path.parent))
         if expected_hash:
             require(hashlib.sha256(data).hexdigest() == expected_hash, 'Catalog differs from the measured tuning results')
         return c, data
@@ -275,7 +264,7 @@ def main():
             require(cat.read_bytes() == data, 'Noncanonical/tampered catalog: ' + str(cat))
             reused[shape] = (found[0], data)
     plan = dict(APP_NAME='tgvstorenone', APP_ARGS='2016 2016 2016 500', NUM_NODES=16, NUM_MPI_RANKS=128,
-                DECOMPOSITIONS=','.join(shapes), AUTOTUNE_MODES='1 2', AUTOTUNE_SAMPLE_RANKS='0 1',
+                DECOMPOSITIONS=','.join(shapes), AUTOTUNE_MODES='1 2', AUTOTUNE_SAMPLE_RANKS='0',
                 AUTOTUNE_REPETITIONS=1, REPLAY_REPETITIONS=args.repetitions, OUTPUT_DIRECTORY=output,
                 EXECUTABLE=exe, EXECUTABLE_SHA256=exe_hash, GPU_DIRECT='YES', REFERENCE_RERUN='NO',
                 REFERENCE_KIND='HISTORICAL', REUSED_CATALOGS=','.join(reused) or 'NONE',
@@ -312,8 +301,7 @@ def main():
         variant = 'autotune_on' if phase == 1 else 'autotune_precomputed'
         run = logs / label / 'mode_1' / ('decomp'+shape) / ('iter_'+str(rep)) / variant
         (run / 'ranks').mkdir(parents=True)
-        for rank in ((0,1) if phase == 1 else (0,)):
-            (run / ('rank_'+str(rank))).mkdir()
+        (run / 'rank_0').mkdir()
         cat = logs / 'precomputed_blocks' / ('decomp'+shape) / 'blocks.csv'
         c = dict(APP_NAME='tgvstorenone', APP_ARGS='2016 2016 2016 500', CAMPAIGN_ID=output.name,
                  CASE_ID='n016_decomp'+shape+'_mode'+str(phase), RUN_CLASS='SCIENTIFIC', SCIENTIFIC_RESULT='YES',
@@ -322,12 +310,12 @@ def main():
                  SLURM_JOB_ID=os.environ['SLURM_JOB_ID'], DECOMPOSITION_MODE=1, GRID_X=2016, GRID_Y=2016, GRID_Z=2016,
                  GRID_CONFIG='cfg1', TOTAL_CELLS=2016**3, NUM_NODES=16, NUM_MPI_RANKS=128, GPUS_PER_NODE=8, NUM_GPUS_USED=128,
                  RANKS_PER_GPU=1, DECOMP_PX=shapes[shape][0], DECOMP_PY=shapes[shape][1], DECOMP_PZ=shapes[shape][2],
-                 OPS_AUTOTUNE_MODE=phase, SAMPLED_AUTOTUNE='YES', AUTOTUNE_SAMPLE_RANKS='0 1', AUTOTUNE_REPETITIONS=1,
+                 OPS_AUTOTUNE_MODE=phase, SAMPLED_AUTOTUNE='YES', AUTOTUNE_SAMPLE_RANKS='0', AUTOTUNE_REPETITIONS=1,
                  GPU_DIRECT='UNVERIFIED', MPICH_GPU_SUPPORT_ENABLED=1, OPS_TILING='NO', RUN_ITERATION=rep,
-                 TOP3_ROLES='TUNING' if phase == 1 else 'D_new', CSV_LOG_RANKS='0 1' if phase == 1 else '0',
+                 TOP3_ROLES='TUNING' if phase == 1 else 'D_new', CSV_LOG_RANKS='0',
                  PRECOMPUTED_CATALOG=cat.parent, PRECOMPUTED_BLOCKS_FILE=cat, PRECOMPUTED_SET_ID='',
                  PRECOMPUTED_SET_ID_KIND='BLOCKS_SHA256', PRECOMPUTED_SOURCE_CONFIG='', BLOCKS_SOURCE_MPI=shape,
-                 PRECOMPUTED_SELECTION='shared sampled-rank consensus: frequency, best_time, block tuple',
+                 PRECOMPUTED_SELECTION='rank 0 best measured block per kernel',
                  REFERENCE_KIND='HISTORICAL', REFERENCE_RERUN='NO', NO_AUTOTUNE_REFERENCE='DEFAULT_MPI_DEFAULT_BLOCKS',
                  NO_AUTOTUNE_MPI='8x4x4', PRECOMPUTED_MPI=shape, NO_AUTOTUNE_CONFIG=ref_paths['A'],
                  DEFAULT_MPI_PRECOMPUTED_CONFIG=ref_paths['C'], PRECOMPUTED_CONFIG=run/'config.txt' if phase == 2 else '',
@@ -373,12 +361,11 @@ def main():
                 require(len(found) == 1 and math.isfinite(float(found[0])) and float(found[0]) >= 0, 'Invalid '+key)
                 metrics[key] = float(found[0])
             if phase == 1:
-                data = catalog_bytes(shared_catalog(run))
+                data = catalog_bytes(rank0_catalog(run))
                 cat.parent.mkdir(parents=True)
                 cat.write_bytes(data)
                 c.update(PRECOMPUTED_SOURCE_CONFIG=run/'config.txt', PRECOMPUTED_SET_ID=hashlib.sha256(data).hexdigest())
-                for rank in (0,1):
-                    c['AUTOTUNE_RANK_%d_BEST_SHA256'%rank] = digest(run/('rank_%d/autotune_on/ops_blocksize_best_logmod.csv'%rank))
+                c['AUTOTUNE_RANK_0_BEST_SHA256'] = digest(run/'rank_0/autotune_on/ops_blocksize_best_logmod.csv')
             else:
                 ids = set()
                 with (run/'rank_0/autotune_on/ops_blocksize_tuning_logmod.csv').open() as f:

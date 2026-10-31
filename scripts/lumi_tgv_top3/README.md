@@ -181,12 +181,12 @@ GPU Direct, no tiling, and 500 simulation steps per execution.
 
 For each shape it runs this sequence:
 
-1. `autotune_on`: sample ranks **0 and 1** in `OPS_AUTOTUNE_MODE=1`; the other
-   ranks execute mode 0, as in the original sampled tuning campaign.
-2. Generate that shape's `precomputed_blocks/decomp<shape>/blocks.csv` from its
-   own sampled best logs. Preserve the existing shared-catalog policy: most
-   frequent block per kernel; ties use lowest measured `best_time`, then the
-   block tuple. Validate both samples, kernel coverage and thread limits.
+1. `autotune_on`: **only rank 0** runs `OPS_AUTOTUNE_MODE=1`, once per
+   decomposition. Ranks 1–127 execute mode 0: they participate in the MPI
+   computation and communication but do not search block shapes.
+2. Generate that shape's `precomputed_blocks/decomp<shape>/blocks.csv` directly
+   from **rank 0's best measured blocks**, validating kernel coverage and thread
+   limits. There is no rank-1 tuning, repeated search or cross-rank consensus.
 3. `autotune_precomputed`: run **all 128 ranks in mode 2** with that shape's
    newly generated catalog. Every rank must confirm loading all 25 tuned IDs.
    Initialization kernel 1 retains the established default fallback.
@@ -241,7 +241,6 @@ TGV_YZ_N016_<stamp>/
           run.log
           mpi_rank_metrics.csv
           rank_0/autotune_on/*.csv
-          rank_1/autotune_on/*.csv
           ranks/rank_<rank>.log
         autotune_precomputed/
           config.txt
@@ -262,11 +261,11 @@ The directory `mode_1` denotes MPI decomposition, while `OPS_AUTOTUNE_MODE`
 in each config distinguishes training (1) and replay (2).
 
 Every run writes `config.txt` before launching and records success or failure,
-input grid, MPI shape, block mode, hashes, sample ranks and wall/kernel/halo
+input grid, MPI shape, block mode, hashes, the single tuning rank and wall/kernel/halo
 times. Replay records `PRECOMPUTED_SOURCE_CONFIG` pointing to the matching
 training execution, `BLOCKS_SOURCE_MPI`, and the catalog SHA256 in
 `PRECOMPUTED_SET_ID` (`PRECOMPUTED_SET_ID_KIND=BLOCKS_SHA256`). The tuning config
-records the sampled best-log hashes. A failed/incomplete tuning phase prevents
+records the rank-0 best-log hash. A failed/incomplete tuning phase prevents
 catalog export and replay. A missing, swapped or incompatible replay catalog
 stops execution; it never falls back to the historical reference catalog.
 
@@ -286,9 +285,10 @@ bash scripts/lumi_tgv_top3/compare_yz_n016.sh \
   --precomputed-source /path/to/OPS_LOGS_<stamp>_n016 --submit
 ```
 
-The script requires the matching shape's `iter_1/autotune_on/config.txt`, both
-sampled best/tuning CSVs, all rank metrics, and `precomputed_blocks/decomp<shape>/blocks.csv`.
-It rechecks application/grid/MPI/executable context, regenerates the selection
+The script requires the matching shape's `iter_1/autotune_on/config.txt`, rank 0's
+best/tuning CSVs, all rank metrics, and `precomputed_blocks/decomp<shape>/blocks.csv`.
+It requires `AUTOTUNE_SAMPLE_RANKS=0`, rechecks application/grid/MPI/executable
+context, regenerates the selection
 from those measurements and compares catalog bytes. Existing incompatible
 catalogs are rejected. Shapes missing from that source train afresh. Reused
 catalogs retain their original tuning config path rather than copying fake
