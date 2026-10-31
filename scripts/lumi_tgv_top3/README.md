@@ -172,3 +172,59 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest -v test_codegen
 `test_codegen` requires translator dependencies (optionally select their Python with `OPS_TEST_TRANSLATOR_PYTHON`) and a CPU C++ compiler. It translates a clean source snapshot, checks all 26 HIP wrappers for leftover CUDA calls, checks all 26 CUDA wrappers, and compiles the HIP block-selection fragments against actual OPS headers with minimal HIP API declarations. It catches API/type mismatches but does not replace compilation with ROCm or execution on LUMI.
 
 The package includes `prepare_dataset.py --validate-only` for the full checksum/catalog/provenance audit using Python 3.6+. The same script can rebuild into a new directory with `--source-package /path/to/verified/package --output-root /path/to/new/TOP3_DATASET`.
+
+## Small 16-node experiment: redistribute MPI along Y and Z
+
+`compare_yz_n016.sh` compares `8x4x4` (local domain `252x504x504`) with
+`2x8x8` (local domain `1008x252x252`) at global size `2016^3`. It uses the
+**same executable and shared 8x4x4 precomputed block catalog** for both shapes,
+with GPU Direct, no tiling, no build and no autotuning. This measures transfer
+of the fixed blocks to a new geometry; it does not claim they are optimal there.
+
+Use the frozen executable and `precomputed_blocks/decomp8x4x4/blocks.csv` from
+the 16-node campaign. Check the plan locally first (no files or jobs created):
+
+```bash
+bash scripts/lumi_tgv_top3/compare_yz_n016.sh \
+  --executable /path/to/campaign/build/tgvstorenone_mpi_hip \
+  --blocks /path/to/campaign/OPS_LOGS_STAMP_n016/precomputed_blocks/decomp8x4x4/blocks.csv \
+  --output /path/to/new/TGV_YZ_N016 --dry-run
+```
+
+Then, on LUMI, submit explicitly with your project account:
+
+```bash
+sbatch --account=project_XXXXXXXXX scripts/lumi_tgv_top3/compare_yz_n016.sh \
+  --ops-root /path/to/OPS \
+  --executable /path/to/campaign/build/tgvstorenone_mpi_hip \
+  --blocks /path/to/campaign/OPS_LOGS_STAMP_n016/precomputed_blocks/decomp8x4x4/blocks.csv \
+  --output /path/to/new/TGV_YZ_N016
+```
+
+The script requests 16 nodes, 128 ranks/GCDs and one hour in `standard-g`.
+An optional `--env-file` selects a pinned LUMI module profile compatible with
+the executable; otherwise the existing `environment.sh` is used. Python 3.6+
+is required. Always provide `--ops-root` when submitting outside the OPS root.
+
+It runs a separate one-step launch/catalog check for each shape, then three
+500-step measurements per shape, in order A/B, B/A, A/B. The launch checks do
+not establish numerical equivalence. An existing output directory is rejected.
+The executable, block file, helper runtime and profile are copied into the new
+output directory with provenance hashes. Every rank must load the catalog and
+complete successfully; rank 0 must confirm GPU Direct.
+
+Outputs include `plan.json`, per-run logs/statuses, `runs.csv`, `rank0_grids.csv`
+and `summary.csv`. Wall time is the maximum application-reported time across
+reporting ranks, not `srun` duration. Kernel/halo totals retain the existing OPS
+rank-mean convention. Grids are the first logged range per kernel on rank 0.
+The summary uses medians over three repetitions and the ratio
+`median_wall(8x4x4) / median_wall(tested_shape)`. The historical 170.819 s is not
+used as the baseline: the reference is measured again in the same allocation.
+
+Local orchestration checks (simulated Slurm/GPU execution):
+
+```bash
+bash -n scripts/lumi_tgv_top3/compare_yz_n016.sh
+cd scripts/lumi_tgv_top3
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest -v test_compare_yz
+```
