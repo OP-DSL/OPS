@@ -181,8 +181,8 @@ def collect_ranks(run, phase, nranks):
     return values
 
 
-parser = argparse.ArgumentParser(description='TGV StoreNone: rank-0 autotuning and own-catalog replay for 4, 6, 16 or 32 nodes; historical input and references preserved.')
-parser.add_argument('--nodes', type=int, choices=(4,6,16,32), default=16, help='Experiment profile; default 16 for backward compatibility')
+parser = argparse.ArgumentParser(description='TGV StoreNone: rank-0 autotuning and own-catalog replay for 4, 6, 16, 32 or 40 nodes; historical input and references preserved.')
+parser.add_argument('--nodes', type=int, choices=(4,6,16,32,40), default=16, help='Experiment profile; default 16 for backward compatibility')
 parser.add_argument('--account', default=os.environ.get('SLURM_JOB_ACCOUNT') or os.environ.get('SLURM_ACCOUNT') or 'project_465003260')
 parser.add_argument('--campaign', type=Path, help='Historical campaign (automatic lookup for the selected node profile)')
 parser.add_argument('--executable', type=Path, help='Existing executable; hash must match historical reference')
@@ -199,7 +199,8 @@ args = parser.parse_args()
 
 
 PROFILES = {
-    32: dict(grid=2544, stamp='20261025_202825', baseline='8x8x4', top3='4x8x8', shapes='8x4x8,8x16x2'),
+    40: dict(grid=2720, stamp='20261026_095042', baseline='8x8x5', top3='8x8x5', shapes='2x16x10,2x10x16,2x8x20'),
+    32: dict(grid=2544, stamp='20261025_202825', baseline='8x8x4', top3='4x8x8', shapes='2x16x8,8x16x2'),
     4: dict(grid=1280, stamp='20261026_101612', baseline='4x4x2', top3='1x32x1', shapes='2x8x2,1x8x4'),
     6: dict(grid=1452, stamp='20261026_101612', baseline='4x4x3', top3='4x3x4', shapes='6x4x2'),
     16: dict(grid=2016, stamp='20261022_083420', baseline='8x4x4', top3='8x4x4', shapes='2x8x8,4x4x8,2x16x4'),

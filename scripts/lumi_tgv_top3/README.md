@@ -253,7 +253,7 @@ only**, once, then all ranks replay that shape's own selected blocks.
 
 | New MPI | Local volume grid | Reason to test |
 |---|---|---|
-| `8x4x8` | `318x636x318` | Changes orientation with the same subdomain surface area as the old Top 2/3 |
+| `2x16x8` | `1272x159x318` | Improves fit of Top 3 Kernel035/034 blocks in X; slightly worsens Kernel025 fit in Y; surface +30% |
 | `8x16x2` | `318x159x1272` | Extends Z to a multiple of 8, reducing Z padding for the observed blocks; increases subdomain surface by 30% |
 
 These are experimental candidates, not guaranteed improvements. The new
@@ -284,6 +284,42 @@ folders. No JSON or additional output file types are introduced. Account,
 reference lookup, preflight, executable hash checks and optional catalog reuse
 follow the shared engine. This entrypoint fixes the node count at 32; the
 underlying engine also supports `compare_yz_n016.sh --nodes 32 --submit`.
+
+## Grid-based follow-up at 40 nodes
+
+`compare_yz_n040.sh` preserves input `2720^3`, 320 ranks/GCDs, GPU Direct,
+500 steps and the same output structure as the 16/32-node engine.
+
+| New MPI | Local volume grid | Kernel024 / Kernel025 useful-thread fraction with historical blocks |
+|---|---|---|
+| `2x16x10` | `1360x170x272` | 96.59% / 96.59% |
+| `2x10x16` | `1360x272x170` | 93.30% / 95.47% |
+| `2x8x20` | `1360x340x136` | 96.59% / 96.59% |
+
+The historical Top 3/default `8x8x5` has grid `340x340x544` and 88.54%
+for both kernels. The new shapes improve geometric fit but increase surface
+by 33.3%, 33.3% and 42.9%; wall-time improvement must be measured.
+Each shape runs rank-0-only tuning once, followed by all-rank precomputed
+replay using that shape's own catalog: six executions total. Other ranks
+participate with default blocks during tuning. No historical case is rerun.
+
+References and executable come from `TGV_TOP3_20261026_095042`,
+`OPS_LOGS_20261026_095042_n040`. Top 3 and default precomputed are the same
+historical run (176.107972 s); both comparisons therefore share a reference.
+
+```bash
+bash scripts/lumi_tgv_top3/compare_yz_n040.sh --dry-run
+bash scripts/lumi_tgv_top3/compare_yz_n040.sh --submit
+```
+
+Output: `/scratch/<account>/ops-decomposition/campaigns/TGV_YZ_N040_<timestamp>/`,
+with the usual `OPS_LOGS_<timestamp>_n040`, per-run `config.txt`, logs,
+metrics, per-shape `blocks.csv`, `summary.csv` and `comparisons.csv`. No JSON.
+
+The 32-node follow-up now uses `2x16x8` instead of `8x4x8`, which was already
+explored in the original tuning campaign. The 4/6-node legacy profiles are
+unchanged and are not launched by these entrypoints. The favorable 4-node
+shapes were also explored in the original campaign; these are not new shapes.
 
 ## Small 16-node experiment: autotune each new MPI configuration
 

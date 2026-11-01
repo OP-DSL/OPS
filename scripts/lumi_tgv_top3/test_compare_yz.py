@@ -55,7 +55,7 @@ else:
  assert '/decomp'+shape+'/blocks.csv' in os.environ['OPS_BLOCKSIZE_CSV']
  with open(os.environ['OPS_BLOCKSIZE_CSV']) as f: blocks = list(csv.DictReader(f))
  assert len(blocks) == 25
- expected = {'2x8x8':(64,2,8),'4x4x8':(128,1,4),'2x16x4':(64,1,4),'2x8x2':(64,2,8),'1x8x4':(128,1,4),'6x4x2':(64,1,4),'8x4x8':(64,2,8),'8x16x2':(128,1,4)}[shape]
+ expected = {'2x8x8':(64,2,8),'4x4x8':(128,1,4),'2x16x4':(64,1,4),'2x8x2':(64,2,8),'1x8x4':(128,1,4),'6x4x2':(64,1,4),'2x16x8':(64,2,8),'8x16x2':(128,1,4),'2x16x10':(64,2,8),'2x10x16':(128,1,4),'2x8x20':(64,1,4)}[shape]
  for r in blocks:
   k = int(r['kernel_id'])
   assert tuple(int(r[a]) for a in ['bx','by','bz']) == ((1,128,2) if k == 2 else expected), 'Wrong shape-specific blocks'
@@ -70,8 +70,11 @@ if logging:
                '2x8x2':[(64,2,8,3.0),(32,4,4,2.0)],
                '1x8x4':[(128,1,4,1.0),(64,2,4,2.0)],
                '6x4x2':[(64,1,4,2.0),(32,2,4,2.0)],
-               '8x4x8':[(64,2,8,3.0),(32,4,4,2.0)],
-               '8x16x2':[(128,1,4,1.0),(64,2,4,2.0)]}[shape]
+               '2x16x8':[(64,2,8,3.0),(32,4,4,2.0)],
+               '8x16x2':[(128,1,4,1.0),(64,2,4,2.0)],
+               '2x16x10':[(64,2,8,3.0),(32,4,4,2.0)],
+               '2x10x16':[(128,1,4,1.0),(64,2,4,2.0)],
+               '2x8x20':[(64,1,4,2.0),(32,2,4,2.0)]}[shape]
  b = candidates[rank] if phase == 1 else (32,4,1,1.0)
  with (logs/'ops_blocksize_tuning_logmod.csv').open('w') as f:
   w=csv.writer(f); w.writerow(['kernel_id','grid_x','grid_y','grid_z','bx','by','bz','stencil_sig','max_threads'])
@@ -287,8 +290,8 @@ print('Submitted batch job 456')
         self.ref_paths[2].write_text(self.ref_paths[2].read_text().replace('GRID_X=2016','GRID_X=300'))
         r=self.run_script('--submit'); self.assertNotEqual(r.returncode,0); self.assertFalse(capture.exists())
 
-    def install_small_profiles(self, large=False):
-        stamp='20261025_202825' if large else '20261026_101612'
+    def install_small_profiles(self, large=False, forty=False):
+        stamp='20261026_095042' if forty else ('20261025_202825' if large else '20261026_101612')
         self.campaign=self.root/('TGV_TOP3_'+stamp)
         target=self.campaign/'build/tgvstorenone_mpi_hip'
         target.parent.mkdir(parents=True,exist_ok=True)
@@ -301,6 +304,8 @@ print('Submitted batch job 456')
             (6,1452,'4x4x3','4x3x4',249.07151,169.41902,169.240052)]
         if large:
             profiles=[(32,2544,'8x8x4','4x8x8',226.890253,168.163679,172.918445)]
+        if forty:
+            profiles=[(40,2720,'8x8x5','8x8x5',224.52848,176.107972,176.107972)]
         for n,grid,baseline,top3,a,c,t in profiles:
             tag='n%03d'%n
             root=self.campaign/('OPS_LOGS_'+stamp+'_'+tag)
@@ -373,13 +378,13 @@ print('Submitted batch job 456')
     def test_32_nodes_tunes_once_and_compares_top2_and_top3(self):
         self.install_small_profiles(large=True)
         self.node_tag='n032'; self.output=self.root/'TGV_YZ_N032_20261101_120000_000001'
-        self.env.update(SLURM_JOB_NUM_NODES='32',MOCK_NODES='32',MOCK_GRID='2544',MOCK_SHAPES='8x4x8,8x16x2')
+        self.env.update(SLURM_JOB_NUM_NODES='32',MOCK_NODES='32',MOCK_GRID='2544',MOCK_SHAPES='2x16x8,8x16x2')
         command=['bash',str(HERE/'compare_yz_n032.sh'),'--campaign',str(self.campaign),
                  '--env-file',str(self.profile),'--output',str(self.output)]
         r=subprocess.run(command,env=self.env,stdout=subprocess.PIPE,stderr=subprocess.PIPE,universal_newlines=True)
         self.assert_success(r)
-        self.assertEqual((self.root/'order.csv').read_text(),'8x4x8,1,1\n8x4x8,2,1\n8x16x2,1,1\n8x16x2,2,1\n')
-        for shape in ['8x4x8','8x16x2']:
+        self.assertEqual((self.root/'order.csv').read_text(),'2x16x8,1,1\n2x16x8,2,1\n8x16x2,1,1\n8x16x2,2,1\n')
+        for shape in ['2x16x8','8x16x2']:
             run=self.scientific(shape,'autotune_precomputed'); c=config(run/'config.txt')
             self.assertEqual(c['APP_ARGS'],'2544 2544 2544 500')
             self.assertEqual(c['NUM_NODES'],'32'); self.assertEqual(c['NUM_MPI_RANKS'],'256')
@@ -411,8 +416,52 @@ Path(os.environ['MOCK_SUBMISSION']).write_text('\\n'.join(sys.argv[1:]))
         sent=capture.read_text().splitlines()
         self.assertIn('--nodes=32',sent); self.assertIn('--job-name=tgv-yz-n032',sent)
         self.assertEqual(sent[sent.index('--nodes')+1],'32')
-        self.assertEqual(sent[sent.index('--decompositions')+1],'8x4x8,8x16x2')
+        self.assertEqual(sent[sent.index('--decompositions')+1],'2x16x8,8x16x2')
         self.assertFalse(self.output.exists())
 
+    def test_40_node_entrypoint_submission_requests_40_nodes(self):
+        self.install_small_profiles(forty=True)
+        self.env.pop('SLURM_JOB_ID'); self.env.pop('SLURM_JOB_NUM_NODES')
+        self.env['PATH']=str(self.bin)+os.pathsep+self.env['PATH']
+        capture=self.root/'submit40.txt'; self.env['MOCK_SUBMISSION']=str(capture)
+        self.executable(self.bin/'sbatch','''#!/usr/bin/env python3
+import os,sys
+from pathlib import Path
+Path(os.environ['MOCK_SUBMISSION']).write_text('\\n'.join(sys.argv[1:]))
+''')
+        cmd=['bash',str(HERE/'compare_yz_n040.sh'),'--campaign',str(self.campaign),
+             '--env-file',str(self.profile),'--output',str(self.output),'--submit']
+        r=subprocess.run(cmd,env=self.env,stdout=subprocess.PIPE,stderr=subprocess.PIPE,universal_newlines=True)
+        self.assertEqual(r.returncode,0,r.stderr)
+        sent=capture.read_text().splitlines()
+        self.assertIn('--nodes=40',sent); self.assertIn('--job-name=tgv-yz-n040',sent)
+        self.assertEqual(sent[sent.index('--nodes')+1],'40')
+        self.assertEqual(sent[sent.index('--decompositions')+1],'2x16x10,2x10x16,2x8x20')
+        self.assertFalse(self.output.exists())
+
+
+
+    def test_40_nodes_three_own_catalogs_rank_zero_only(self):
+        self.install_small_profiles(forty=True)
+        self.node_tag='n040'; self.output=self.root/'TGV_YZ_N040_20261101_120000_000001'
+        shapes=['2x16x10','2x10x16','2x8x20']
+        self.env.update(SLURM_JOB_NUM_NODES='40',MOCK_NODES='40',MOCK_GRID='2720',MOCK_SHAPES=','.join(shapes))
+        command=['bash',str(HERE/'compare_yz_n040.sh'),'--campaign',str(self.campaign),
+                 '--env-file',str(self.profile),'--output',str(self.output)]
+        r=subprocess.run(command,env=self.env,stdout=subprocess.PIPE,stderr=subprocess.PIPE,universal_newlines=True)
+        self.assert_success(r)
+        self.assertEqual((self.root/'order.csv').read_text(),''.join(s+','+m+',1\n' for s in shapes for m in ['1','2']))
+        for shape in shapes:
+            run=self.scientific(shape,'autotune_precomputed'); c=config(run/'config.txt')
+            self.assertEqual(c['APP_ARGS'],'2720 2720 2720 500')
+            self.assertEqual(c['NUM_NODES'],'40'); self.assertEqual(c['NUM_MPI_RANKS'],'320')
+            self.assertEqual(c['TOP3_MPI'],'8x8x5')
+            self.assertAlmostEqual(float(c['SPEEDUP_TOP3_PRECOMPUTED']),176.107972/152)
+            self.assertEqual(len(table(run/'mpi_rank_metrics.csv')),320)
+            tuning=table(self.scientific(shape,'autotune_on')/'mpi_rank_metrics.csv')
+            self.assertEqual([v['rank_id'] for v in tuning if v['autotune_mode']=='1'],['0'])
+        self.assertEqual(len(table(self.logs()/'summary.csv')),6)
+        self.assertEqual(len(table(self.logs()/'comparisons.csv')),9)
+        self.assertEqual(list(self.output.rglob('*.json')),[])
 
 if __name__=='__main__': unittest.main()
