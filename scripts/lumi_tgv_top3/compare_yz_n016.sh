@@ -181,8 +181,8 @@ def collect_ranks(run, phase, nranks):
     return values
 
 
-parser = argparse.ArgumentParser(description='TGV StoreNone: rank-0 autotuning and own-catalog replay for 4, 6 or 16 nodes; historical input and references preserved.')
-parser.add_argument('--nodes', type=int, choices=(4,6,16), default=16, help='Experiment profile; default 16 for backward compatibility')
+parser = argparse.ArgumentParser(description='TGV StoreNone: rank-0 autotuning and own-catalog replay for 4, 6, 16 or 32 nodes; historical input and references preserved.')
+parser.add_argument('--nodes', type=int, choices=(4,6,16,32), default=16, help='Experiment profile; default 16 for backward compatibility')
 parser.add_argument('--account', default=os.environ.get('SLURM_JOB_ACCOUNT') or os.environ.get('SLURM_ACCOUNT') or 'project_465003260')
 parser.add_argument('--campaign', type=Path, help='Historical campaign (automatic lookup for the selected node profile)')
 parser.add_argument('--executable', type=Path, help='Existing executable; hash must match historical reference')
@@ -199,6 +199,7 @@ args = parser.parse_args()
 
 
 PROFILES = {
+    32: dict(grid=2544, stamp='20261025_202825', baseline='8x8x4', top3='4x8x8', shapes='8x4x8,8x16x2'),
     4: dict(grid=1280, stamp='20261026_101612', baseline='4x4x2', top3='1x32x1', shapes='2x8x2,1x8x4'),
     6: dict(grid=1452, stamp='20261026_101612', baseline='4x4x3', top3='4x3x4', shapes='6x4x2'),
     16: dict(grid=2016, stamp='20261022_083420', baseline='8x4x4', top3='8x4x4', shapes='2x8x8,4x4x8,2x16x4'),
@@ -343,6 +344,10 @@ def main():
                  SPEEDUP_DEFAULT_MPI_PRECOMPUTED='NA', APP_WALL_TIME='NA', JOB_WALL_TIME='NA', PROCESS_EXIT_CODE='NA',
                  RUN_EXIT_CODE='NA', RUN_STATUS='RUNNING', VALIDATION_STATUS='PENDING', COMMIT_STATUS='UNCOMMITTED',
                  KERNEL_TOTAL_TIME='NA', HALO_TOTAL_TIME='NA')
+        if nodes == 32:
+            # In this campaign Top 2 is exactly reference C/default MPI.
+            c.update(TOP2_MPI=baseline, TOP2_REFERENCE_CONFIG=ref_paths['C'],
+                     WALL_TIME_TOP2_PRECOMPUTED=refs['C']['APP_WALL_TIME'], SPEEDUP_TOP2_PRECOMPUTED='NA')
         if trained:
             source, data = trained
             c.update(PRECOMPUTED_SOURCE_CONFIG=source, PRECOMPUTED_SET_ID=hashlib.sha256(data).hexdigest(),
@@ -400,6 +405,8 @@ def main():
                 c['SPEEDUP_PRECOMPUTED'] = float(refs['A']['APP_WALL_TIME'])/max(times)
                 c['SPEEDUP_DEFAULT_MPI_PRECOMPUTED'] = float(refs['C']['APP_WALL_TIME'])/max(times)
                 c['SPEEDUP_TOP3_PRECOMPUTED'] = float(refs['T']['APP_WALL_TIME'])/max(times)
+                if nodes == 32:
+                    c['SPEEDUP_TOP2_PRECOMPUTED'] = c['SPEEDUP_DEFAULT_MPI_PRECOMPUTED']
         except (OSError, ValueError, KeyError) as e:
             c.update(RUN_STATUS='FAILED', RUN_EXIT_CODE=rc or 1, VALIDATION_STATUS='FAIL', ERROR=str(e).replace('\n',' '))
             write_config(run/'config.txt', c)

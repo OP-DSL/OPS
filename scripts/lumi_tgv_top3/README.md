@@ -244,6 +244,47 @@ Use `--submit` so the engine sets Slurm's allocation from the selected profile;
 direct `sbatch` retains the file's legacy 16-node directives unless overridden.
 Allocation validation rejects a mismatch before running the application.
 
+## Follow-up for Top 2 and Top 3 at 32 nodes
+
+`compare_yz_n032.sh` adds a separate 32-node experiment, without resubmitting
+4/6-node work. It preserves global input **`2544^3`**, 256 ranks/GCDs, GPU Direct,
+500 steps, and the same config/log/CSV output. Each new shape tunes **rank 0
+only**, once, then all ranks replay that shape's own selected blocks.
+
+| New MPI | Local volume grid | Reason to test |
+|---|---|---|
+| `8x4x8` | `318x636x318` | Changes orientation with the same subdomain surface area as the old Top 2/3 |
+| `8x16x2` | `318x159x1272` | Extends Z to a multiple of 8, reducing Z padding for the observed blocks; increases subdomain surface by 30% |
+
+These are experimental candidates, not guaranteed improvements. The new
+block catalogs are selected by fresh per-configuration tuning, not copied
+from the historical configurations used for the geometric diagnosis.
+
+Historical reference campaign: `TGV_TOP3_20261025_202825`, node directory
+`OPS_LOGS_20261025_202825_n032`:
+
+- **Top 2 = default MPI `8x8x4`**, precomputed wall time **168.163679 s**.
+- **Top 3 `4x8x8`**, precomputed wall time **172.918445 s**.
+
+Neither reference is rerun. The job has four main executions (two tuning/replay
+pairs). Comparison `C_over_D` is the speedup versus Top 2/default; `T_over_D`
+is versus Top 3. Run configs additionally label `TOP2_MPI`,
+`TOP2_REFERENCE_CONFIG`, `WALL_TIME_TOP2_PRECOMPUTED`, and
+`SPEEDUP_TOP2_PRECOMPUTED` alongside the existing Top 3 fields.
+
+```bash
+bash scripts/lumi_tgv_top3/compare_yz_n032.sh --dry-run
+bash scripts/lumi_tgv_top3/compare_yz_n032.sh --submit
+```
+
+The default output is
+`/scratch/<account>/ops-decomposition/campaigns/TGV_YZ_N032_<timestamp>/`,
+with `OPS_LOGS_<timestamp>_n032` and the usual per-decomposition execution
+folders. No JSON or additional output file types are introduced. Account,
+reference lookup, preflight, executable hash checks and optional catalog reuse
+follow the shared engine. This entrypoint fixes the node count at 32; the
+underlying engine also supports `compare_yz_n016.sh --nodes 32 --submit`.
+
 ## Small 16-node experiment: autotune each new MPI configuration
 
 `compare_yz_n016.sh` runs **all three MPI shapes `2x8x8`, `4x4x8`, `2x16x4`**
