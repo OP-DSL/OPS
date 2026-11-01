@@ -173,6 +173,77 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest -v test_codegen
 
 The package includes `prepare_dataset.py --validate-only` for the full checksum/catalog/provenance audit using Python 3.6+. The same script can rebuild into a new directory with `--source-package /path/to/verified/package --output-root /path/to/new/TOP3_DATASET`.
 
+## Follow-up experiments for 4 and 6 nodes
+
+Use `compare_yz_n004_n006.sh` to prepare the two approved node profiles. It
+validates **both** historical references before submitting either job, then
+submits one job per node count:
+
+| Nodes / ranks | Unchanged global input | New MPI shapes | Historical default | Historical Top 3 |
+|---|---|---|---|---|
+| 4 / 32 | `1280x1280x1280` | `2x8x2`, `1x8x4` | `4x4x2` | `1x32x1` |
+| 6 / 48 | `1452x1452x1452` | `6x4x2` | `4x4x3` | `4x3x4` |
+
+```bash
+bash scripts/lumi_tgv_top3/compare_yz_n004_n006.sh --dry-run
+bash scripts/lumi_tgv_top3/compare_yz_n004_n006.sh --submit
+```
+
+For each new MPI shape, **only rank 0** autotunes, once, while the other ranks
+participate in the simulation with default blocks. All ranks then replay the
+blocks selected by that shape's rank-0 tuning. Both phases use 500 steps and
+GPU Direct. The 4-node job has four executions (two tuning/replay pairs); the
+6-node job has two (one pair). Historical default and Top 3 runs are not repeated.
+The optional exploratory `12x2x2` shape is not included.
+
+These are experiments, not promises of speedup. The 4-node choices preserve
+the good geometric fit of the dominant volume kernels while reducing subdomain
+surface area relative to `1x32x1`. The 6-node choice trades a slightly better
+geometric fit against more surface area. Each new shape gets fresh tuning;
+old block shapes were used only to select the experiments.
+
+References and the frozen executable are located automatically in
+`/scratch/<account>/ops-decomposition/campaigns/TGV_TOP3_20261026_101612`,
+including `OPS_LOGS_20261026_101612_n004` and `_n006`. Alternate Lustre aliases
+are also checked. Account defaults and environment setup are the same as the
+16-node script. `--campaign`, `--account`, `--ops-root`, `--env-file`,
+`--executable`, and `--repetitions` can be passed to both jobs. An optional
+`--output-root /path/to/campaigns` changes only their parent output directory.
+Without an action, the wrapper performs a dry-run. It does not launch compute
+work on the login node.
+
+The normal output locations are:
+
+```text
+/scratch/<account>/ops-decomposition/campaigns/TGV_YZ_N004_<timestamp>/
+/scratch/<account>/ops-decomposition/campaigns/TGV_YZ_N006_<timestamp>/
+```
+
+Both use the same `OPS_LOGS_<timestamp>_nNNN/.../mode_1/decomp.../iter_1/`
+structure described below, with `autotune_on` and `autotune_precomputed`,
+`config.txt`, logs, native OPS CSVs, `mpi_rank_metrics.csv`, per-shape
+`blocks.csv`, `summary.csv`, and `comparisons.csv`. No JSON or extra diagnostic
+files are added.
+
+Each replay is compared against **both** the historical default precomputed
+and historical Top 3. Configs retain `SPEEDUP_DEFAULT_MPI_PRECOMPUTED` and add
+`TOP3_MPI`, `TOP3_REFERENCE_CONFIG`, `WALL_TIME_TOP3_PRECOMPUTED`, and
+`SPEEDUP_TOP3_PRECOMPUTED`. `comparisons.csv` adds `T` and `T_over_D` for each
+wall/kernel/halo metric. Values above one favor the new shape; all references
+remain labeled historical.
+
+The existing `compare_yz_n016.sh` is the shared engine and retains its
+16-node defaults for existing commands. To launch only one new profile, use:
+
+```bash
+bash scripts/lumi_tgv_top3/compare_yz_n016.sh --nodes 4 --submit
+bash scripts/lumi_tgv_top3/compare_yz_n016.sh --nodes 6 --submit
+```
+
+Use `--submit` so the engine sets Slurm's allocation from the selected profile;
+direct `sbatch` retains the file's legacy 16-node directives unless overridden.
+Allocation validation rejects a mismatch before running the application.
+
 ## Small 16-node experiment: autotune each new MPI configuration
 
 `compare_yz_n016.sh` runs **all three MPI shapes `2x8x8`, `4x4x8`, `2x16x4`**

@@ -8,7 +8,7 @@
 #SBATCH --mem=0
 #SBATCH --exclusive
 #SBATCH --time=01:00:00
-# Each new MPI shape trains its own catalog before replay; 8x4x4 is historical.
+# Each new MPI shape trains rank 0 once before replay; existing references are historical.
 set -euo pipefail
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 export OPS_YZ_SOURCE_SCRIPT="$script_dir/$(basename -- "${BASH_SOURCE[0]}")"
@@ -119,7 +119,7 @@ from pathlib import Path
 path = Path(sys.argv[1]); run = path.parent
 c = dict(line.split('=',1) for line in path.read_text().splitlines() if '=' in line)
 rank, local = int(os.environ['SLURM_PROCID']), int(os.environ['SLURM_LOCALID'])
-if not (0 <= rank < 128 and 0 <= local < 8): raise SystemExit('Invalid MPI rank/GCD')
+if not (0 <= rank < int(c['NUM_MPI_RANKS']) and 0 <= local < 8): raise SystemExit('Invalid MPI rank/GCD')
 phase = int(c['OPS_AUTOTUNE_MODE'])
 mode = 1 if phase == 1 and rank == 0 else (0 if phase == 1 else 2)
 logging = rank == 0
@@ -160,7 +160,7 @@ RANK_FIELDS = ['rank_id','local_rank','gpu_id','hostname','rank_wall_time_s',
                'app_reported_wall_time_s','rank_status','returncode','autotune_mode','precomputed_loaded']
 
 
-def collect_ranks(run, phase):
+def collect_ranks(run, phase, nranks):
     values = []
     for path in (run / 'ranks').glob('rank_*.log'):
         status = [line.split('\t',1)[1] for line in path.read_text(errors='replace').splitlines()
@@ -173,7 +173,7 @@ def collect_ranks(run, phase):
         values.append(row)
     values.sort(key=lambda s: int(s['rank_id']))
     write_csv(run / 'mpi_rank_metrics.csv', values)
-    require(len(values) == 128 and {int(s['rank_id']) for s in values} == set(range(128)), 'Missing MPI rank status')
+    require(len(values) == nranks and {int(s['rank_id']) for s in values} == set(range(nranks)), 'Missing MPI rank status')
     for s in values:
         expected = 1 if phase == 1 and int(s['rank_id']) == 0 else (0 if phase == 1 else 2)
         require(s['rank_status'] == 'OK' and s['returncode'] == '0' and int(s['autotune_mode']) == expected
@@ -181,14 +181,15 @@ def collect_ranks(run, phase):
     return values
 
 
-parser = argparse.ArgumentParser(description='TGV StoreNone 2016^3: autotune and replay a separate catalog for each new MPI decomposition, 16 nodes.')
+parser = argparse.ArgumentParser(description='TGV StoreNone: rank-0 autotuning and own-catalog replay for 4, 6 or 16 nodes; historical input and references preserved.')
+parser.add_argument('--nodes', type=int, choices=(4,6,16), default=16, help='Experiment profile; default 16 for backward compatibility')
 parser.add_argument('--account', default=os.environ.get('SLURM_JOB_ACCOUNT') or os.environ.get('SLURM_ACCOUNT') or 'project_465003260')
-parser.add_argument('--campaign', type=Path, help='Historical TGV_TOP3_20261022_083420 reference (automatic project scratch lookup)')
+parser.add_argument('--campaign', type=Path, help='Historical campaign (automatic lookup for the selected node profile)')
 parser.add_argument('--executable', type=Path, help='Existing executable; hash must match historical reference')
-parser.add_argument('--output', type=Path, help='Override automatic project scratch TGV_YZ_N016_<timestamp> directory')
+parser.add_argument('--output', type=Path, help='Override automatic project scratch TGV_YZ_Nnnn_<timestamp> directory')
 parser.add_argument('--ops-root', type=Path, default=Path(os.environ['OPS_YZ_DEFAULT_ROOT']))
 parser.add_argument('--env-file', type=Path)
-parser.add_argument('--decompositions', default='2x8x8,4x4x8,2x16x4', help='New shapes; default all three. Never reruns 8x4x4.')
+parser.add_argument('--decompositions', help='Override new MPI shapes from the selected profile; historical default/Top3 are never rerun')
 parser.add_argument('--repetitions', type=int, default=1, help='Replay measurements per shape; one fresh tuning run per shape')
 parser.add_argument('--precomputed-source', type=Path, help='Optional OPS_LOGS directory with matching per-shape tuning logs/catalogs; incompatible catalogs are rejected')
 action = parser.add_mutually_exclusive_group()
@@ -197,19 +198,34 @@ action.add_argument('--submit', action='store_true')
 args = parser.parse_args()
 
 
+PROFILES = {
+    4: dict(grid=1280, stamp='20261026_101612', baseline='4x4x2', top3='1x32x1', shapes='2x8x2,1x8x4'),
+    6: dict(grid=1452, stamp='20261026_101612', baseline='4x4x3', top3='4x3x4', shapes='6x4x2'),
+    16: dict(grid=2016, stamp='20261022_083420', baseline='8x4x4', top3='8x4x4', shapes='2x8x8,4x4x8,2x16x4'),
+}
+
+
 def main():
+    nodes, nranks = args.nodes, args.nodes*8
+    profile_case = PROFILES[nodes]
+    grid, baseline, top3 = profile_case['grid'], profile_case['baseline'], profile_case['top3']
+    node_tag = 'n%03d' % nodes
+    grid_text = 'x'.join([str(grid)]*3)
+    app_args = ' '.join([str(grid)]*3 + ['500'])
+    reference_name = 'TGV_TOP3_' + profile_case['stamp']
+    reference_logs = 'OPS_LOGS_' + profile_case['stamp'] + '_' + node_tag
     require(args.repetitions > 0, 'Repetitions must be positive')
     shapes = {}
-    for shape in args.decompositions.split(','):
+    for shape in (args.decompositions or profile_case['shapes']).split(','):
         require(re.fullmatch(r'[1-9][0-9]*x[1-9][0-9]*x[1-9][0-9]*', shape), 'Invalid MPI shape: ' + shape)
         dims = [int(v) for v in shape.split('x')]
-        require(dims[0]*dims[1]*dims[2] == 128 and all(2016 % v == 0 for v in dims), 'Shape must divide 2016^3 into 128 equal parts')
-        require(shape != '8x4x4', '8x4x4 is historical and will not be rerun')
+        require(dims[0]*dims[1]*dims[2] == nranks and all(grid % v == 0 for v in dims), 'Shape must divide %d^3 into %d equal parts' % (grid,nranks))
+        require(shape not in (baseline,top3), 'Historical default/Top3 MPI will not be rerun')
         require(shape not in shapes, 'Duplicate decomposition')
         shapes[shape] = dims
     require(args.account and '/' not in args.account and not any(c.isspace() for c in args.account), 'Invalid Slurm account')
     campaigns = Path('/scratch') / args.account / 'ops-decomposition/campaigns'
-    candidates = [campaigns / 'TGV_TOP3_20261022_083420'] + [Path(m) / args.account / 'ops-decomposition/campaigns/TGV_TOP3_20261022_083420'
+    candidates = [campaigns / reference_name] + [Path(m) / args.account / 'ops-decomposition/campaigns' / reference_name
                   for m in ('/pfs/lustrep1/scratch', '/pfs/lustrep2/scratch')]
     campaign = (args.campaign or next((p for p in candidates if (p / 'build/tgvstorenone_mpi_hip').is_file()), candidates[0])).resolve()
     exe = (args.executable or campaign / 'build/tgvstorenone_mpi_hip').resolve()
@@ -220,19 +236,20 @@ def main():
     source_script = Path(os.environ['OPS_YZ_SOURCE_SCRIPT'])
     script_hash = digest(source_script)
     stamp = datetime.now().strftime('%Y%m%d_%H%M%S_%f')
-    output = (args.output or campaigns / ('TGV_YZ_N016_' + stamp)).resolve()
-    output_stamp = re.fullmatch(r'TGV_YZ_N016_(\d{8}_\d{6}_\d{6})', output.name)
+    output = (args.output or campaigns / ('TGV_YZ_' + node_tag.upper() + '_' + stamp)).resolve()
+    output_stamp = re.fullmatch(r'TGV_YZ_' + node_tag.upper() + r'_(\d{8}_\d{6}_\d{6})', output.name)
     if output_stamp: stamp = output_stamp.group(1)
     require(not output.exists(), 'Output already exists: ' + str(output))
     refs, ref_paths = {}, {}
-    common = dict(APP_NAME='tgvstorenone', GRID_X='2016', GRID_Y='2016', GRID_Z='2016', NITER='500',
-                  NUM_NODES='16', NUM_MPI_RANKS='128', EXECUTABLE_SHA256=exe_hash, GPU_DIRECT='YES', RUN_STATUS='OK', RUN_EXIT_CODE='0')
-    for role, variant, mode in [('A','autotune_off','0'), ('C','autotune_precomputed','2')]:
-        found = list((campaign / 'OPS_LOGS_20261022_083420_n016').glob(
-            'tgvstorenone_hip_2016x2016x2016_cfg1_comparison_*/mode_1/decomp8x4x4/iter_1/' + variant + '/config.txt'))
+    common = dict(APP_NAME='tgvstorenone', GRID_X=str(grid), GRID_Y=str(grid), GRID_Z=str(grid), NITER='500',
+                  NUM_NODES=str(nodes), NUM_MPI_RANKS=str(nranks), EXECUTABLE_SHA256=exe_hash, GPU_DIRECT='YES', RUN_STATUS='OK', RUN_EXIT_CODE='0')
+    for role, variant, mode in [('A','autotune_off','0'), ('C','autotune_precomputed','2'), ('T','autotune_precomputed','2')]:
+        found = list((campaign / reference_logs).glob(
+            'tgvstorenone_hip_'+grid_text+'_cfg1_comparison_*/mode_1/decomp'+(top3 if role == 'T' else baseline)+'/iter_1/' + variant + '/config.txt'))
         require(len(found) == 1, 'Expected one historical ' + variant + '/config.txt')
         c = read_config(found[0])
-        expected = dict(common, DECOMP_PX='8', DECOMP_PY='4', DECOMP_PZ='4', OPS_AUTOTUNE_MODE=mode)
+        reference_shape = (top3 if role == 'T' else baseline).split('x')
+        expected = dict(common, DECOMP_PX=reference_shape[0], DECOMP_PY=reference_shape[1], DECOMP_PZ=reference_shape[2], OPS_AUTOTUNE_MODE=mode)
         require(all(c.get(k) == v for k,v in expected.items()), 'Historical context/executable mismatch: ' + str(found[0]))
         require(all(math.isfinite(float(c[k])) and float(c[k]) > 0 for k in ('APP_WALL_TIME','KERNEL_TOTAL_TIME','HALO_TOTAL_TIME')), 'Invalid reference timing')
         refs[role], ref_paths[role] = c, found[0]
@@ -243,7 +260,7 @@ def main():
                         OPS_AUTOTUNE_MODE='1', SAMPLED_AUTOTUNE='YES', AUTOTUNE_SAMPLE_RANKS='0', COMMIT_STATUS='COMMITTED')
         require(all(c.get(k) == v for k,v in expected.items()), 'Catalog tuning context mismatch: ' + str(config_path))
         metrics = rows(config_path.parent / 'mpi_rank_metrics.csv')
-        require(len(metrics) == 128 and {r['rank_id'] for r in metrics} == {str(r) for r in range(128)}
+        require(len(metrics) == nranks and {r['rank_id'] for r in metrics} == {str(r) for r in range(nranks)}
                 and all(r['rank_status'] == 'OK' for r in metrics), 'Incomplete tuning rank metrics')
         data = catalog_bytes(rank0_catalog(config_path.parent))
         if expected_hash:
@@ -258,24 +275,25 @@ def main():
             cat = source / 'precomputed_blocks' / ('decomp' + shape) / 'blocks.csv'
             if not cat.exists():
                 continue  # Missing shape trains afresh; incompatible existing shape fails.
-            found = list(source.glob('tgvstorenone_hip_2016x2016x2016_cfg1_comparison_*/mode_1/decomp' + shape + '/iter_1/autotune_on/config.txt'))
+            found = list(source.glob('tgvstorenone_hip_'+grid_text+'_cfg1_comparison_*/mode_1/decomp' + shape + '/iter_1/autotune_on/config.txt'))
             require(len(found) == 1, 'Catalog lacks unique same-shape tuning provenance: ' + str(cat))
             c, data = validate_source(found[0], shape, digest(cat))
             require(cat.read_bytes() == data, 'Noncanonical/tampered catalog: ' + str(cat))
             reused[shape] = (found[0], data)
-    plan = dict(APP_NAME='tgvstorenone', APP_ARGS='2016 2016 2016 500', NUM_NODES=16, NUM_MPI_RANKS=128,
+    plan = dict(APP_NAME='tgvstorenone', APP_ARGS=app_args, NUM_NODES=nodes, NUM_MPI_RANKS=nranks,
                 DECOMPOSITIONS=','.join(shapes), AUTOTUNE_MODES='1 2', AUTOTUNE_SAMPLE_RANKS='0',
                 AUTOTUNE_REPETITIONS=1, REPLAY_REPETITIONS=args.repetitions, OUTPUT_DIRECTORY=output,
                 EXECUTABLE=exe, EXECUTABLE_SHA256=exe_hash, GPU_DIRECT='YES', REFERENCE_RERUN='NO',
-                REFERENCE_KIND='HISTORICAL', REUSED_CATALOGS=','.join(reused) or 'NONE',
+                REFERENCE_KIND='HISTORICAL', DEFAULT_MPI=baseline, TOP3_MPI=top3,
+                WALL_TIME_DEFAULT_MPI_PRECOMPUTED=refs['C']['APP_WALL_TIME'], WALL_TIME_TOP3_PRECOMPUTED=refs['T']['APP_WALL_TIME'], REUSED_CATALOGS=','.join(reused) or 'NONE',
                 MAIN_EXECUTIONS=len(shapes)-len(reused)+len(shapes)*args.repetitions)
     print(config_text(plan), flush=True)
     if args.dry_run: return
     if args.submit:
         require(not os.environ.get('SLURM_JOB_ID'), 'Use --submit from a login node')
         output.parent.mkdir(parents=True, exist_ok=True)
-        command = ['sbatch', '--account='+args.account, '--output='+str(output.parent / (output.name+'-%j.out')),
-                   str(source_script), '--account', args.account, '--ops-root', str(args.ops_root.resolve()),
+        command = ['sbatch', '--nodes='+str(nodes), '--job-name=tgv-yz-'+node_tag, '--account='+args.account, '--output='+str(output.parent / (output.name+'-%j.out')),
+                   str(source_script), '--nodes', str(nodes), '--account', args.account, '--ops-root', str(args.ops_root.resolve()),
                    '--campaign', str(campaign), '--executable', str(exe), '--output', str(output), '--env-file', str(profile),
                    '--decompositions', ','.join(shapes), '--repetitions', str(args.repetitions)]
         if args.precomputed_source: command += ['--precomputed-source', str(args.precomputed_source.resolve())]
@@ -284,16 +302,16 @@ def main():
     if not os.environ.get('SLURM_JOB_ID'):
         print('Inputs validated. Add --submit to send the job.')
         return
-    require(int(os.environ.get('SLURM_JOB_NUM_NODES', os.environ.get('SLURM_NNODES','0'))) == 16, 'Expected exactly 16 nodes')
+    require(int(os.environ.get('SLURM_JOB_NUM_NODES', os.environ.get('SLURM_NNODES','0'))) == nodes, 'Expected exactly %d nodes' % nodes)
     profile_result = subprocess.run(['bash','-c','set -e; source "$1" >&2; env -0','bash',str(profile)], stdout=subprocess.PIPE, check=True)
     env = dict(item.decode().split('=',1) for item in profile_result.stdout.split(b'\0') if item)
     env.update(MPICH_GPU_SUPPORT_ENABLED='1', OMP_NUM_THREADS='1')
     link = subprocess.run(['ldd',str(exe)], env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
     require(link.returncode == 0 and 'libmpi_gtl_hsa' in link.stdout and 'not found' not in link.stdout, 'GPU-aware MPI linkage unavailable: '+link.stdout)
     output.mkdir(parents=True, exist_ok=False)
-    logs = output / ('OPS_LOGS_'+stamp+'_n016')
+    logs = output / ('OPS_LOGS_'+stamp+'_'+node_tag)
     logs.mkdir()
-    label = 'tgvstorenone_hip_2016x2016x2016_cfg1_comparison_'+stamp+'_n016'
+    label = 'tgvstorenone_hip_'+grid_text+'_cfg1_comparison_'+stamp+'_'+node_tag
     summary, comparisons = [], []
 
     def execute(shape, phase, rep, trained=None):
@@ -303,12 +321,12 @@ def main():
         (run / 'ranks').mkdir(parents=True)
         (run / 'rank_0').mkdir()
         cat = logs / 'precomputed_blocks' / ('decomp'+shape) / 'blocks.csv'
-        c = dict(APP_NAME='tgvstorenone', APP_ARGS='2016 2016 2016 500', CAMPAIGN_ID=output.name,
-                 CASE_ID='n016_decomp'+shape+'_mode'+str(phase), RUN_CLASS='SCIENTIFIC', SCIENTIFIC_RESULT='YES',
+        c = dict(APP_NAME='tgvstorenone', APP_ARGS=app_args, CAMPAIGN_ID=output.name,
+                 CASE_ID=node_tag+'_decomp'+shape+'_mode'+str(phase), RUN_CLASS='SCIENTIFIC', SCIENTIFIC_RESULT='YES',
                  NITER=500, GPU_ARCH='gfx90a', EXECUTABLE=exe, EXECUTABLE_SHA256=exe_hash, SCRIPT_SHA256=script_hash,
                  ENVIRONMENT_PROFILE=profile, ENVIRONMENT_SHA256=profile_hash, LOADEDMODULES=env.get('LOADEDMODULES',''),
-                 SLURM_JOB_ID=os.environ['SLURM_JOB_ID'], DECOMPOSITION_MODE=1, GRID_X=2016, GRID_Y=2016, GRID_Z=2016,
-                 GRID_CONFIG='cfg1', TOTAL_CELLS=2016**3, NUM_NODES=16, NUM_MPI_RANKS=128, GPUS_PER_NODE=8, NUM_GPUS_USED=128,
+                 SLURM_JOB_ID=os.environ['SLURM_JOB_ID'], DECOMPOSITION_MODE=1, GRID_X=grid, GRID_Y=grid, GRID_Z=grid,
+                 GRID_CONFIG='cfg1', TOTAL_CELLS=grid**3, NUM_NODES=nodes, NUM_MPI_RANKS=nranks, GPUS_PER_NODE=8, NUM_GPUS_USED=nranks,
                  RANKS_PER_GPU=1, DECOMP_PX=shapes[shape][0], DECOMP_PY=shapes[shape][1], DECOMP_PZ=shapes[shape][2],
                  OPS_AUTOTUNE_MODE=phase, SAMPLED_AUTOTUNE='YES', AUTOTUNE_SAMPLE_RANKS='0', AUTOTUNE_REPETITIONS=1,
                  GPU_DIRECT='UNVERIFIED', MPICH_GPU_SUPPORT_ENABLED=1, OPS_TILING='NO', RUN_ITERATION=rep,
@@ -317,8 +335,9 @@ def main():
                  PRECOMPUTED_SET_ID_KIND='BLOCKS_SHA256', PRECOMPUTED_SOURCE_CONFIG='', BLOCKS_SOURCE_MPI=shape,
                  PRECOMPUTED_SELECTION='rank 0 best measured block per kernel',
                  REFERENCE_KIND='HISTORICAL', REFERENCE_RERUN='NO', NO_AUTOTUNE_REFERENCE='DEFAULT_MPI_DEFAULT_BLOCKS',
-                 NO_AUTOTUNE_MPI='8x4x4', PRECOMPUTED_MPI=shape, NO_AUTOTUNE_CONFIG=ref_paths['A'],
-                 DEFAULT_MPI_PRECOMPUTED_CONFIG=ref_paths['C'], PRECOMPUTED_CONFIG=run/'config.txt' if phase == 2 else '',
+                 NO_AUTOTUNE_MPI=baseline, PRECOMPUTED_MPI=shape, NO_AUTOTUNE_CONFIG=ref_paths['A'],
+                 DEFAULT_MPI_PRECOMPUTED_CONFIG=ref_paths['C'], TOP3_MPI=top3, TOP3_REFERENCE_CONFIG=ref_paths['T'],
+                 WALL_TIME_TOP3_PRECOMPUTED=refs['T']['APP_WALL_TIME'], SPEEDUP_TOP3_PRECOMPUTED='NA', PRECOMPUTED_CONFIG=run/'config.txt' if phase == 2 else '',
                  WALL_TIME_NO_AUTOTUNE=refs['A']['APP_WALL_TIME'], WALL_TIME_DEFAULT_MPI_PRECOMPUTED=refs['C']['APP_WALL_TIME'],
                  WALL_TIME_AUTOTUNE='NA', WALL_TIME_PRECOMPUTED='NA', SPEEDUP_PRECOMPUTED='NA',
                  SPEEDUP_DEFAULT_MPI_PRECOMPUTED='NA', APP_WALL_TIME='NA', JOB_WALL_TIME='NA', PROCESS_EXIT_CODE='NA',
@@ -335,7 +354,7 @@ def main():
                 require(trained is not None, 'Missing same-configuration autotuning')
                 validate_source(trained[0], shape, c['PRECOMPUTED_SET_ID'])
                 require(cat.read_bytes() == trained[1], 'Wrong/mutated per-configuration catalog')
-            command = ['srun','--nodes=16','--ntasks=128','--ntasks-per-node=8','--cpus-per-task=7',
+            command = ['srun','--nodes='+str(nodes),'--ntasks='+str(nranks),'--ntasks-per-node=8','--cpus-per-task=7',
                        '--kill-on-bad-exit=1','--cpu-bind=map_cpu:49,57,17,25,1,9,33,41',
                        sys.executable,'-c',RANK_CODE,str(run/'config.txt')]
             print('RUN '+shape+' '+variant+' iteration '+str(rep), flush=True)
@@ -350,7 +369,7 @@ def main():
                 (run/'run.log').write_text(text + ('\nSLURM LAUNCH OUTPUT:\n'+launch_text if launch_text else ''))
             else:
                 text = ''
-            statuses = collect_ranks(run, phase)
+            statuses = collect_ranks(run, phase, nranks)
             require(rc == 0, 'srun failed')
             times = [float(s['app_reported_wall_time_s']) for s in statuses if s['app_reported_wall_time_s']]
             require(times and all(math.isfinite(t) and t > 0 for t in times), 'Missing/invalid application wall time')
@@ -380,20 +399,22 @@ def main():
             if phase == 2:
                 c['SPEEDUP_PRECOMPUTED'] = float(refs['A']['APP_WALL_TIME'])/max(times)
                 c['SPEEDUP_DEFAULT_MPI_PRECOMPUTED'] = float(refs['C']['APP_WALL_TIME'])/max(times)
+                c['SPEEDUP_TOP3_PRECOMPUTED'] = float(refs['T']['APP_WALL_TIME'])/max(times)
         except (OSError, ValueError, KeyError) as e:
             c.update(RUN_STATUS='FAILED', RUN_EXIT_CODE=rc or 1, VALIDATION_STATUS='FAIL', ERROR=str(e).replace('\n',' '))
             write_config(run/'config.txt', c)
             raise ValueError('Run failed: '+str(run)+': '+str(e))
         write_config(run/'config.txt', c)
-        summary.append(dict(nodes=16, roles=c['TOP3_ROLES'], global_grid='2016x2016x2016', mpi=shape,
+        summary.append(dict(nodes=nodes, roles=c['TOP3_ROLES'], global_grid=grid_text, mpi=shape,
                             blocks='dynamic' if phase == 1 else 'precomputed', wall_time_s=c['APP_WALL_TIME'],
                             kernel_time_s=c['KERNEL_TOTAL_TIME'], halo_time_s=c['HALO_TOTAL_TIME'],
                             result_directory=str(run), iteration=rep, reference_kind='HISTORICAL'))
         if phase == 2:
             for metric, key in [('app_wall_time_s','APP_WALL_TIME'),('kernel_time_s','KERNEL_TOTAL_TIME'),('halo_time_s','HALO_TOTAL_TIME')]:
                 a, ref, measured = float(refs['A'][key]), float(refs['C'][key]), c[key]
-                comparisons.append(dict(nodes=16, metric=metric, role='D_new', A=a, C=ref, D=measured,
+                comparisons.append(dict(nodes=nodes, metric=metric, role='D_new', A=a, C=ref, D=measured,
                     C_over_D=ref/measured if measured > 0 else 'NA', A_over_D=a/measured if measured > 0 else 'NA',
+                    T=float(refs['T'][key]), T_over_D=float(refs['T'][key])/measured if measured > 0 else 'NA',
                     repetitions=1, mpi=shape, iteration=rep, reference_kind='HISTORICAL'))
         write_csv(logs/'summary.csv', summary)
         write_csv(logs/'comparisons.csv', comparisons)
