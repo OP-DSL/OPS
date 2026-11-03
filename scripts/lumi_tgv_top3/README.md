@@ -456,3 +456,137 @@ bash -n scripts/lumi_tgv_top3/compare_yz_n016.sh
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover \
   -s scripts/lumi_tgv_top3 -p test_compare_yz.py -v
 ```
+
+## Repeated default/Top3 comparison on the same four nodes
+
+`repeat_default_top3_n004.sh` measures the default MPI decomposition and the
+three currently selected alternatives in one allocation, with a new default
+measurement in every replay round. This tests whether the lower observed halo
+times persist despite increased reported communication volume.
+
+All executions use TGV StoreNone, global input `1280x1280x1280`, 500 simulation
+steps, four LUMI nodes, eight ranks/GCDs per node, GPU Direct and no tiling.
+The executable and environment profile are fixed throughout the job.
+
+| Role | MPI decomposition | Local interior shape |
+|---|---|---|
+| Default | `4x4x2` | `320x320x640` |
+| Top1 | `2x16x1` | `640x80x1280` |
+| Top2 | `4x8x1` | `320x160x1280` |
+| Top3 | `2x8x2` | `640x160x640` |
+
+These are the current best-wall-time selections. Top3 is the YZ alternative
+`2x8x2`, replacing the original campaign's `1x32x1`. The labels identify the
+selected cases; new measurements may give a different ranking.
+
+The sequence is:
+
+```text
+Training: Default -> Top1 -> Top2 -> Top3
+Replay 1: Default -> Top1 -> Top2 -> Top3
+Replay 2: Default -> Top1 -> Top2 -> Top3
+Replay 3: Default -> Top1 -> Top2 -> Top3
+```
+
+There are **four training executions and twelve replay measurements**. Each
+training execution tunes rank 0 once while the other 31 ranks use mode 0.
+Each shape's 25 selected blocks (kernel IDs 2–26) are then frozen in its own
+`blocks.csv`. All ranks load the matching catalog in mode 2 during every replay;
+initialization kernel 1 retains the established default fallback. Training is
+excluded from the performance comparisons. Fresh training evaluates the tuning
+strategy; it does not replay the exact historical block catalogs.
+
+Use the Bash entry point from the OPS checkout on a LUMI login node:
+
+```bash
+bash scripts/lumi_tgv_top3/repeat_default_top3_n004.sh --dry-run
+bash scripts/lumi_tgv_top3/repeat_default_top3_n004.sh --submit
+```
+
+No action also performs validation only, including inside an existing allocation.
+`--submit` submits exactly one exclusive four-node `standard-g` job, with a
+default limit of `01:30:00`; `--time HH:MM:SS` overrides that limit when submitting.
+This is an initial allowance, not a runtime guarantee. `--run` is the internal
+allocation-only action used by the submitted job. Python 3.6+ is required.
+
+The campaign/binary are located using the same account and scratch-path rules
+as the YZ launcher, with original campaign `TGV_TOP3_20261026_101612`.
+The original default-MPI config is used only to validate the input context and
+binary hash; its historical timing is never used in a new comparison. No rebuild
+is performed. `--campaign`, `--executable`, `--env-file`, `--ops-root`, `--account`
+and `--output` allow path/account overrides. Executable and profile hashes are
+pinned at submission and checked again after allocation. Output defaults to
+`/scratch/<account>/ops-decomposition/campaigns/TGV_REPEAT_N004_<stamp>/`.
+An existing output directory is rejected. `--repetitions N` changes the number
+of replay rounds, retaining exactly four training executions.
+
+The existing config/log/CSV layout is retained:
+
+```text
+TGV_REPEAT_N004_<stamp>/
+  OPS_LOGS_<stamp>_n004/
+    precomputed_blocks/decomp<shape>/blocks.csv
+    tgvstorenone_hip_1280x1280x1280_cfg1_comparison_<stamp>_n004/
+      mode_1/decomp<shape>/
+        iter_1/autotune_on/                  # training once
+        iter_1/autotune_precomputed/         # replay round 1
+        iter_2/autotune_precomputed/         # replay round 2
+        iter_3/autotune_precomputed/         # replay round 3
+    summary.csv
+    comparisons.csv
+    statistics.csv
+    comparison_statistics.csv
+```
+
+Each execution directory contains `config.txt`, `run.log`,
+`mpi_rank_metrics.csv`, `ranks/rank_<rank>.log` and native OPS CSVs under
+`rank_0/autotune_on/`. The native CSV directory name is retained in replay too.
+No JSON, copied binary or historical-result folders are generated.
+
+Every run records wall time, kernel time, halo time, cumulative sent decimal
+MB/rank and cumulative messages/rank. Wall time is the maximum application
+value among reporting ranks; kernel/halo times preserve OPS's rank-mean totals.
+The communication counters are also averages over ranks. Sent MB counts the
+payload of automatic OPS halo exchanges, including intra-node and inter-node
+sends; it is not physical NIC traffic. Halo timing includes exchange preparation,
+packing and related waits, so it is not a pure network-transfer timer.
+
+The script requests the existing CPU mapping `49,57,17,25,1,9,33,41`, assigns
+GPU/GCD by local rank and uses block rank distribution. It records and checks
+the rank-to-host/local-GPU/CPU-affinity mapping across every execution. Failed
+ranks, incomplete catalogs, changed placement, missing metrics or mismatched
+replay blocks stop the experiment. Catalog bytes are checked before and after
+replay; rank-0 native diagnostics must match the frozen block selection.
+Changes to a shape's reported volume/messages between replay rounds are
+preserved, flagged as `COMMUNICATION_COUNTERS_STABLE=NO`, and reported with a
+warning rather than discarded.
+
+`summary.csv` retains all four training and twelve replay rows. Training rows
+have `scientific_result=NO`. `comparisons.csv` contains only the nine alternative
+replays, with one row per metric, referencing the measured default of the same
+round (`reference_kind=SAME_JOB_SAME_ROUND`). For each metric:
+
+```text
+baseline_over_measured = default_this_round / alternative_this_round
+change_pct = 100 * (alternative_this_round / default_this_round - 1)
+```
+
+For wall time the ratio is the incremental speedup over default MPI with tuned
+blocks. For volume/messages it is a count ratio, not a performance speedup.
+`statistics.csv` reports replay median/minimum/maximum for each shape/metric;
+`comparison_statistics.csv` reports those statistics for the within-round ratios
+and percentage changes. Statistics are produced only after all rounds complete.
+
+Each round shares one default baseline. This is not a default immediately before
+each of the three alternatives. Fixed run order and shared network activity can
+still introduce temporal variation; three repeats within one allocation do not
+establish stability across allocations or identify the mechanism of a halo-time
+change. Report the individual results and their spread along with the medians.
+
+Local validation executes the real rank worker with simulated Slurm/TGV output:
+
+```bash
+bash -n scripts/lumi_tgv_top3/repeat_default_top3_n004.sh
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover \
+  -s scripts/lumi_tgv_top3 -p test_repeat_default_top3.py -v
+```
