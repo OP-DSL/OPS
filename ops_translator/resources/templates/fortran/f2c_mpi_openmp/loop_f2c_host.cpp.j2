@@ -325,5 +325,12 @@
 {% endblock %}
 
 {% block kernel_descriptor_lazy_call %}
+{% if jit %}
+    void ops_jit_init(void);
+    ops_jit_init();
+    extern const struct ops_jit_artifact ops_jit_artifact_{{lh.kernel}};
+    create_kerneldesc_and_enque_jit("{{lh.kernel}}", args, {{lh.args|length}}, {{kernel_idx}}, dim, 0, range, block, {{lh.kernel}}_execute, &ops_jit_artifact_{{lh.kernel}});
+{% else %}
     create_kerneldesc_and_enque("{{lh.kernel}}", args, {{lh.args|length}}, {{kernel_idx}}, dim, 0, range, block, {{lh.kernel}}_execute);
+{% endif %}
 {% endblock %}
