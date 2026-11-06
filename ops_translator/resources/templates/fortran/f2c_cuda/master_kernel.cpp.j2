@@ -33,8 +33,27 @@ __constant__ {{const_c_type[loop.index0]}} *{{const.ptr}};
     {% endif %}
     {% endfor %}
 
+{% if jit %}
+extern "C" void ops_jit_init(void);
+void ops_init_backend(){ ops_jit_init(); }
+{% else %}
 void ops_init_backend(){}
+{% endif %}
 
+{% if jit %}
+#include <cctype>
+#include <cstring>
+
+// The JIT reads constants from OPS's registry, under their Fortran (lower case) names.
+static void ops_jit_register_const_f2c(char const *name, int dim, char const *type, int size, char *dat) {
+    char lname[256];
+    size_t n = strlen(name) < sizeof(lname) - 1 ? strlen(name) : sizeof(lname) - 1;
+    for (size_t i = 0; i < n; i++) lname[i] = (char)tolower((unsigned char)name[i]);
+    lname[n] = '\0';
+    ops_register_const_char(OPS_instance::getOPSInstance(), dim, type, size, dat, lname);
+}
+
+{% endif %}
 extern "C"
 void ops_decl_const_f2c(char const *name, int dim, int size, char *dat) {
 
@@ -43,6 +62,9 @@ void ops_decl_const_f2c(char const *name, int dim, int size, char *dat) {
 
     {% for const in app.consts() %}
     if(!strcmp(name, "{{const.name}}")) {
+{% if jit %}
+        ops_jit_register_const_f2c(name, dim, "{{const_c_type[loop.index0]}}", size, dat);
+{% endif %}
         {% if const.dim.isdigit() %}
             {% if target.name == "f2c_cuda" %}
         cutilSafeCall(instance->ostream(), cudaMemcpyToSymbol({{const.ptr}}, dat, dim*size));
