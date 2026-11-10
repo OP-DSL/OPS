@@ -13,6 +13,26 @@
     list(FILTER EXTERN EXCLUDE REGEX "hdf5")
     list(FILTER CORE EXCLUDE REGEX "device")
 
+    # AMD HIP: the sources that use the HIP API (their names contain "hip", or they are the shared device code) are compiled as the
+    # HIP language by ROCm's clang, through a generated <name>.hip that includes them (a source file property such as LANGUAGE would
+    # apply to the other backends that share a file); the others stay C++. __HIP_PLATFORM_AMD__ is only for the former:
+    # ops_lib_core.h includes the HIP half-precision header when it is defined.
+    function(ops_hip_wrap OUT)
+        set(wrapped "")
+        foreach(src ${ARGN})
+            if(src MATCHES "hip" OR src MATCHES "ops_device_singlenode_common")
+                get_filename_component(name ${src} NAME_WE)
+                set(wrapper "${CMAKE_CURRENT_BINARY_DIR}/hip_sources/${name}.hip")
+                file(GENERATE OUTPUT "${wrapper}" CONTENT "#include \"${src}\"\n")
+                set_source_files_properties("${wrapper}" PROPERTIES GENERATED TRUE COMPILE_DEFINITIONS __HIP_PLATFORM_AMD__)
+                list(APPEND wrapped "${wrapper}")
+            else()
+                list(APPEND wrapped "${src}")
+            endif()
+        endforeach()
+        set(${OUT} "${wrapped}" PARENT_SCOPE)
+    endfunction()
+
     macro(InstallTarget Name Pos)
         install(
                 TARGETS ops_${Name}
@@ -76,15 +96,25 @@
         if(HIP_FOUND)
             file(GLOB_RECURSE HIP "${CMAKE_CURRENT_SOURCE_DIR}/src/hip/*.cpp"
                 "${CMAKE_CURRENT_SOURCE_DIR}/src/core/ops_device_singlenode_common.cpp")
-            add_library(ops_hip ${CORE} ${EXTERN} ${HIP})
-            # -D__HIP_PLATFORM_NVCC__= -D__HIP_PLATFORM_NVIDIA__
-            # -I/opt/rocm-4.5.0/hip/include -I/usr/local/cuda/include
-            target_compile_definitions(ops_hip PRIVATE OpenMP::OpenMP_CXX
-                                               __HIP_PLATFORM_NVIDIA__)
-            # target_compile_options(ops_hip PRIVATE -I/opt/rocm-4.5.0/hip/include)
-            target_link_libraries(ops_hip PRIVATE CUDA::cudart_static)
+            if(NOT OPS_HIP_PLATFORM STREQUAL "nvidia")
+                ops_hip_wrap(HIP_WRAPPED ${HIP})
+                add_library(ops_hip ${CORE} ${EXTERN} ${HIP_WRAPPED})
+            else()
+                add_library(ops_hip ${CORE} ${EXTERN} ${HIP})
+            endif()
+            if(OPS_HIP_PLATFORM STREQUAL "nvidia")
+                # -D__HIP_PLATFORM_NVCC__= -D__HIP_PLATFORM_NVIDIA__
+                # -I/opt/rocm-4.5.0/hip/include -I/usr/local/cuda/include
+                target_compile_definitions(ops_hip PRIVATE OpenMP::OpenMP_CXX
+                                                   __HIP_PLATFORM_NVIDIA__)
+                # target_compile_options(ops_hip PRIVATE -I/opt/rocm-4.5.0/hip/include)
+                target_link_libraries(ops_hip PRIVATE CUDA::cudart_static)
 
-            target_include_directories(ops_hip PRIVATE /opt/rocm-4.5.0/hip/include)
+                target_include_directories(ops_hip PRIVATE /opt/rocm-4.5.0/hip/include)
+            else()
+                target_include_directories(ops_hip PRIVATE ${HIP_INCLUDE_DIRS})
+                target_link_libraries(ops_hip PRIVATE OpenMP::OpenMP_CXX ${HIP_LIBRARIES})
+            endif()
             installtarget(hip ${ConfigPackageLocation})
         endif()
     endif()
@@ -153,6 +183,10 @@
                     "${CMAKE_CURRENT_SOURCE_DIR}/src/hip/*")
                 list(FILTER MPIHIP EXCLUDE REGEX "singlenode")
                 list(APPEND MPIHIP ${CommonFiles})
+                if(NOT OPS_HIP_PLATFORM STREQUAL "nvidia")
+                    ops_hip_wrap(MPIHIP_WRAPPED ${MPIHIP})
+                    set(MPIHIP ${MPIHIP_WRAPPED})
+                endif()
                 add_library(ops_mpi_hip ${MPICORE} ${EXTERN} ${MPIHIP})
                 target_include_directories(ops_mpi_hip PRIVATE ${HIP_INCLUDE_DIRS})
                 target_link_libraries(ops_mpi_hip PRIVATE OpenMP::OpenMP_CXX

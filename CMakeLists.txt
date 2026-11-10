@@ -182,25 +182,48 @@
     endif()
 
     if(OPS_HIP)
-#       Search for rocm in common locations
-        list(APPEND CMAKE_PREFIX_PATH /opt/rocm/hip /opt/rocm)
-
-#       Find hip
-        find_package(hip)
-
-#       enable_language(HIP) message($ENV{HIP_PLATFORM})
-
-        set(ENV{HIP_PLATFORM} "nvidia")
-#       message($ENV{HIP_PLATFORM})
-
-        set(HIP_FOUND TRUE)
-
-        if({$hip::host} STREQUAL "" OR {$hip::device} STREQUAL "")
-            message(
-                WARNING
-                    "We cannot find the HIP environment. The HIP codes won't work! You might need to use CMAKE_PREFIX_PATH to specify the path for HIP!"
-            )
-            set(HIP_FOUND FALSE)
+        set(OPS_HIP_PLATFORM "amd" CACHE STRING "HIP platform: amd (ROCm, AMD GPUs) or nvidia (HIP over CUDA)")
+        if(OPS_HIP_PLATFORM STREQUAL "nvidia")
+#           HIP over CUDA, as before
+            list(APPEND CMAKE_PREFIX_PATH /opt/rocm/hip /opt/rocm)
+            find_package(hip)
+            set(ENV{HIP_PLATFORM} "nvidia")
+            set(HIP_FOUND TRUE)
+        else()
+#           AMD GPUs: the HIP sources (src/hip, see ops/c/CMakeLists.txt) are compiled as the CMake HIP language by ROCm's own
+#           clang (upstream clang does not work with the ROCm headers); the rest of OPS stays on the C++ compiler, and
+#           libamdhip64 is linked by path (no hip:: targets, so nothing for a consumer to find).
+            if(NOT ROCM_PATH)
+                if(DEFINED ENV{ROCM_PATH})
+                    set(ROCM_PATH $ENV{ROCM_PATH})
+                else()
+                    set(ROCM_PATH /opt/rocm)
+                endif()
+            endif()
+            set(ROCM_PATH ${ROCM_PATH} CACHE PATH "ROCm installation (HIP headers and libamdhip64)")
+            set(HIP_ARCH "gfx90a" CACHE STRING "AMD GPU architecture(s) of the HIP backend, e.g. gfx90a (MI250X), gfx942 (MI300)")
+            if(EXISTS "${ROCM_PATH}/include/hip/hip_runtime.h" AND EXISTS "${ROCM_PATH}/lib/libamdhip64.so")
+                set(HIP_FOUND TRUE)
+                if(CMAKE_VERSION VERSION_LESS 3.21)
+                    message(FATAL_ERROR "The HIP backend for AMD GPUs needs CMake 3.21 (the HIP language)")
+                endif()
+                if(NOT CMAKE_HIP_COMPILER)
+                    set(CMAKE_HIP_COMPILER "${ROCM_PATH}/llvm/bin/clang++")
+                endif()
+                set(CMAKE_HIP_ARCHITECTURES "${HIP_ARCH}")
+                # ROCm's clang does not make PIE objects by default, the compiler that links the applications does
+                set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+                enable_language(HIP)
+                # hipRAND: the random number generation, rocm_smi64: the GPU power measurement (rsmi_*), both in ops_hip_common.cpp
+                set(HIP_LIBRARIES "${ROCM_PATH}/lib/libamdhip64.so" "${ROCM_PATH}/lib/libhiprand.so" "${ROCM_PATH}/lib/librocm_smi64.so")
+                set(HIP_INCLUDE_DIRS "${ROCM_PATH}/include")
+            else()
+                message(
+                    WARNING
+                        "We cannot find the HIP environment in ${ROCM_PATH} (include/hip/hip_runtime.h, lib/libamdhip64.so). The HIP codes won't be built! Use -DROCM_PATH to specify the ROCm installation."
+                )
+                set(HIP_FOUND FALSE)
+            endif()
         endif()
     endif()
 
