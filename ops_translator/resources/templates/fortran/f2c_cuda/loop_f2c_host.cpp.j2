@@ -355,27 +355,39 @@ __global__ void ops_{{lh.kernel}}({{signature[0]}}) {
     int z_size = MAX(0,end_indx[2]-start_indx[2]+1);
 {%endif%}
 
-{% if lh.ndim == 1 %}
-    dim3 grid( (x_size-1)/block->instance->OPS_block_size_x + 1, 1, 1);
-{% elif lh.ndim == 2 %}
-    dim3 grid( (x_size-1)/block->instance->OPS_block_size_x + 1, (y_size-1)/block->instance->OPS_block_size_y + 1, 1);
-{% elif lh.ndim == 3 %}
-    dim3 grid( (x_size-1)/block->instance->OPS_block_size_x + 1, (y_size-1)/block->instance->OPS_block_size_y + 1, (z_size-1)/block->instance->OPS_block_size_z + 1);
-{% endif %}
-
-{% if lh.ndim > 1 %}
-    dim3 tblock(block->instance->OPS_block_size_x,block->instance->OPS_block_size_y,block->instance->OPS_block_size_z);
+{# Per-kernel thread-block selection (default, autotuning or precomputed) #}
+{% if target.name == "f2c_hip" %}
+    hipFuncAttributes attributes;
+    hipSafeCall(block->instance->ostream(), hipFuncGetAttributes(&attributes, reinterpret_cast<const void *>(ops_{{lh.kernel}})));
 {% else %}
-    dim3 tblock(block->instance->OPS_block_size_x,1,1);
+    cudaFuncAttributes attributes;
+    cutilSafeCall(block->instance->ostream(), cudaFuncGetAttributes(&attributes, ops_{{lh.kernel}}));
+{% endif %}
+{# start_indx/end_indx are Fortran style (inclusive end); the runtime expects an exclusive end #}
+    int local_range[2*{{lh.ndim}}];
+    for (int i = 0; i < {{lh.ndim}}; i++) {
+        local_range[2*i] = start_indx[i];
+        local_range[2*i+1] = end_indx[i] + 1;
+    }
+
+    const ops::dim3 selected_block = ops_get_kernel_block_size({{kernel_idx}}, {{lh.ndim}}, local_range, {{lh.args|length}}, args, attributes.maxThreadsPerBlock, attributes.numRegs);
+    dim3 tblock(selected_block.x, selected_block.y, selected_block.z);
+
+{% if lh.ndim == 1 %}
+    dim3 grid( (x_size-1)/tblock.x + 1, 1, 1);
+{% elif lh.ndim == 2 %}
+    dim3 grid( (x_size-1)/tblock.x + 1, (y_size-1)/tblock.y + 1, 1);
+{% elif lh.ndim == 3 %}
+    dim3 grid( (x_size-1)/tblock.x + 1, (y_size-1)/tblock.y + 1, (z_size-1)/tblock.z + 1);
 {% endif %}
 
 {% if lh.has_reduction %}
 {% if lh.ndim == 1 %}
-    int nblocks = ((x_size-1)/block->instance->OPS_block_size_x + 1);
+    int nblocks = ((x_size-1)/tblock.x + 1);
 {% elif lh.ndim == 2 %}
-    int nblocks = ((x_size-1)/block->instance->OPS_block_size_x + 1)*((y_size-1)/block->instance->OPS_block_size_y + 1);
+    int nblocks = ((x_size-1)/tblock.x + 1)*((y_size-1)/tblock.y + 1);
 {% elif lh.ndim == 3 %}
-    int nblocks = ((x_size-1)/block->instance->OPS_block_size_x + 1)*((y_size-1)/block->instance->OPS_block_size_y + 1)*((z_size-1)/block->instance->OPS_block_size_z + 1);
+    int nblocks = ((x_size-1)/tblock.x + 1)*((y_size-1)/tblock.y + 1)*((z_size-1)/tblock.z + 1);
 {% endif %}
 
     int maxblocks = nblocks;
@@ -499,7 +511,7 @@ __global__ void ops_{{lh.kernel}}({{signature[0]}}) {
 {# set up shared memory for reduction #}
 {% if lh.has_reduction %}
     size_t nshared = 0;
-    int nthread = block->instance->OPS_block_size_x*block->instance->OPS_block_size_y*block->instance->OPS_block_size_z;
+    int nthread = tblock.x*tblock.y*tblock.z;
 {% endif %}
 
 {% for arg in lh.args %}
@@ -649,6 +661,7 @@ __global__ void ops_{{lh.kernel}}({{signature[0]}}) {
     {% endif %}
         ops_timers_core(&__c1, &__t1);
         block->instance->OPS_kernels[{{kernel_idx}}].time += __t1 - __t2;
+        ops_record_kernel_performance({{kernel_idx}}, __t1 - __t2);
     }
 
 #ifndef OPS_LAZY
