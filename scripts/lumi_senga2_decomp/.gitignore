@@ -1,0 +1,4 @@
+# The repository root ignores *.py and *.csv; this package needs both.
+!*.py
+!/fixtures/*.csv
+__pycache__/
