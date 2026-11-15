@@ -6,8 +6,10 @@
 if ! command -v module >/dev/null 2>&1; then
   if [[ -f /etc/profile.d/modules.sh ]]; then source /etc/profile.d/modules.sh; fi
 fi
-# A ready site environment is preserved; otherwise the standard LUMI components are loaded.
-if ! command -v hipcc >/dev/null 2>&1 || [[ -z "${CRAY_MPICH_DIR:-}" ]]; then
+# A ready PrgEnv-gnu site environment is preserved; otherwise the standard LUMI components
+# are loaded. The Fortran flags below are gfortran flags, so a login shell that still has
+# PrgEnv-cray (the LUMI default, where ftn is Cray Fortran) must be switched as well.
+if [[ "${PE_ENV:-}" != "GNU" ]] || ! command -v hipcc >/dev/null 2>&1 || [[ -z "${CRAY_MPICH_DIR:-}" ]]; then
   if ! command -v module >/dev/null 2>&1; then
     echo 'ERROR: no HIP/Cray MPI environment and no "module" command. Pass --env-file with your module setup.' >&2
     return 1
@@ -25,6 +27,11 @@ fi
 export AMD_ARCH=gfx90a
 export MPICH_GPU_SUPPORT_ENABLED=1
 export OMP_NUM_THREADS=1
+if [[ -z "${SENGA_F90:-}" && "${PE_ENV:-}" != "GNU" ]] && command -v ftn >/dev/null 2>&1; then
+  echo "ERROR: this environment file needs PrgEnv-gnu (ftn = gfortran) but PE_ENV is '${PE_ENV:-unset}'." >&2
+  echo '       Run "module load PrgEnv-gnu" and retry, or use environment_cray.sh for Cray Fortran.' >&2
+  return 1
+fi
 
 # ---- Fortran toolchain: ftn is gfortran under PrgEnv-gnu ---------------------------
 export SENGA_F90="${SENGA_F90:-ftn}"
