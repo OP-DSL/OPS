@@ -15,6 +15,7 @@ from unittest.mock import patch
 import dataset as D
 import engine as E
 import launcher as L
+import plan as P
 import runtime as R
 import testlib as T
 from common import read_json, sha
@@ -499,12 +500,65 @@ class UpgradeTests(unittest.TestCase):
 
     def test_repetitions_cannot_change_after_the_plan_is_frozen(self):
         T.quiet(L.main, ['plan', '--campaign', str(self.campaign)])
-        with self.assertRaisesRegex(ValueError, 'already frozen with 3 repetition'):
+        with self.assertRaisesRegex(ValueError, r'already frozen \(plan.json: 3 repetition'):
             self.upgrade('--repetitions', '1')
         self.assertFalse((self.campaign / 'launcher_upgrades.json').exists())
         status, text = self.upgrade()                                 # without a change it is allowed
         self.assertEqual(status, 0, text)
         self.assertEqual(read_json(self.campaign / 'campaign.json')['repetitions'], 3)
+
+    def test_restart_sweep_archives_the_started_sweep_and_applies_mirror(self):
+        self.upgrade('--decompositions', 'all')
+        T.quiet(L.main, ['plan', '--campaign', str(self.campaign)])
+        valid, _ = P.enumerate_decompositions(8, 20)
+        self.assertEqual(len(read_json(self.campaign / 'plan.json')['decompositions']), len(valid))   # all triples
+        T.run_job(self.campaign, 'sweep', T.job_env(self.tmp, fail=[dict(decomposition='unforced', mode=0, kind='exit')]))
+        lay = T.layout(self.campaign)
+        self.assertTrue(lay.dataset.is_dir())
+        before = {p.relative_to(self.campaign): sha(p) for p in self.campaign.rglob('*') if p.is_file()
+                  and not p.relative_to(self.campaign).parts[0] in ('launcher', 'launcher_previous', 'archive')}
+        kept = {p for p in before if p.parts[0] in ('runs', 'build', 'references', 'catalogs') and 'sweep' not in p.parts}
+        with self.assertRaisesRegex(ValueError, 'add --restart-sweep'):
+            self.upgrade('--decompositions', 'mirror')
+        status, text = self.upgrade('--decompositions', 'mirror', '--restart-sweep')
+        self.assertEqual(status, 0, text)
+        self.assertIn('Decompositions: mirror (was all)', text)
+        archive = next((self.campaign / 'archive').glob('sweep_*'))
+        moved = read_json(archive / 'ARCHIVED.json')['moved']
+        self.assertIn('plan.json', moved)
+        self.assertIn(lay.dataset.name, moved)
+        self.assertFalse((self.campaign / 'plan.json').exists())
+        self.assertFalse(lay.dataset.exists())
+        # nothing deleted: every file that was there is either in place or under the archive with the same bytes
+        for rel, digest in before.items():
+            if str(rel) in ('campaign.json', 'launcher_upgrades.json', 'submissions.json'):
+                continue                       # rewritten on purpose (submissions.json is copied into the archive)
+            here, there = self.campaign / rel, archive / rel
+            self.assertTrue(here.is_file() and sha(here) == digest or there.is_file() and sha(there) == digest, str(rel))
+        for rel in kept:
+            self.assertEqual(sha(self.campaign / rel), before[rel], str(rel))     # qualification, builds untouched
+        self.assertEqual(read_json(self.campaign / 'campaign.json')['plan']['decompositions'], 'mirror')
+        entry = read_json(self.campaign / 'launcher_upgrades.json')['upgrades'][-1]
+        self.assertEqual((entry['decompositions_old'], entry['decompositions_new'], entry['sweep_restarted']),
+                         ('all', 'mirror', True))
+        # the sweep can be planned and run again with the mirror representatives (Px >= Pz)
+        status, text = T.quiet(L.main, ['plan', '--campaign', str(self.campaign)])
+        self.assertEqual(status, 0, text)
+        decs = [d['decomposition'] for d in read_json(self.campaign / 'plan.json')['decompositions']]
+        expected = sorted('%dx%dx%d' % t for t in valid if t[0] >= t[2])
+        self.assertEqual(sorted(decs), expected)
+        self.assertLess(len(decs), len(valid))
+        status, text = T.run_job(self.campaign, 'sweep', T.job_env(self.tmp))
+        self.assertEqual(status, 0, text)
+        self.assertEqual({p.name for p in T.layout(self.campaign).grid_folder.glob('mode_1/decomp*')},
+                         {'decomp' + d for d in decs})
+
+    def test_decomposition_set_cannot_change_after_the_plan_is_frozen(self):
+        T.quiet(L.main, ['plan', '--campaign', str(self.campaign)])
+        with self.assertRaisesRegex(ValueError, 'already frozen'):
+            self.upgrade('--decompositions', 'all' if read_json(self.campaign / 'campaign.json')['plan'].get(
+                'decompositions', 'all') == 'mirror' else 'mirror')
+        self.assertFalse((self.campaign / 'launcher_upgrades.json').exists())
 
     def test_refused_from_the_frozen_copy(self):
         self.upgrade()

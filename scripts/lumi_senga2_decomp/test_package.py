@@ -149,7 +149,9 @@ class ReadmeTests(unittest.TestCase):
         shown = {command for command, _, _ in calls}
         self.assertEqual(shown, {'plan', 'prepare', 'build', 'smoke', 'gonogo', 'submit', 'status', 'collect', 'upgrade'})
         upgrade = [line for command, _, line in calls if command == 'upgrade']
-        self.assertEqual(upgrade, ['bash ~/OPS/scripts/lumi_senga2_decomp/run.sh upgrade --campaign $C --repetitions 1'])
+        self.assertEqual(upgrade, ['bash ~/OPS/scripts/lumi_senga2_decomp/run.sh upgrade --campaign $C --repetitions 1',
+                                   'bash ~/OPS/scripts/lumi_senga2_decomp/run.sh upgrade --campaign $C '
+                                   '--decompositions mirror --restart-sweep'])
         for option in re.findall(r'`(--[a-z0-9-]+)', self.text):          # options named in the prose
             self.assertTrue(any(option in opts for opts in self.commands.values()), option)
 

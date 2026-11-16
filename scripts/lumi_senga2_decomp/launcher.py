@@ -33,7 +33,8 @@ TIME = re.compile(r'(?:\d+-)?\d+:\d{2}:\d{2}')
 def plan_config(args):
     return dict(ranks=args.nodes * 8, nodes=args.nodes, grid=args.grid, steps=args.steps,
                 repetitions=args.repetitions, seed=args.seed, fixed_order=args.fixed_order,
-                sentinel_every=args.sentinel_every, small_grid=args.small_grid, smoke_steps=args.smoke_steps)
+                sentinel_every=args.sentinel_every, small_grid=args.small_grid, smoke_steps=args.smoke_steps,
+                decompositions=args.decompositions)
 
 
 def add_plan_options(p):
@@ -43,6 +44,9 @@ def add_plan_options(p):
     p.add_argument('--steps', type=int, default=100, help='time steps per run (default 100)')
     p.add_argument('--smoke-steps', type=int, default=10, help='time steps of the Q4 memory checks (default 10)')
     p.add_argument('--repetitions', type=int, default=1, help='default/precomputed pairs per decomposition (default 1)')
+    p.add_argument('--decompositions', default='mirror', choices=P.DECOMPOSITION_SETS,
+                   help='mirror: PxxPyxPz and PzxPyxPx count once, keep Px >= Pz (33 for 160 ranks, default); '
+                        'all: every ordered triple (63 for 160 ranks)')
     p.add_argument('--seed', type=int, default=P.DEFAULT_SEED, help='seed of the decomposition order (default %(default)s)')
     p.add_argument('--fixed-order', action='store_true', help='lexicographic decomposition order instead of the seeded one')
     p.add_argument('--sentinel-every', type=int, default=8, help='sentinel run after every N decompositions (default 8)')
@@ -451,20 +455,27 @@ def command_upgrade(args):
     sweep_jobs = [j['job_id'] for j in (read_json_or(c.root / 'submissions.json') or dict(jobs=[]))['jobs']
                   if j['kind'] == 'sweep']
     old_runs = sorted((c.root / 'runs/sweep').glob('*/attempt_*')) if (c.root / 'runs/sweep').is_dir() else []
-    require(not sweep_jobs and not old_runs and not c.layout.sweep_runs_exist(),
+    started = bool(sweep_jobs or old_runs or c.layout.sweep_runs_exist())
+    require(args.restart_sweep or not started,
             'The sweep of this campaign has already started (%d sweep job(s) submitted, %d run attempt(s) on disk). '
-            'A running sweep is never switched to another launcher. Nothing was changed.'
+            'A running sweep is never switched to another launcher. To set the sweep aside and start it again, '
+            'add --restart-sweep (nothing is deleted). Nothing was changed.'
             % (len(sweep_jobs), len(old_runs) + len(c.layout.record_paths())))
+    frozen_plan = (c.root / 'plan.json').exists() and not args.restart_sweep
     old_reps = c.config['repetitions']
     new_reps = old_reps if args.repetitions is None else args.repetitions
-    if new_reps != old_reps:
-        require(not (c.root / 'plan.json').exists(),
-                'The sweep plan is already frozen with %d repetition(s) (plan.json); repetitions cannot change any more. '
-                'Nothing was changed.' % old_reps)
-        P.make_sweep_plan(dict(c.config['plan'], repetitions=new_reps, exclude=[], exclude_halo60_risk=False))
+    old_set = c.config['plan'].get('decompositions', 'all')
+    new_set = old_set if args.decompositions is None else args.decompositions
+    if new_reps != old_reps or new_set != old_set:
+        require(not frozen_plan,
+                'The sweep plan is already frozen (plan.json: %d repetition(s), decompositions %s). Add --restart-sweep '
+                'to set the frozen sweep aside and plan it again. Nothing was changed.' % (old_reps, old_set))
+    P.make_sweep_plan(dict(c.config['plan'], repetitions=new_reps, decompositions=new_set, exclude=[],
+                           exclude_halo60_risk=False))   # parameter check before anything is changed
     with lock(c.root / 'state' / '.sweep.lock'), lock(c.root / 'state' / '.smoke.lock'):
         old = launcher_hashes(c.root / 'launcher')
         stamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')
+        archived = archive_sweep(c, stamp) if args.restart_sweep else []
         staging = c.root / ('launcher.new_' + stamp)
         staging.mkdir()
         for name in PACKAGE_FILES:
@@ -474,16 +485,17 @@ def command_upgrade(args):
         os.rename(str(c.root / 'launcher'), str(keep))         # the old copy is kept, not deleted
         os.rename(str(staging), str(c.root / 'launcher'))
         new = launcher_hashes(c.root / 'launcher')
-        if new_reps != old_reps:
+        if new_reps != old_reps or new_set != old_set:
             config = read_json(c.root / 'campaign.json')
             config['repetitions'] = new_reps
-            config['plan'] = dict(config['plan'], repetitions=new_reps)
+            config['plan'] = dict(config['plan'], repetitions=new_reps, decompositions=new_set)
             atomic(c.root / 'campaign.json', config)
         history = read_json_or(c.root / 'launcher_upgrades.json') or dict(upgrades=[])
         history['upgrades'].append(dict(
             utc=now(), previous_launcher=str(keep), old_files_sha256=old, new_files_sha256=new,
             package=package_identity(args.ops_root.expanduser().resolve()), repetitions_old=old_reps,
-            repetitions_new=new_reps, dataset=str(c.layout.dataset)))
+            repetitions_new=new_reps, decompositions_old=old_set, decompositions_new=new_set,
+            sweep_restarted=bool(args.restart_sweep), archived=archived, dataset=str(c.layout.dataset)))
         atomic(c.root / 'launcher_upgrades.json', history)
     changed = sorted(n for n in set(old) | set(new) if old.get(n) != new.get(n))
     print('Launcher of %s replaced by this package (%d file(s) changed: %s).' % (c.id, len(changed), ' '.join(changed) or 'none'))
@@ -492,9 +504,42 @@ def command_upgrade(args):
         print('Repetitions per decomposition: %d -> %d (campaign.json)' % (old_reps, new_reps))
     else:
         print('Repetitions per decomposition: %d (unchanged)' % new_reps)
+    print('Decompositions: %s%s' % (new_set, '' if new_set == old_set else ' (was %s)' % old_set))
+    if args.restart_sweep:
+        print('Previous sweep set aside in %s (%d item(s); nothing deleted).'
+              % (c.root / 'archive' / ('sweep_' + stamp), len(archived)))
     print('The sweep will write its dataset to %s' % c.layout.dataset)
     print('From now on use: bash %s <command> --campaign %s' % (c.root / 'launcher/run.sh', c.root))
+    if args.restart_sweep or not (c.root / 'plan.json').exists():
+        print('Next: bash %s plan --campaign %s' % (c.root / 'launcher/run.sh', c.root))
     return EXIT_OK
+
+
+# Files and folders that belong to the sweep only. Qualification records, executables, the smoke
+# plan, references, measured times and the qualification d0 are never moved.
+SWEEP_ITEMS = ('plan.json', 'plan.json.sha256', 'plan.csv', 'runs/sweep', 'catalogs/sweep', 'state/decompositions',
+               'state/d0.json', 'state/ABORTED.json', 'gonogo.json', 'gonogo_override.json', 'results')
+
+
+def archive_sweep(c, stamp):
+    """Move every sweep artefact into $C/archive/sweep_<stamp>/ (never deletes). Returns the moved paths."""
+    target = c.root / 'archive' / ('sweep_' + stamp)
+    target.mkdir(parents=True)
+    moved = []
+    for rel in SWEEP_ITEMS + (c.layout.dataset.name,):
+        source = c.root / rel
+        if source.exists():
+            (target / rel).parent.mkdir(parents=True, exist_ok=True)
+            os.rename(str(source), str(target / rel))
+            moved.append(rel)
+    submissions = c.root / 'submissions.json'
+    record = read_json_or(submissions)
+    if record and any(j['kind'] == 'sweep' for j in record['jobs']):
+        atomic(target / 'submissions.json', record)
+        atomic(submissions, dict(record, jobs=[j for j in record['jobs'] if j['kind'] != 'sweep']))
+        moved.append('submissions.json (sweep entries)')
+    atomic(target / 'ARCHIVED.json', dict(utc=now(), moved=moved, reason='upgrade --restart-sweep'))
+    return moved
 
 
 def command_rank(args):
@@ -593,7 +638,12 @@ def parser():
     s = sub.add_parser('upgrade', help='replace the frozen launcher of a campaign whose sweep has not started')
     s.add_argument('--campaign', type=Path, required=True)
     s.add_argument('--repetitions', type=int, help='new default/precomputed pairs per decomposition (only before the '
-                   'sweep plan is frozen)')
+                   'sweep plan is frozen, or with --restart-sweep)')
+    s.add_argument('--decompositions', choices=P.DECOMPOSITION_SETS, help='new decomposition set (only before the '
+                   'sweep plan is frozen, or with --restart-sweep)')
+    s.add_argument('--restart-sweep', action='store_true', help='move the frozen sweep plan, sweep runs, sweep dataset '
+                   'and sweep job records into $C/archive/sweep_<utc>/ and start the sweep again (nothing is deleted; '
+                   'qualification and executables are kept)')
     s.add_argument('--ops-root', type=Path, default=HERE.parent.parent, help='OPS checkout of this package (recorded)')
     s.set_defaults(func=command_upgrade)
 

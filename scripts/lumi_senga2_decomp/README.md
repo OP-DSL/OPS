@@ -9,7 +9,7 @@ block size of each kernel.
 | Application | SENGA2, repository `https://github.com/vishnu-ncl/SENGA2`, commit `a5c76d3597117a514da93ce2e8a434674cd5bf04` |
 | Scale | 20 LUMI-G nodes, 160 MPI ranks, one GCD (MI250X, `gfx90a`) per rank, GPU direct |
 | Problem | 1440^3 cells, 100 time steps |
-| Decompositions | all 63 ordered `Px x Py x Pz` with product 160 |
+| Decompositions | 33 of the 63 ordered `Px x Py x Pz` with product 160: `PxxPyxPz` and its mirror `PzxPyxPx` count once and the one with `Px >= Pz` is kept (`--decompositions all` runs all 63) |
 | Per decomposition | 1 autotune run (A), then 1 pair of default (D) and precomputed (P) runs (`--repetitions N` gives N pairs) |
 | Extra runs | 1 unforced baseline run (one per repetition), and sentinel runs that measure the noise floor |
 | Output | the sweep writes its dataset directly in the structure of the earlier TGV decomposition campaigns (section 6.1) |
@@ -48,13 +48,23 @@ bash run.sh plan --output-dir ~/senga2_plan_preview
 
 It writes `plan.json`, `plan.csv` (one line per run: position, stage, decomposition, mode,
 repetition, pair, full argument list, seed) and the qualification list `smoke_plan.csv`.
-With the defaults it reports 63 autotune, 63 default and 63 precomputed sweep runs,
-1 baseline run and 8 sentinel runs (with `--repetitions 3`: 189 default, 189 precomputed and 3 baseline runs). Decompositions that cannot run (a local width that is
+With the defaults it reports 33 autotune, 33 default and 33 precomputed sweep runs,
+1 baseline run and 5 sentinel runs. Each mirror that is left out is listed with the reason
+`mirror of PxxPyxPz`. With `--decompositions all` it reports 63 of each and 8 sentinel runs
+(and with `--repetitions 3` as well: 189 default, 189 precomputed and 3 baseline runs).
+
+The 33 decompositions for 160 ranks (`Px >= Pz`):
+
+```text
+160x1x1  80x2x1  80x1x2  40x4x1  40x2x2  40x1x4  32x5x1  32x1x5  20x8x1  20x4x2  20x2x4
+20x1x8   16x10x1 16x5x2  16x2x5  16x1x10 10x16x1 10x8x2  10x4x4  10x2x8  8x20x1  8x10x2
+8x5x4    8x4x5   5x32x1  5x16x2  5x8x4   4x40x1  4x20x2  4x10x4  2x80x1  2x40x2  1x160x1
+``` Decompositions that cannot run (a local width that is
 not an integer, or below the halo depth 5) are skipped with a `NOTICE` line; for 1440^3 on
 160 ranks nothing is skipped. 16 triples are flagged `halo60_risk` (see section 8).
 
-Options: `--nodes`, `--grid`, `--steps`, `--repetitions`, `--seed`, `--fixed-order`,
-`--sentinel-every`, `--exclude PxxPyxPz`, `--exclude-halo60-risk`.
+Options: `--nodes`, `--grid`, `--steps`, `--repetitions`, `--decompositions mirror|all`, `--seed`,
+`--fixed-order`, `--sentinel-every`, `--exclude PxxPyxPz`, `--exclude-halo60-risk`.
 
 ### 1.2 Create the campaign
 
@@ -259,6 +269,25 @@ bash $C/launcher/run.sh status --campaign $C   # from now on always $C/launcher/
 The upgrade must be run with the `run.sh` of the checkout (the command refuses to run from
 `$C/launcher`). Afterwards continue with section 1.5 (`gonogo`; run it again even if it already
 said GO, so that its projection uses one repetition), then 1.6 and 1.7 as usual.
+
+#### Restart a sweep that has already started (33 decompositions)
+
+`--decompositions mirror|all` changes the decomposition set, under the same rule as
+`--repetitions`. To change it after the sweep has started, add `--restart-sweep`: the frozen sweep
+plan, the sweep runs, the sweep dataset folder, the sweep catalogs and state, the go/no-go result
+and the sweep entries of `submissions.json` are moved to `$C/archive/sweep_<utc>/` (nothing is
+deleted; `ARCHIVED.json` lists what was moved). Qualification records, executables, builds,
+references and measured times stay where they are. It is refused while any job of the campaign is
+pending or running. For `SENGA2_DECOMP_20261115_200600`, after `scancel` of its sweep jobs:
+
+```bash
+cd ~/OPS && git pull
+bash ~/OPS/scripts/lumi_senga2_decomp/run.sh upgrade --campaign $C --decompositions mirror --restart-sweep
+bash $C/launcher/run.sh plan --campaign $C
+bash $C/launcher/run.sh submit --campaign $C --jobs 2 --override-gonogo "qualification passed"
+```
+
+`plan` must report 33 decompositions before `submit`.
 
 ## 2. Build variables and the PrgEnv-cray fallback
 
@@ -546,7 +575,11 @@ The last line of every Slurm output file (`$C/slurm/*.out`) states the exit stat
   block is timed once, in one run: the catalog is "the minimum observed once", not an
   optimum; (c) rank 0 is slower than its neighbours during the autotune run, so that run is
   not a measure of a uniformly tuned job; (d) no per-rank or per-node variation is captured.
-- **No confirmation stage.** The decomposition with the lowest time among 63 single-run
+- **Mirror pairs.** With the default `--decompositions mirror` only one of `PxxPyxPz` and
+  `PzxPyxPx` runs. x is the contiguous dimension, so the two are not guaranteed to perform alike
+  (in qualification, 160x1x1 took 104 s and 1x1x160 67 s for 10 steps); the omitted mirror is not
+  measured.
+- **No confirmation stage.** The decomposition with the lowest time among the single-run
   measurements is optimistically biased. Any "best decomposition" figure taken from the tables
   is selection-biased until fresh runs confirm it.
 - **Catalog stability is not measured.** Each decomposition is tuned once.

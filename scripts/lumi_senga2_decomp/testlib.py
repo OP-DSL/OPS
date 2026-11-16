@@ -116,7 +116,7 @@ def make_campaign(tmp, nodes=1, grid=20, small_grid=20, steps=3, reps=1, sentine
     argv = ['prepare', '--account', ACCOUNT, '--campaign', str(campaign), '--senga-root', str(senga),
             '--env-file', str(env_file), '--nodes', str(nodes), '--grid', str(grid), '--small-grid', str(small_grid),
             '--steps', str(steps), '--smoke-steps', '2', '--repetitions', str(reps),
-            '--sentinel-every', str(sentinel_every)] + list(extra)
+            '--sentinel-every', str(sentinel_every), '--decompositions', 'all'] + list(extra)
     status, text = quiet(L.main, argv)
     assert status == 0, text
     return campaign

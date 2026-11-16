@@ -7,6 +7,7 @@ from common import require, shape_text, parse_shape
 # Narrowest local subdomain OPS accepts: the exchanged halo depth of SENGA2.
 # Source: SENGA2 src/com_senga2.F90:32 (nhalox=nhaloy=nhaloz=5) and the OPS check
 # "Error: overpartitioning!" in ops/c/src/mpi/ops_mpi_rt_support.cpp:204-208.
+DECOMPOSITION_SETS = ('mirror', 'all')   # mirror: PxxPyxPz == PzxPyxPx, keep Px >= Pz
 HALO_DEPTH = 5
 # SENGA2 also declares y/z-split dats with 60-deep halos (src/ops_data_init.F90:703-717,
 # nfy=nfz=60). Nothing rejects a local y or z width below 60, but it has never been
@@ -158,11 +159,17 @@ def pair_order(decomp_position, pair_index):
 
 def make_sweep_plan(cfg):
     """cfg: ranks, nodes, grid, steps, repetitions, seed, fixed_order, sentinel_every,
-    exclude (list of 'PxxPyxPz'), exclude_halo60_risk."""
+    exclude (list of 'PxxPyxPz'), exclude_halo60_risk, decompositions ('mirror' or 'all').
+
+    decompositions='mirror' treats PxxPyxPz and PzxPyxPx as the same decomposition and keeps the
+    one with Px >= Pz (33 of the 63 ordered triples for 160 ranks). A campaign whose plan section
+    has no 'decompositions' key was prepared before this option and keeps all ordered triples."""
     ranks, nodes, grid, steps = cfg['ranks'], cfg['nodes'], cfg['grid'], cfg['steps']
     reps, every = cfg['repetitions'], cfg['sentinel_every']
     require(ranks == nodes * 8, 'This package runs one rank per GCD: ranks must equal 8 x nodes')
     require(reps >= 1 and every >= 1 and steps >= 1 and grid >= HALO_DEPTH, 'Invalid plan parameters')
+    decomposition_set = cfg.get('decompositions', 'all')
+    require(decomposition_set in DECOMPOSITION_SETS, 'decompositions must be one of %s' % ', '.join(DECOMPOSITION_SETS))
     valid, skipped = enumerate_decompositions(ranks, grid)
     excluded = []
     requested = set()
@@ -176,6 +183,9 @@ def make_sweep_plan(cfg):
             excluded.append(dict(decomposition=shape_text(triple), reason='explicit --exclude'))
         elif cfg.get('exclude_halo60_risk') and halo60_risk(triple, grid):
             excluded.append(dict(decomposition=shape_text(triple), reason='--exclude-halo60-risk'))
+        elif decomposition_set == 'mirror' and triple[0] < triple[2]:
+            excluded.append(dict(decomposition=shape_text(triple),
+                                 reason='mirror of %s (--decompositions mirror)' % shape_text(triple[::-1])))
         else:
             kept.append(triple)
     require(kept, 'No decomposition left to run')
@@ -207,6 +217,7 @@ def make_sweep_plan(cfg):
     return dict(plan_version=PLAN_VERSION, kind='sweep', seed=cfg['seed'],
                 order='lexicographic (--fixed-order)' if cfg.get('fixed_order') else 'seeded sha256 permutation',
                 ranks=ranks, nodes=nodes, grid=grid, steps=steps, repetitions=reps, sentinel_every=every,
+                decomposition_set=decomposition_set,
                 halo_depth=HALO_DEPTH, wide_halo=WIDE_HALO, default_block=list(DEFAULT_BLOCK),
                 skipped=skipped, excluded=excluded, decompositions=decomps, runs=runs,
                 dynamic_runs='Every Slurm allocation after the first starts with one extra sentinel run '
