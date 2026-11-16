@@ -79,7 +79,7 @@ class PackageTests(unittest.TestCase):
                 self.assertEqual(status, 0, text)
                 lines = (Path(tmp) / 'sbatch_args').read_text().splitlines()
                 self.assertEqual(len(lines), 2)
-                self.assertIn('--account=%s --partition=small-g --nodes=1 --ntasks-per-node=8 --gpus-per-node=8 '
+                self.assertIn('--account=%s --partition=standard-g --nodes=1 --ntasks-per-node=8 --gpus-per-node=8 '
                               '--cpus-per-task=7 --mem=0 --time=02:00:00 --exclusive' % T.ACCOUNT, lines[0])
                 self.assertIn('--partition=standard-g --nodes=1', lines[1])
                 self.assertIn('--dependency=afterok:4242', lines[1])

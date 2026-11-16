@@ -455,7 +455,8 @@ def parser():
     s.add_argument('--hdf5', default='strip', choices=('strip', 'keep'), help='strip: build without HDF5 (default); keep: link parallel HDF5')
     s.add_argument('--translator-python', type=Path, help='Python >= 3.8 with ops_translator/requirements.txt; default: a venv is created at build time')
     s.add_argument('--partition', default='standard-g')
-    s.add_argument('--smoke-partition', default='small-g', help='partition of the one-node qualification job')
+    s.add_argument('--smoke-partition', default='standard-g',
+                   help='partition of the one-node qualification job (it uses a whole node, so standard-g)')
     s.add_argument('--build-partition', default='small-g')
     s.add_argument('--cpu-bind', default=R.CPU_BIND, help='cores for srun --cpu-bind=map_cpu (default %(default)s)')
     s.add_argument('--fingerprint-tolerance', type=float, default=1e-6, help='relative tolerance on final tke/enstrophy/tmax')

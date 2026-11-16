@@ -144,7 +144,7 @@ bash $C/launcher/run.sh smoke --campaign $C --submit      # two jobs: Q1-Q3, the
 | Q4 | full 1440^3 | 20 nodes, 160 ranks, 10 steps | unforced, 4x5x8, 160x1x1, 1x160x1, 1x1x160 | memory fits, no overpartitioning, identifies `d0`, thin triples |
 | Q5 | full | 160 ranks, 100 steps | forced `d0`: A, then D P P D | the whole per-decomposition pipeline, measured times |
 
-The first job (Q1 to Q3) uses one node of `--smoke-partition`; the second (Q4, Q5) uses
+The first job (Q1 to Q3) uses one whole node of `--smoke-partition` (default `standard-g`; it takes the full node, so it costs the same as in `small-g` and does not wait for a free node there); the second (Q4, Q5) uses
 the 20 nodes and starts only if the first ended with status 0. Use `--stage small` or
 `--stage full` to submit one of them, `--time-small` / `--time-full` for the wall times,
 and `--retry-failed` to rerun failed qualification runs (old attempts are kept).
