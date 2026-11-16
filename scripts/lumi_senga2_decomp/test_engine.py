@@ -41,7 +41,15 @@ class Base(unittest.TestCase):
         return status, text, T.srun_calls(self.tmp)[before:]
 
     def record(self, run_id, attempt=1, scope='sweep'):
+        if scope == 'sweep':
+            return T.sweep_record(self.campaign, run_id, attempt)
         return read_json(self.campaign / 'runs' / scope / run_id / ('attempt_%03d' % attempt) / 'record.json')
+
+    def catalog(self, decomposition):
+        return T.layout(self.campaign).catalog_folder(decomposition)
+
+    def catalogs(self):
+        return T.layout(self.campaign).dataset / 'precomputed_blocks'
 
     def rid(self, position, suffix):
         return 'sweep_p%03d_%s_%s' % (position, self.order[position], suffix)
@@ -63,7 +71,7 @@ class FailurePolicyTests(Base):
             d = self.order[position]
             self.assertNotIn(self.rid(position, 'pair1_P'), launched)       # no P run
             self.assertIn(self.rid(position, 'pair1_D'), launched)          # D still executed
-            self.assertFalse((self.campaign / 'catalogs/sweep' / ('full_' + d)).exists())   # no catalog file
+            self.assertFalse(self.catalog(d).exists())                       # no catalog file
             record = self.record(self.rid(position, 'A'))
             self.assertEqual(record['autotune']['status'], 'FAILED')
             self.assertEqual(record['verdict'], 'VALID' if kind in ('no_best', 'empty_best') else 'INVALID')
@@ -72,9 +80,15 @@ class FailurePolicyTests(Base):
         self.assertIn('Best-block CSV is missing', self.record(self.rid(0, 'A'))['autotune']['reason'])
         self.assertIn('no kernel rows', self.record(self.rid(2, 'A'))['autotune']['reason'])
         self.assertIn('autotune run invalid', self.record(self.rid(4, 'A'))['autotune']['reason'])
-        self.assertEqual(sorted(p.name for p in (self.campaign / 'catalogs/sweep').iterdir()),
-                         sorted('full_' + self.order[p] for p in (1, 3, 5)))
-        self.assertEqual(len(list(self.campaign.glob('catalogs/**/blocks.csv'))), 3)
+        folder = self.catalog(self.order[0]).parent
+        self.assertEqual(sorted(p.name for p in folder.iterdir()), sorted('decomp' + self.order[p] for p in (1, 3, 5)))
+        self.assertEqual(len(list(self.catalogs().glob('**/blocks.csv'))), 3)
+        self.assertFalse((self.campaign / 'catalogs/sweep').exists())
+        # the failed autotune runs stay out of the final tree, and no run folder holds a substitute catalog
+        lay = T.layout(self.campaign)
+        for position in kinds:
+            self.assertFalse(lay.locate(self.rid(position, 'A'))['final'].exists())
+            self.assertFalse(list(lay.grid_folder.glob('mode_1/decomp%s/**/blocks.csv' % self.order[position])))
         table = self.collect()
         for position in kinds:
             row = table[self.order[position]]
@@ -149,7 +163,7 @@ class FailurePolicyTests(Base):
         status, text, launched = self.job(job='1003', extra=['--retry-failed'])
         self.assertEqual(status, 0, text)
         self.assertEqual(sorted(launched), sorted(['sentinel_alloc_1003', bad, self.rid(3, 'pair1_D')]))   # whole pair
-        self.assertTrue((self.campaign / 'runs/sweep' / bad / 'attempt_001/SUPERSEDED.json').exists())
+        self.assertTrue((T.sweep_folder(self.campaign, bad, 1) / 'SUPERSEDED.json').exists())
         self.assertEqual(self.record(bad, 2)['verdict'], 'VALID')
         self.assertEqual(self.record(bad, 1)['verdict'], 'INVALID')          # the failed attempt is kept
 
@@ -174,15 +188,17 @@ class ResumeTests(Base):
         pair = [self.rid(4, 'pair1_D'), self.rid(4, 'pair1_P')]
         second = max(pair, key=lambda r: self.record(r)['plan_position'])
         partial = [r for r in pair if r != second][0]
-        (self.campaign / 'runs/sweep' / second / 'attempt_001/record.json').unlink()   # allocation ended mid-run
+        T.interrupt(self.campaign, second)                                     # allocation ended mid-run
         status, text, launched = self.job(job='1002')
         self.assertEqual(status, 0, text)
         self.assertEqual(launched, ['sentinel_alloc_1002'] + sorted(pair, key=lambda r: self.record(r, 2)['plan_position']))
         self.assertEqual(sha(self.campaign / 'plan.json'), plan_sha)           # stored plan reused, never regenerated
         self.assertTrue(all(self.record(r, 2)['plan_hash'] == self.record(first[0])['plan_hash'] for r in pair))
-        old = self.campaign / 'runs/sweep' / partial / 'attempt_001'
+        old = T.sweep_folder(self.campaign, partial, 1)
+        self.assertIn('_attempts', str(old))                                   # left the final tree ...
         self.assertEqual(read_json(old / 'record.json')['verdict'], 'VALID')   # partial run kept ...
         self.assertIn('incomplete pair', read_json(old / 'SUPERSEDED.json')['reason'])   # ... but superseded
+        self.assertIn('COMMIT_STATUS=SUPERSEDED', (old / 'config.txt').read_text())
         self.assertEqual({self.record(r, 2)['slurm_job_id'] for r in pair}, {'1002'})
         table = self.collect()
         self.assertEqual(table[self.order[4]]['slurm_job_ids'], '1001 1002')    # job id kept as a covariate
@@ -196,7 +212,7 @@ class ResumeTests(Base):
     def test_pair_split_over_two_allocations_is_rerun(self):
         self.job()
         target = self.rid(5, 'pair1_P')
-        path = self.campaign / 'runs/sweep' / target / 'attempt_001/record.json'
+        path = T.sweep_folder(self.campaign, target, 1) / 'record.json'
         path.write_text(json.dumps(dict(read_json(path), slurm_job_id='999')))
         status, text, launched = self.job(job='1002')
         self.assertEqual(sorted(launched), sorted(['sentinel_alloc_1002', target, self.rid(5, 'pair1_D')]))
@@ -225,9 +241,9 @@ class ResumeTests(Base):
         good, bad = self.order[4], self.order[5]
         for position in (4, 5):                                               # both pairs were cut off
             for suffix in ('pair1_D', 'pair1_P'):
-                (self.campaign / 'runs/sweep' / self.rid(position, suffix) / 'attempt_001/record.json').unlink()
-        blocks = self.campaign / 'catalogs/sweep' / ('full_' + bad) / 'blocks.csv'
-        digest = sha(self.campaign / 'catalogs/sweep' / ('full_' + good) / 'blocks.csv')
+                T.interrupt(self.campaign, self.rid(position, suffix))
+        blocks = self.catalog(bad) / 'blocks.csv'
+        digest = sha(self.catalog(good) / 'blocks.csv')
         os.chmod(str(blocks), 0o644)
         blocks.write_text(blocks.read_text().replace(',1,32,8', ',32,4,1'))
         status, text, launched = self.job(job='1002')
@@ -263,6 +279,7 @@ class ResumeTests(Base):
                 engine.execute(run, swapped)
         self.assertEqual(len(T.srun_calls(self.tmp)), before)                  # nothing was launched
         self.assertEqual(len(c.attempts('sweep', run['run_id'])), 1)
+        self.assertEqual(c.attempts('sweep', run['run_id']), [c.layout.locate(run['run_id'])['final']])
 
 
 class TimeGuardTests(Base):
@@ -365,6 +382,7 @@ class QualificationTests(Base):
         self.assertEqual((small['build'], small['grid'], full['build']), ('small', 20, 'full'))
         self.assertEqual(self.record('q3_2x2x2_D_nogpudirect', scope='qualification')['gpu_direct_reported'], False)
         self.assertTrue((self.campaign / 'catalogs/qualification/small_1x1x1/blocks.csv').is_file())
+        self.assertFalse(T.layout(self.campaign).dataset.exists())               # qualification is not in the dataset
         status, text = self.gonogo(*self.FULL)
         self.assertEqual(status, 0, text)
         self.assertIn('VERDICT: GO', text)
@@ -461,7 +479,7 @@ class CollectorTests(Base):
     reps, exclude = 3, ('1x4x2', '4x1x2', '1x2x4', '2x1x4')
 
     def set_time(self, run_id, seconds, attempt=1):
-        path = self.campaign / 'runs/sweep' / run_id / ('attempt_%03d' % attempt) / 'record.json'
+        path = T.sweep_folder(self.campaign, run_id, attempt) / 'record.json'
         atomic(path, dict(read_json(path), total_ttime_s=seconds))
 
     def test_tables_use_the_declared_estimators_and_never_fill_gaps(self):

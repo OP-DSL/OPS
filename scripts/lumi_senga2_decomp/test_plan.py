@@ -65,7 +65,7 @@ class PlanTests(unittest.TestCase):
 
     def test_dry_run_writes_the_complete_ordered_list(self):
         with tempfile.TemporaryDirectory() as tmp:
-            status, text = T.quiet(L.main, ['plan', '--output-dir', tmp])
+            status, text = T.quiet(L.main, ['plan', '--output-dir', tmp, '--repetitions', '3'])   # general path
             self.assertEqual(status, 0)
             self.assertIn('Dry run only', text)
             plan = json.loads((Path(tmp) / 'plan.json').read_text())
@@ -83,6 +83,30 @@ class PlanTests(unittest.TestCase):
         self.assertEqual(count('baseline', 'D'), 3)
         self.assertEqual(count('sentinel', 'D'), 8)      # 1 at the start + after every 8th decomposition (7)
         self.assertEqual(len(rows), 63 + 189 + 189 + 3 + 8)
+
+    def test_default_plan_has_one_repetition(self):
+        """Default (user decision 2026-11-16): per decomposition 1 A, 1 D and 1 P; one unforced baseline run."""
+        with tempfile.TemporaryDirectory() as tmp:
+            status, text = T.quiet(L.main, ['plan', '--output-dir', tmp])
+            self.assertEqual(status, 0)
+            plan = json.loads((Path(tmp) / 'plan.json').read_text())
+        self.assertEqual(plan, json.loads(P.plan_bytes(P.make_sweep_plan(dict(CFG, repetitions=1))).decode()))
+        self.assertEqual(plan['repetitions'], 1)
+        count = lambda stage, mode: sum(1 for r in plan['runs'] if r['stage'] == stage and r['mode'] == mode)
+        self.assertEqual((count('sweep', 'A'), count('sweep', 'D'), count('sweep', 'P')), (63, 63, 63))
+        self.assertEqual(count('baseline', 'D'), 1)
+        self.assertEqual(count('sentinel', 'D'), 8)
+        self.assertEqual(len(plan['runs']), 63 * 3 + 1 + 8)
+        self.assertIn('  sweep     default       63 runs', text)
+        starts = {'D': 0, 'P': 0}
+        for dec in plan['decompositions']:
+            runs = [r for r in plan['runs'] if r['stage'] == 'sweep' and r['decomposition'] == dec['decomposition']]
+            modes = ''.join(r['mode'] for r in runs)
+            self.assertEqual(modes, 'ADP' if dec['position'] % 2 == 0 else 'APD')     # one pair, still interleaved
+            self.assertEqual([r['pair_index'] for r in runs[1:]], [1, 1])
+            starts[modes[1]] += 1
+        self.assertEqual(starts, {'D': 32, 'P': 31})
+        self.assertEqual([r['run_id'] for r in plan['runs'][:2]], ['baseline_unforced_r1', 'sentinel_start'])
 
     def test_same_seed_is_byte_identical_and_other_seed_differs(self):
         self.assertEqual(P.plan_bytes(P.make_sweep_plan(dict(CFG))), P.plan_bytes(self.plan))

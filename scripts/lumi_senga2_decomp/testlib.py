@@ -174,8 +174,7 @@ def srun_calls(tmp):
         return []
     out = []
     for line in log.read_text().splitlines():
-        spec = json.loads(line)['command'][-1]
-        out.append(read_json(spec)['run']['run_id'])
+        out.append(json.loads(line)['run_id'])
     return out
 
 
@@ -189,3 +188,37 @@ def run_job(campaign, kind, env, *extra):
 def copy_tree(source, target):
     shutil.copytree(str(source), str(target), symlinks=True)
     return Path(target)
+
+
+# ----- sweep runs live in the dataset layout (dataset.py)
+def layout(campaign):
+    import engine as E
+    return E.Campaign(campaign).layout
+
+
+def sweep_folder(campaign, run_id, attempt=1):
+    """Folder of attempt N of a sweep run: its final folder if that attempt was committed, else _attempts/."""
+    lay = layout(campaign)
+    loc = lay.locate(run_id)
+    record = loc['final'] / 'record.json'
+    if record.is_file() and read_json(record)['attempt'] == 'attempt_%03d' % attempt:
+        return loc['final']
+    return loc['attempts'] / ('attempt_%03d' % attempt)
+
+
+def sweep_record(campaign, run_id, attempt=1):
+    return read_json(sweep_folder(campaign, run_id, attempt) / 'record.json')
+
+
+def interrupt(campaign, run_id):
+    """Turn a committed run into an attempt cut short by the end of an allocation:
+    back in _attempts/, without record.json or dataset files (they are written at the end of a run)."""
+    lay = layout(campaign)
+    loc = lay.locate(run_id)
+    name = read_json(loc['final'] / 'record.json')['attempt']
+    target = loc['attempts'] / name
+    os.rename(str(loc['final']), str(target))
+    for leftover in ('record.json', 'config.txt', 'run.log', 'mpi_rank_metrics.csv'):
+        (target / leftover).unlink()
+    lay.refresh()
+    return target

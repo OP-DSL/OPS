@@ -140,16 +140,22 @@ class RunTests(unittest.TestCase):
         T.fake_build(cls.campaign)
         T.quiet(L.main, ['plan', '--campaign', str(cls.campaign)])
         cls.job_status, cls.text = T.run_job(cls.campaign, 'sweep', T.job_env(cls.tmp))
-        cls.runs = cls.campaign / 'runs/sweep'
+        cls.layout = T.layout(cls.campaign)
+        cls.run_ids = [r['run_id'] for r in read_json(cls.campaign / 'plan.json')['runs']]
 
     @classmethod
     def tearDownClass(cls):
         cls.temp.cleanup()
 
     def attempt(self, suffix):
-        found = sorted(self.runs.glob('*%s/attempt_001' % suffix))
+        found = [r for r in self.run_ids if r.endswith(suffix)]
         self.assertEqual(len(found), 1, suffix)
-        return found[0]
+        folder = T.sweep_folder(self.campaign, found[0], 1)
+        self.assertEqual(folder, self.layout.locate(found[0])['final'])       # committed
+        return folder
+
+    def dataset_csvs(self, folder):
+        return {'mpi_rank_metrics.csv'} | {'ranks/metric_%d.csv' % r for r in range(read_json(folder / 'record.json')['nranks'])}
 
     def check(self, suffix, mutate=None, **overrides):
         source = self.attempt(suffix)
@@ -249,8 +255,8 @@ class RunTests(unittest.TestCase):
         self.rejected(self.check('pair1_P', self.edit(4, '[OPS] Loaded', '[OPS] Read')), 'OTHER', r'rank\(s\) 4 did not load')
 
     def test_precomputed_wrong_catalog_path(self):
-        self.rejected(self.check('pair1_P', self.edit(3, 'full_2x2x2/blocks.csv', 'full_8x1x1/blocks.csv')), 'OTHER',
-                      r'rank\(s\) 3 did not load.*full_8x1x1')
+        self.rejected(self.check('pair1_P', self.edit(3, 'decomp2x2x2/blocks.csv', 'decomp8x1x1/blocks.csv')), 'OTHER',
+                      r'rank\(s\) 3 did not load.*decomp8x1x1')
 
     def test_precomputed_fallback_set_differs(self):
         warning = '[OPS] WARNING: kernel 9002 not found in CSV, using default (32,4,1)\n'
@@ -304,11 +310,12 @@ class RunTests(unittest.TestCase):
         self.assertIn('-OPS_AUTOTUNE_MODE=2', record['argv'])
         env = record['environment']['rank_0']
         self.assertEqual((env['MPICH_GPU_SUPPORT_ENABLED'], env['ROCR_VISIBLE_DEVICES']), ('1', '0'))
-        self.assertTrue(env['OPS_BLOCKSIZE_CSV'].endswith('catalogs/sweep/full_2x2x2/blocks.csv'))
+        self.assertEqual(env['OPS_BLOCKSIZE_CSV'], str(self.layout.catalog_folder('2x2x2') / 'blocks.csv'))
+        self.assertTrue(env['OPS_BLOCKSIZE_CSV'].endswith('precomputed_blocks/senga2_hip_10x10x10_cfg1/mode_1/decomp2x2x2/blocks.csv'))
         self.assertEqual(record['environment']['cpu_bind'], 'map_cpu:' + R.CPU_BIND)
         self.assertEqual(record['executable_sha256'], sha(self.campaign / 'build/full/senga2_f2c_mpi_hip'))
         self.assertEqual((record['catalog_sha256'], record['catalog_rows']),
-                         (sha(self.campaign / 'catalogs/sweep/full_2x2x2/blocks.csv'), 81))
+                         (sha(self.layout.catalog_folder('2x2x2') / 'blocks.csv'), 81))
         self.assertEqual((record['package_commit'], record['ops_commit']), (config['package']['commit'], config['ops_commit']))
         self.assertRegex(record['ops_commit'], '^[0-9a-f]{40}$')
         self.assertIn('senga_commit', record)
@@ -322,7 +329,9 @@ class RunTests(unittest.TestCase):
         self.assertTrue(Path(record['cont_dat']).is_file())
 
     def test_every_run_has_a_fresh_working_directory_with_inputs(self):
-        for attempt in self.runs.glob('*/attempt_001'):
+        folders = [p.parent for p, _ in self.layout.record_paths()]
+        self.assertEqual(len(folders), 5)
+        for attempt in folders:
             work = attempt / 'work'
             for name in ('input/cont.dat', 'input/chem.dat', 'input/diff.dat', 'input/radn.dat', 'TGV_species.dat',
                          't_initial.dat', 'output/tgv_stat.dat'):
@@ -341,9 +350,15 @@ class RunTests(unittest.TestCase):
             return out
         self.assertEqual(logging('pair1_D'), {('0', '1', '2')})
         self.assertEqual(logging('pair1_P'), {('0', '1', '2')})
-        self.assertFalse(list(self.attempt('pair1_D').glob('**/*.csv')) + list(self.attempt('pair1_P').glob('**/*.csv')))
-        self.assertEqual(sorted(p.name for p in self.attempt('2x2x2_A').glob('**/*.csv')),
-                         ['ops_blocksize_best_logmod.csv', 'ops_blocksize_tuning_logmod.csv'])
+        def csvs(suffix):
+            folder = self.attempt(suffix)
+            return {p.relative_to(folder).as_posix() for p in folder.glob('**/*.csv')}, self.dataset_csvs(folder)
+        found, data = csvs('pair1_D')
+        self.assertEqual(found, data)                                # no OPS tuning CSV, only the dataset tables
+        found, data = csvs('pair1_P')
+        self.assertEqual(found, data | {'blocks.csv'})               # + the copy of its own catalog
+        found, data = csvs('2x2x2_A')
+        self.assertEqual(found, data | {R.BEST_CSV, R.TUNING_CSV})
 
 
 class WiringTests(unittest.TestCase):
@@ -368,6 +383,7 @@ class WiringTests(unittest.TestCase):
                 cls.records['D'] = engine.execute(runs['D'])
                 cls.records['P'] = engine.execute(runs['P'], catalog)
         cls.catalog = catalog
+        cls.campaign_layout = c.layout
 
     @classmethod
     def tearDownClass(cls):
@@ -375,7 +391,8 @@ class WiringTests(unittest.TestCase):
 
     def statuses(self, mode):
         record = self.records[mode]
-        folder = self.campaign / 'runs/sweep' / record['run_id'] / record['attempt'] / 'ranks'
+        self.assertEqual(record['run_dir'], str(self.campaign_layout.locate(record['run_id'])['final']))
+        folder = Path(record['run_dir']) / 'ranks'
         out = [read_json(folder / ('status_%d.json' % rank)) for rank in range(160)]
         self.assertEqual(record['verdict'], 'VALID', record['reason'])
         return out
@@ -400,12 +417,13 @@ class WiringTests(unittest.TestCase):
             self.assertTrue(all(t in s['argv'] for t in ('OPS_BLOCK_SIZE_X=32', 'OPS_BLOCK_SIZE_Y=4', 'OPS_BLOCK_SIZE_Z=1')))
             e = s['environment']
             self.assertEqual((e['OPS_AUTOTUNE_LOGS'], e['OPS_DISABLE_CSV_LOGS'], e['OPS_CSV_LOG_LEVEL']), ('0', '1', '2'))
-        attempt = self.campaign / 'runs/sweep' / self.records['A']['run_id'] / self.records['A']['attempt']
-        self.assertEqual(sorted(p.relative_to(attempt).as_posix() for p in attempt.glob('**/*.csv')),
-                         [R.BEST_CSV, R.TUNING_CSV])
+        attempt = Path(self.records['A']['run_dir'])
+        dataset = {'mpi_rank_metrics.csv'} | {'ranks/metric_%d.csv' % r for r in range(160)}
+        self.assertEqual({p.relative_to(attempt).as_posix() for p in attempt.glob('**/*.csv')},
+                         dataset | {R.BEST_CSV, R.TUNING_CSV})
 
     def test_precomputed_run_uses_its_own_catalog_on_every_rank(self):
-        own = str(self.campaign / 'catalogs/sweep/full_4x5x8/blocks.csv')
+        own = str(self.campaign_layout.catalog_folder('4x5x8') / 'blocks.csv')
         for s in self.statuses('P'):
             self.assertIn('-OPS_AUTOTUNE_MODE=2', s['argv'])
             self.assertEqual(s['environment']['OPS_BLOCKSIZE_CSV'], own)

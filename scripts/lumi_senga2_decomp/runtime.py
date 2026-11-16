@@ -1,6 +1,7 @@
 """One application run: per-rank launch, validation, tuning catalog and run record."""
 import csv
 import io
+import json
 import math
 import os
 from pathlib import Path
@@ -214,14 +215,24 @@ def build_catalog(attempt, folder, meta):
     blocks = folder / 'blocks.csv'
     atomic_bytes(blocks, data)
     os.chmod(str(blocks), 0o444)
-    manifest = dict(meta, rows=len(selected), sha256=sha_bytes(data), kernel_ids=ids, executed_kernel_ids=executed,
+    source_run = meta.get('source_run') or str(attempt)    # where the autotune run is kept (final folder)
+    manifest = dict(meta, schema_version=2, rows=len(selected), sha256=sha_bytes(data), files={'blocks.csv': sha_bytes(data)},
+                    kernel_ids=ids, executed_kernel_ids=executed,
                     fallback_kernel_ids=sorted(set(executed) - set(ids)),
                     kernel_coverage=len(ids) / float(len(executed)), duplicates_reduced=reduced,
-                    footer=footer, footer_present=bool(footer), source_best_csv=str(best),
+                    footer=footer, footer_present=bool(footer), source_run=source_run,
+                    source_best_csv=str(Path(source_run) / BEST_CSV),
                     source_best_csv_sha256=sha(best), source_attempt=str(attempt), frozen_utc=now(),
                     selection='rank 0, one row per kernel id, lowest best_time; product <= min(1024, max_threads)')
+    # set_id as in the TGV campaigns: sha256 of the manifest without set_id (json, sorted keys).
+    manifest['set_id'] = manifest_set_id(manifest)
     atomic(folder / 'manifest.json', manifest)
     return manifest
+
+
+def manifest_set_id(manifest):
+    unsigned = {k: v for k, v in manifest.items() if k != 'set_id'}
+    return sha_bytes(json.dumps(unsigned, sort_keys=True).encode())
 
 
 def load_catalog(folder, decomposition, executable_sha256):
@@ -236,9 +247,11 @@ def load_catalog(folder, decomposition, executable_sha256):
             'Frozen catalog changed on disk (sha256 differs from its manifest): %s' % (folder / 'blocks.csv'))
     require(manifest['executable_sha256'] == executable_sha256,
             'Catalog %s was tuned with another executable (%s)' % (folder, manifest['executable_sha256'][:12]))
+    require('set_id' not in manifest or manifest['set_id'] == manifest_set_id(manifest),
+            'Catalog manifest changed on disk (set_id does not match its content): %s' % (folder / 'manifest.json'))
     return dict(path=str(folder / 'blocks.csv'), folder=str(folder), decomposition=decomposition,
                 rows=manifest['rows'], sha256=manifest['sha256'], kernel_ids=manifest['kernel_ids'],
-                executed_kernel_ids=manifest['executed_kernel_ids'])
+                executed_kernel_ids=manifest['executed_kernel_ids'], set_id=manifest.get('set_id', ''))
 
 
 def verify_catalog_for(run, catalog, executable_sha256):
@@ -349,9 +362,11 @@ def validate_run(attempt, run, expect):
         fail('OTHER', 'expected exactly one positive total_ttime in the root log, found %d' % len(times))
     else:
         m['total_ttime_s'] = values[0]
+        m['total_ttime_text'] = times[0]          # the printed digits, kept for config.txt
     for key, label in TOTALS:
         found = re.findall(r'^[ \t]*' + label + r':[ \t]*([0-9.eE+-]+)[ \t]*$', root, re.M)
         m[key] = float(found[-1]) if found else None
+        m[key[:-2] + '_text'] = found[-1] if found else None      # kernel_time_text, ... (printed digits)
     if any(m[key] is None for key, _ in TOTALS):
         fail('OTHER', 'OPS timing totals missing from the root log (is -OPS_DIAGS=2 in effect?)')
     m['kernel_times'] = kernel_table(root)

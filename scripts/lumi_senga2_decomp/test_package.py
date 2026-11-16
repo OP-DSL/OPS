@@ -109,7 +109,7 @@ class PackageTests(unittest.TestCase):
     def test_no_command_prints_help_and_errors_are_clear(self):
         r = subprocess.run(['bash', str(HERE / 'run.sh')], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
         self.assertEqual(r.returncode, 0)
-        for command in ('plan', 'prepare', 'build', 'smoke', 'gonogo', 'submit', 'status', 'collect'):
+        for command in ('plan', 'prepare', 'build', 'smoke', 'gonogo', 'submit', 'status', 'collect', 'upgrade'):
             self.assertIn(command, r.stdout)
         r = subprocess.run(['bash', str(HERE / 'run.sh'), 'status', '--campaign', '/nonexistent/campaign'],
                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
@@ -147,7 +147,9 @@ class ReadmeTests(unittest.TestCase):
             for option in options:
                 self.assertIn(option, self.commands[command], line)
         shown = {command for command, _, _ in calls}
-        self.assertEqual(shown, {'plan', 'prepare', 'build', 'smoke', 'gonogo', 'submit', 'status', 'collect'})
+        self.assertEqual(shown, {'plan', 'prepare', 'build', 'smoke', 'gonogo', 'submit', 'status', 'collect', 'upgrade'})
+        upgrade = [line for command, _, line in calls if command == 'upgrade']
+        self.assertEqual(upgrade, ['bash ~/OPS/scripts/lumi_senga2_decomp/run.sh upgrade --campaign $C --repetitions 1'])
         for option in re.findall(r'`(--[a-z0-9-]+)', self.text):          # options named in the prose
             self.assertTrue(any(option in opts for opts in self.commands.values()), option)
 

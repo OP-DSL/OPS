@@ -3,6 +3,7 @@
 
 Typical order (every command is described in README.md):
   plan (dry run) -> prepare -> build -> smoke -> gonogo -> plan --campaign -> submit [--resume] -> collect
+A campaign prepared with an older package is brought up to date with `upgrade` (run from the checkout).
 No command submits a job unless --submit (or the submit command) is given."""
 import argparse
 from datetime import datetime, timezone
@@ -23,7 +24,8 @@ from common import (require, sha, atomic, atomic_bytes, read_json, read_json_or,
                     write_csv, slurm_seconds, StopJob, EXIT_OK, EXIT_ERROR)
 
 HERE = Path(__file__).resolve().parent
-PACKAGE_FILES = ('run.sh', 'launcher.py', 'common.py', 'plan.py', 'sources.py', 'runtime.py', 'engine.py', 'collect.py')
+PACKAGE_FILES = ('run.sh', 'launcher.py', 'common.py', 'plan.py', 'sources.py', 'runtime.py', 'engine.py', 'collect.py',
+                 'dataset.py')
 NAME = re.compile(r'[A-Za-z0-9_.-]+')
 TIME = re.compile(r'(?:\d+-)?\d+:\d{2}:\d{2}')
 
@@ -40,7 +42,7 @@ def add_plan_options(p):
     p.add_argument('--small-grid', type=int, default=256, help='cubic grid of the qualification build (default 256)')
     p.add_argument('--steps', type=int, default=100, help='time steps per run (default 100)')
     p.add_argument('--smoke-steps', type=int, default=10, help='time steps of the Q4 memory checks (default 10)')
-    p.add_argument('--repetitions', type=int, default=3, help='default/precomputed pairs per decomposition (default 3)')
+    p.add_argument('--repetitions', type=int, default=1, help='default/precomputed pairs per decomposition (default 1)')
     p.add_argument('--seed', type=int, default=P.DEFAULT_SEED, help='seed of the decomposition order (default %(default)s)')
     p.add_argument('--fixed-order', action='store_true', help='lexicographic decomposition order instead of the seeded one')
     p.add_argument('--sentinel-every', type=int, default=8, help='sentinel run after every N decompositions (default 8)')
@@ -153,7 +155,8 @@ def command_prepare(args):
         atomic(campaign / 'source_snapshot.json', dict(ops=ops, senga=senga, created_utc=now()))
         package = package_identity(ops_root)
         config = dict(
-            version=1, campaign_id=campaign.name, created_utc=now(), account=account, partition=args.partition,
+            version=1, campaign_id=campaign.name, created_utc=now(), date_stamp=args.date_stamp, account=account,
+            partition=args.partition,
             smoke_partition=args.smoke_partition, build_partition=args.build_partition, hdf5=args.hdf5,
             plan=cfg, seed=cfg['seed'], nodes=cfg['nodes'], ranks=cfg['ranks'], grid=cfg['grid'], steps=cfg['steps'],
             repetitions=cfg['repetitions'], sentinel_every=cfg['sentinel_every'],
@@ -402,6 +405,7 @@ def command_status(args):
             state = c.state(scope, run['run_id'])[0]
             counts[state] = counts.get(state, 0) + 1
         print('  %s plan %s: %s' % (kind, digest[:12], ', '.join('%d %s' % (v, k) for k, v in sorted(counts.items()))))
+    print('  dataset: %s%s' % (c.layout.dataset, '' if c.layout.dataset.is_dir() else ' (created by the first sweep job)'))
     go = read_json_or(c.root / 'gonogo.json')
     print('  go/no-go: %s' % (go['verdict'] if go else 'not evaluated'))
     d0 = read_json_or(c.root / 'state/d0.json')
@@ -425,6 +429,71 @@ def command_status(args):
         print('  last events:')
         for line in log.read_text().splitlines()[-args.events:]:
             print('    ' + line)
+    return EXIT_OK
+
+
+# --------------------------------------------------------------------------- upgrade
+def launcher_hashes(folder):
+    folder = Path(folder)
+    return {p.name: sha(p) for p in sorted(folder.iterdir()) if p.is_file()} if folder.is_dir() else {}
+
+
+def command_upgrade(args):
+    """Replace $C/launcher with this package. Refused while a job of the campaign may run or once the
+    sweep has started; executables, plans, catalogs and qualification results are never touched."""
+    c = E.Campaign(args.campaign)
+    frozen = (c.root / 'launcher').resolve()
+    require(HERE != frozen, 'Run upgrade with the run.sh of your OPS checkout (bash ~/OPS/scripts/lumi_senga2_decomp/run.sh '
+                            'upgrade --campaign %s), not with the campaign copy it replaces.' % c.root)
+    busy = active_jobs(c, ['build', 'smoke-small', 'smoke-full', 'sweep'])
+    require(not busy, 'Job(s) %s of this campaign are still pending or running (squeue). Wait for them to end, then '
+                      'run upgrade again. Nothing was changed.' % ','.join(busy))
+    sweep_jobs = [j['job_id'] for j in (read_json_or(c.root / 'submissions.json') or dict(jobs=[]))['jobs']
+                  if j['kind'] == 'sweep']
+    old_runs = sorted((c.root / 'runs/sweep').glob('*/attempt_*')) if (c.root / 'runs/sweep').is_dir() else []
+    require(not sweep_jobs and not old_runs and not c.layout.sweep_runs_exist(),
+            'The sweep of this campaign has already started (%d sweep job(s) submitted, %d run attempt(s) on disk). '
+            'A running sweep is never switched to another launcher. Nothing was changed.'
+            % (len(sweep_jobs), len(old_runs) + len(c.layout.record_paths())))
+    old_reps = c.config['repetitions']
+    new_reps = old_reps if args.repetitions is None else args.repetitions
+    if new_reps != old_reps:
+        require(not (c.root / 'plan.json').exists(),
+                'The sweep plan is already frozen with %d repetition(s) (plan.json); repetitions cannot change any more. '
+                'Nothing was changed.' % old_reps)
+        P.make_sweep_plan(dict(c.config['plan'], repetitions=new_reps, exclude=[], exclude_halo60_risk=False))
+    with lock(c.root / 'state' / '.sweep.lock'), lock(c.root / 'state' / '.smoke.lock'):
+        old = launcher_hashes(c.root / 'launcher')
+        stamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')
+        staging = c.root / ('launcher.new_' + stamp)
+        staging.mkdir()
+        for name in PACKAGE_FILES:
+            shutil.copy2(str(HERE / name), str(staging / name))
+        keep = c.root / 'launcher_previous' / stamp
+        keep.parent.mkdir(exist_ok=True)
+        os.rename(str(c.root / 'launcher'), str(keep))         # the old copy is kept, not deleted
+        os.rename(str(staging), str(c.root / 'launcher'))
+        new = launcher_hashes(c.root / 'launcher')
+        if new_reps != old_reps:
+            config = read_json(c.root / 'campaign.json')
+            config['repetitions'] = new_reps
+            config['plan'] = dict(config['plan'], repetitions=new_reps)
+            atomic(c.root / 'campaign.json', config)
+        history = read_json_or(c.root / 'launcher_upgrades.json') or dict(upgrades=[])
+        history['upgrades'].append(dict(
+            utc=now(), previous_launcher=str(keep), old_files_sha256=old, new_files_sha256=new,
+            package=package_identity(args.ops_root.expanduser().resolve()), repetitions_old=old_reps,
+            repetitions_new=new_reps, dataset=str(c.layout.dataset)))
+        atomic(c.root / 'launcher_upgrades.json', history)
+    changed = sorted(n for n in set(old) | set(new) if old.get(n) != new.get(n))
+    print('Launcher of %s replaced by this package (%d file(s) changed: %s).' % (c.id, len(changed), ' '.join(changed) or 'none'))
+    print('Previous launcher kept in %s; hashes recorded in %s' % (keep, c.root / 'launcher_upgrades.json'))
+    if new_reps != old_reps:
+        print('Repetitions per decomposition: %d -> %d (campaign.json)' % (old_reps, new_reps))
+    else:
+        print('Repetitions per decomposition: %d (unchanged)' % new_reps)
+    print('The sweep will write its dataset to %s' % c.layout.dataset)
+    print('From now on use: bash %s <command> --campaign %s' % (c.root / 'launcher/run.sh', c.root))
     return EXIT_OK
 
 
@@ -520,6 +589,13 @@ def parser():
     s = sub.add_parser('collect', help='write results/runs.csv and results/decompositions.csv')
     s.add_argument('--campaign', type=Path, required=True)
     s.set_defaults(func=command_collect)
+
+    s = sub.add_parser('upgrade', help='replace the frozen launcher of a campaign whose sweep has not started')
+    s.add_argument('--campaign', type=Path, required=True)
+    s.add_argument('--repetitions', type=int, help='new default/precomputed pairs per decomposition (only before the '
+                   'sweep plan is frozen)')
+    s.add_argument('--ops-root', type=Path, default=HERE.parent.parent, help='OPS checkout of this package (recorded)')
+    s.set_defaults(func=command_upgrade)
 
     s = sub.add_parser('job')     # internal: body of a Slurm job
     s.add_argument('--campaign', type=Path, required=True)

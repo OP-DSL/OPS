@@ -14,7 +14,11 @@ command = argv
 ntasks, per_node = int(options['ntasks']), int(options['ntasks-per-node'])
 if os.environ.get('FAKE_SRUN_LOG'):
     with open(os.environ['FAKE_SRUN_LOG'], 'a') as f:
-        f.write(json.dumps(dict(options=options, command=command)) + '\n')
+        try:      # the run id is read now: a committed attempt moves to its dataset folder afterwards
+            run_id = json.load(open(command[-1]))['run']['run_id']
+        except (OSError, ValueError, KeyError, IndexError):
+            run_id = ''
+        f.write(json.dumps(dict(options=options, command=command, run_id=run_id)) + '\n')
 counter = os.environ.get('FAKE_SRUN_LOG', '') + '.step'
 step = 0
 if os.environ.get('FAKE_SRUN_LOG'):

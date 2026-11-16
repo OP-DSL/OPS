@@ -10,17 +10,21 @@ block size of each kernel.
 | Scale | 20 LUMI-G nodes, 160 MPI ranks, one GCD (MI250X, `gfx90a`) per rank, GPU direct |
 | Problem | 1440^3 cells, 100 time steps |
 | Decompositions | all 63 ordered `Px x Py x Pz` with product 160 |
-| Per decomposition | 1 autotune run (A), then 3 pairs of default (D) and precomputed (P) runs |
-| Extra runs | 3 unforced baseline runs, and sentinel runs that measure the noise floor |
+| Per decomposition | 1 autotune run (A), then 1 pair of default (D) and precomputed (P) runs (`--repetitions N` gives N pairs) |
+| Extra runs | 1 unforced baseline run (one per repetition), and sentinel runs that measure the noise floor |
+| Output | the sweep writes its dataset directly in the structure of the earlier TGV decomposition campaigns (section 6.1) |
 
 Nothing here needs an assistant: every step is a command of `run.sh`, each prints what it
 did and what to run next, and every failure names the file or log to read.
 No project, account or user name is stored in the package. You give the Slurm account
 with `--account` (or `SLURM_ACCOUNT`).
 
+A campaign created before the dataset layout existed (for example `SENGA2_DECOMP_20261115_200600`)
+must be upgraded once before its sweep starts: section [1.9](#19-upgrade-a-campaign-whose-sweep-has-not-started).
+
 Contents: [1 Steps](#1-steps-in-order) · [2 Build variables](#2-build-variables-and-the-prgenv-cray-fallback) ·
 [3 What a run must satisfy](#3-what-a-valid-run-is) · [4 Resume and failures](#4-allocations-resume-and-failures) ·
-[5 Results](#5-results) · [6 Campaign directory](#6-campaign-directory) · [7 Exit statuses](#7-exit-statuses) ·
+[5 Results](#5-results) · [6 Campaign directory and dataset](#6-campaign-directory) · [7 Exit statuses](#7-exit-statuses) ·
 [8 Limitations](#8-limitations-to-carry-into-every-result) · [9 Only LUMI can verify](#9-what-only-lumi-can-verify) ·
 [10 First-run checks](#10-checks-to-do-by-eye-in-the-first-lumi-runs) · [11 Troubleshooting](#11-troubleshooting) ·
 [12 Local tests](#12-local-tests)
@@ -44,8 +48,8 @@ bash run.sh plan --output-dir ~/senga2_plan_preview
 
 It writes `plan.json`, `plan.csv` (one line per run: position, stage, decomposition, mode,
 repetition, pair, full argument list, seed) and the qualification list `smoke_plan.csv`.
-With the defaults it reports 63 autotune, 189 default and 189 precomputed sweep runs,
-3 baseline runs and 8 sentinel runs. Decompositions that cannot run (a local width that is
+With the defaults it reports 63 autotune, 63 default and 63 precomputed sweep runs,
+1 baseline run and 8 sentinel runs (with `--repetitions 3`: 189 default, 189 precomputed and 3 baseline runs). Decompositions that cannot run (a local width that is
 not an integer, or below the halo depth 5) are skipped with a `NOTICE` line; for 1440^3 on
 160 ranks nothing is skipped. 16 triples are flagged `halo60_risk` (see section 8).
 
@@ -229,6 +233,33 @@ bash $C/launcher/run.sh collect --campaign $C
 
 It can be run at any time, also on a partial campaign. See section 5.
 
+### 1.9 Upgrade a campaign whose sweep has not started
+
+A campaign keeps a frozen copy of the launcher in `$C/launcher`. A campaign prepared with an
+earlier version of this package (one without `dataset.py` in `$C/launcher`) writes the sweep in
+the old layout. `upgrade` replaces that copy by the package of your checkout. It is refused, and
+changes nothing, if any build, qualification or sweep job of the campaign is pending or running,
+if a sweep job was ever submitted, or if any sweep run exists on disk. Executables, builds, plans,
+catalogs and qualification results are not touched; the old launcher is kept in
+`$C/launcher_previous/<utc>/` and both sets of file hashes are recorded in `$C/launcher_upgrades.json`.
+
+`--repetitions N` changes the number of D/P pairs per decomposition stored in `campaign.json`; it
+is accepted only while the sweep plan is not frozen (`$C/plan.json` absent). The old and new
+values are recorded with the hashes. For the campaign `SENGA2_DECOMP_20261115_200600`, on a login
+node, after its qualification jobs have ended:
+
+```bash
+C=/scratch/<your_project>/ops-senga2-decomp/campaigns/SENGA2_DECOMP_20261115_200600
+squeue --me                                    # no job of this campaign may be listed
+cd ~/OPS && git checkout feature/gpu_block_size && git pull
+bash ~/OPS/scripts/lumi_senga2_decomp/run.sh upgrade --campaign $C --repetitions 1
+bash $C/launcher/run.sh status --campaign $C   # from now on always $C/launcher/run.sh
+```
+
+The upgrade must be run with the `run.sh` of the checkout (the command refuses to run from
+`$C/launcher`). Afterwards continue with section 1.5 (`gonogo`; run it again even if it already
+said GO, so that its projection uses one repetition), then 1.6 and 1.7 as usual.
+
 ## 2. Build variables and the PrgEnv-cray fallback
 
 SENGA2 has never been built on LUMI. The default recipe is therefore a starting point, and
@@ -302,8 +333,9 @@ HDF5 field dump at step 0 of every run, inside the measured `total_ttime`.
 
 ## 3. What a valid run is
 
-Each run is one `srun` in a fresh directory `runs/<scope>/<run_id>/attempt_NNN/` with its
-own inputs (`input/*.dat`, `TGV_species.dat`, `t_initial.dat`, empty `output/`) and its own
+Each run is one `srun` in a fresh attempt directory (qualification:
+`runs/qualification/<run_id>/attempt_NNN/`; sweep: `<dataset>/_attempts/<CASE_ID>/iter_<r>/<variant>/attempt_NNN/`,
+section 6.1) with its own inputs (`input/*.dat`, `TGV_species.dat`, `t_initial.dat`, empty `output/`) and its own
 generated `input/cont.dat`. A run is `VALID` only if all of this holds:
 
 - `srun` and every rank exit with status 0;
@@ -345,7 +377,8 @@ The catalog of a decomposition is built once, from rank 0's
 `ops_blocksize_best_logmod.csv` of that decomposition's own autotune run: footer lines are
 skipped, one row per kernel is kept (lowest `best_time`), every block must be positive with
 `bx*by*bz <= min(1024, max_threads_per_block)`. It is written as `kernel_id,bx,by,bz`,
-made read-only and hashed (`catalogs/<scope>/<build>_<decomposition>/`). If the CSV is
+made read-only and hashed (sweep: `<dataset>/precomputed_blocks/senga2_hip_<grid>_cfg1/mode_1/decomp<PxPyPz>/`,
+with a `set_id` in its `manifest.json`; qualification: `catalogs/qualification/<build>_<decomposition>/`). If the CSV is
 missing, empty, has only footers, has an invalid row or two different blocks with the same
 best time for one kernel, or if the autotune run is invalid, the decomposition is marked
 `AUTOTUNE_FAILED`: no catalog is written, no precomputed run is launched, and no substitute
@@ -360,7 +393,8 @@ Order inside a sweep job:
 2. one sentinel run (forced `d0`, default blocks) at the start of **every** allocation, and
    one after every 8 decompositions;
 3. the decompositions in the seeded random order of the plan. For each: A first, then the
-   pairs; the first mode of the pairs alternates (D P / P D / D P at even plan positions,
+   pair(s); the first mode alternates with the plan position: with the default single pair,
+   D P at even positions and P D at odd ones (with 3 pairs: D P / P D / D P at even positions,
    P D / D P / P D at odd ones).
 
 Rules:
@@ -368,7 +402,11 @@ Rules:
 - A run with a valid record is never repeated. Resume aborts if the executable hash or the
   plan hash differs from the records.
 - A D/P pair is atomic within one allocation. If only one member finished, it is kept,
-  marked superseded (`SUPERSEDED.json`) and the whole pair is rerun.
+  marked superseded (`SUPERSEDED.json`, moved back to `_attempts/` with `COMMIT_STATUS=SUPERSEDED`)
+  and the whole pair is rerun.
+- A run enters the dataset (its final folder) only when it satisfies the commit rule; failed and
+  interrupted attempts stay in `_attempts/`. A valid run whose move was cut off by the end of an
+  allocation is committed by the next job without being rerun.
 - A frozen catalog is reused in a later allocation only if its sha256 still matches;
   otherwise `CATALOG REJECTED` is logged and no precomputed run is launched for it.
 - A failed run is never retried automatically. `--retry-failed` reruns failed runs; the
@@ -394,8 +432,10 @@ Rules:
 Estimators (also in the manifest), with `T` = `total_ttime` printed by the root rank:
 
 - `D_median_total_ttime_s`, `D_min_...`, `D_max_...` (and `P_...`): median, minimum and
-  maximum over the 3 repetitions, given only when all 3 are valid. No confidence interval.
-- `S_pair1..3` = `T(D, pair i) / T(P, pair i)`; `S_median_of_paired_ratios` is their median.
+  maximum over the repetitions, given only when all are valid. With the default single
+  repetition the three are the one measured value. No confidence interval.
+- `S_pair1..N` = `T(D, pair i) / T(P, pair i)`; `S_median_of_paired_ratios` is their median
+  (with one repetition: `S_pair1` itself).
   `S_ratio_of_medians` is a different estimator and is tabulated beside it.
 - `A_total_ttime_s`: the single autotune run; it is never used as a D or P sample.
   `search_cost_A_over_D_median` has one sample and no uncertainty.
@@ -416,17 +456,73 @@ $C/
   source/OPS  source/SENGA2                                          frozen sources (never edited)
   build/small  build/full     OPS/ SENGA2/ build.log build_manifest.json senga2_f2c_mpi_hip
   smoke_plan.json  plan.json  *.sha256  *.csv                        frozen plans
-  runs/qualification/<run_id>/attempt_NNN/   runs/sweep/<run_id>/attempt_NNN/
+  launcher_upgrades.json  launcher_previous/<utc>/                 only after an upgrade (section 1.9)
+  OPS_LOGS_<stamp>_n<NNN>/                   the sweep dataset (section 6.1)
+  runs/qualification/<run_id>/attempt_NNN/   qualification runs (not part of the dataset)
       record.json        the per-run record (decomposition, mode, pair, job, nodes, arguments,
                          environment, hashes, commits, modules, times, per-rank host and GPU, verdict)
       srun.log  ranks/rank_N.log  ranks/status_N.json  execution.json
       work/              the run directory: input/cont.dat, output/tgv_stat.dat, ...
       rank_0/autotune_on/*.csv   only in autotune runs
-  catalogs/<scope>/<build>_<PxxPyxPz>/blocks.csv  manifest.json
+  catalogs/qualification/<build>_<PxxPyxPz>/blocks.csv  manifest.json
   references/            fingerprint reference per build and step count
   state/events.log  state/d0.json  state/decompositions/  state/ABORTED.json
   gonogo.json  measured_times.json  submissions.json  slurm/  results/
 ```
+
+### 6.1 Dataset
+
+The sweep writes its results directly in the structure of the earlier TGV decomposition
+campaigns (`OPS_LOGS_<stamp>_n<NNN>`), so that their readers work on it. `<stamp>` is the date
+stamp of the campaign (`20261115_200600` for `SENGA2_DECOMP_20261115_200600`) and `<NNN>` the
+number of nodes. Copy this folder to keep or analyse the results.
+
+```text
+$C/OPS_LOGS_<stamp>_n<NNN>/
+  campaign_manifest.json        campaign id <stamp>_n<NNN>, case_count, commit_rule, plan_sha256 (of plan.jsonl)
+  plan.jsonl                    one sweep case per line (app, app_args, autotune_mode, case_id, decomposition, ...)
+  precomputed_blocks/senga2_hip_<G>x<G>x<G>_cfg1/mode_1/decomp<PxPyPz>/{blocks.csv, manifest.json}
+  _attempts/<CASE_ID>/iter_<r>/<variant>/attempt_NNN/      failed, interrupted, superseded attempts
+  senga2_hip_<G>x<G>x<G>_cfg1_comparison_<stamp>_n<NNN>/
+    config.txt                  APP_NAME, GRID, NUM_DECOMPOSITION_GPUS, RUN_ITERATIONS, AUTOTUNE_MODES, ...
+    autotune_off_summary.txt  autotune_on_summary.txt  autotune_precomputed_summary.txt
+                                WALL_TIME_DECOMPOSITION_<PxPyPz>_ITER_<r>_S=<APP_WALL_TIME>
+    mode_1/decomp<PxPyPz>/iter_<r>/
+      config.txt                WALL_TIME_NO_AUTOTUNE / _AUTOTUNE / _PRECOMPUTED and JOB_WALL_TIME_*
+      autotune_off/             default run of pair r
+      autotune_on/              the single autotune run (iter_1 only) + rank_0/autotune_on/*.csv
+      autotune_precomputed/     precomputed run of pair r + blocks.csv, precomputed_manifest.json
+    baseline_unforced/iter_<r>/autotune_off/      unforced baseline (RUN_CLASS=BASELINE_UNFORCED)
+    sentinels/<label>/autotune_off/               sentinels (RUN_CLASS=SENTINEL)
+```
+
+Every run folder holds `config.txt`, `run.log` (all rank logs, each under a `===== rank_N.log =====`
+line), `mpi_rank_metrics.csv` (one row per rank), `ranks/` (`rank_N.log`, `metric_N.csv`,
+`status_N.json`), and the launcher's own `record.json`, `srun.log`, `execution.json` and `work/`.
+Baseline and sentinel runs are outside `mode_1/`, so a glob such as
+`mode_*/decomp*/iter_*/autotune_*/config.txt` returns only sweep runs.
+
+A run is in its final folder if and only if its `config.txt` has `RUN_STATUS=OK`,
+`RUN_EXIT_CODE=0`, `VALIDATION_STATUS=PASS` and `COMMIT_STATUS=COMMITTED`. An autotune run whose
+catalog could not be frozen does not pass validation and stays in `_attempts/`.
+
+`config.txt` of a run has the keys of the TGV files, in their order, then SENGA2 extras (GPU
+direct evidence, OPS kernel and halo totals, Slurm job and node list, pair index and order, plan
+position and seed, catalog rows and fallback kernels, fingerprint values, failure reason). What
+differs from the TGV campaigns, and why:
+
+| Key | Value here | Reason |
+|---|---|---|
+| `APP_WALL_TIME` | `total_ttime` printed by SENGA2's root rank, digits as printed | SENGA2 prints no `Total Wall time`; it includes initialisation |
+| `APP_ARGS` | empty | SENGA2 takes no positional arguments (the grid is compiled in, the steps are in `cont.dat`); the OPS arguments are in `OPS_ARGS_RANK0` / `OPS_ARGS_OTHER_RANKS` |
+| `NITER` | the time steps (100) | |
+| `AUTOTUNE_SAMPLE_RANKS` | `0` | tuning on rank 0 only (section 8) |
+| `TIMING_PARSER_VERSION` | `senga2_total_ttime_v1` | another parser than the TGV one (`5`) |
+| `COORD_SOURCE`, `coord_x/y/z` | `not_measured`, empty | OPS does not print the rank-to-coordinate map; nothing is assumed |
+| `rank_compute_time_s`, `rank_mpi_time_s`, `rank_wait_time_s` | empty | not measured |
+| `rank_halo_time_s`, `app_reported_wall_time_s` | filled only for ranks whose log prints them (rank 0) | |
+| `GPU_DIRECT` | `YES` only if `-gpudirect` was passed, `GPU Direct enabled` was printed and `MPICH_GPU_SUPPORT_ENABLED=1` | |
+| `PRECOMPUTED_SET_ID` | `set_id` of the catalog manifest: sha256 of the manifest without `set_id` (as in the TGV campaigns) | |
 
 ## 7. Exit statuses
 
@@ -450,12 +546,13 @@ The last line of every Slurm output file (`$C/slurm/*.out`) states the exit stat
   block is timed once, in one run: the catalog is "the minimum observed once", not an
   optimum; (c) rank 0 is slower than its neighbours during the autotune run, so that run is
   not a measure of a uniformly tuned job; (d) no per-rank or per-node variation is captured.
-- **No confirmation stage.** The decomposition with the lowest median among 63 three-run
-  medians is optimistically biased. Any "best decomposition" figure taken from the tables
+- **No confirmation stage.** The decomposition with the lowest time among 63 single-run
+  measurements is optimistically biased. Any "best decomposition" figure taken from the tables
   is selection-biased until fresh runs confirm it.
 - **Catalog stability is not measured.** Each decomposition is tuned once.
-- **Three repetitions.** Per-decomposition statements are limited to "resolved or not"
-  (ranges do not overlap and the ratio exceeds the noise floor from `sentinels.csv`).
+- **One repetition (default).** Each decomposition has one D and one P run: there is no
+  within-decomposition spread. A per-decomposition difference is only "resolved" when it
+  exceeds the noise floor measured by the sentinels (`sentinels.csv`); otherwise it is not.
 - **One scale.** No strong scaling, other sizes, shapes, step counts or applications.
 - **`halo60_risk`.** SENGA2 declares some y/z-split fields with 60-deep halos. In 16 triples
   the local y or z width is below 60. Nothing rejects them and they have never been run;

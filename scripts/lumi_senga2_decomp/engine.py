@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import time
 
+import dataset as D
 import plan as P
 import runtime as R
 from common import (require, sha, atomic, read_json, read_json_or, now, shape_text, shell_join, StopJob,
@@ -23,6 +24,13 @@ class Campaign(object):
                 '%s is not a campaign directory (campaign.json missing). Create one with: run.sh prepare ...' % self.root)
         self.config = read_json(self.root / 'campaign.json')
         self.id = self.config['campaign_id']
+        self.layout = D.Layout(self.root, self.config)    # the sweep is stored in the dataset layout
+
+    @property
+    def package(self):
+        """Identity of the launcher in $C/launcher: the last upgrade, or the one copied by prepare."""
+        upgrades = (read_json_or(self.root / 'launcher_upgrades.json') or {}).get('upgrades') or []
+        return upgrades[-1]['package'] if upgrades else self.config['package']
 
     def build(self, name):
         path = self.root / 'build' / name / 'build_manifest.json'
@@ -51,16 +59,25 @@ class Campaign(object):
                 '%s changed after it was frozen (sha256 mismatch). The plan is never regenerated or edited.' % path)
         return json.loads(data.decode()), digest
 
-    # ----- run records
+    # ----- run records. Qualification: runs/qualification/<run_id>/attempt_NNN/. Sweep: the dataset
+    # layout (dataset.py): final folders for committed runs, _attempts/ for everything else.
     def run_dir(self, scope, run_id):
+        require(scope != 'sweep', 'Sweep runs are stored in the dataset layout (Campaign.layout)')
         return self.root / 'runs' / scope / run_id
 
     def attempts(self, scope, run_id):
+        if scope == 'sweep':
+            loc = self.layout.locate(run_id)
+            final = [loc['final']] if (loc['final'] / 'record.json').is_file() else []
+            return self.layout.attempts(loc) + final
         folder = self.run_dir(scope, run_id)
         return sorted(p for p in folder.glob('attempt_*') if p.is_dir()) if folder.is_dir() else []
 
     def state(self, scope, run_id):
-        """('MISSING' | 'INTERRUPTED' | 'VALID' | 'FAILED', record, attempt) of the current attempt."""
+        """('MISSING' | 'INTERRUPTED' | 'VALID' | 'FAILED', record, attempt) of the current attempt.
+        Sweep runs may also be 'PENDING_COMMIT' (see dataset.Layout.state)."""
+        if scope == 'sweep':
+            return self.layout.state(run_id)
         live = [a for a in self.attempts(scope, run_id) if not (a / 'SUPERSEDED.json').exists()]
         if not live:
             return 'MISSING', None, None
@@ -72,6 +89,8 @@ class Campaign(object):
         return ('VALID' if good else 'FAILED'), record, attempt
 
     def supersede(self, scope, run_id, reason):
+        if scope == 'sweep':
+            return self.layout.supersede(run_id, reason, os.environ.get('SLURM_JOB_ID', ''))
         for attempt in self.attempts(scope, run_id):
             if not (attempt / 'SUPERSEDED.json').exists():
                 atomic(attempt / 'SUPERSEDED.json', dict(reason=reason, utc=now(),
@@ -81,18 +100,23 @@ class Campaign(object):
         """Every record on disk, superseded ones included (flagged)."""
         out = []
         base = self.root / 'runs'
-        for path in sorted(base.glob('*/*/attempt_*/record.json')) if base.is_dir() else []:
+        paths = [(p, True) for p in sorted(base.glob('*/*/attempt_*/record.json'))] if base.is_dir() else []
+        for path, committed in paths + self.layout.record_paths():
             record = read_json_or(path)
             if record is None:
                 continue
             marker = read_json_or(path.parent / 'SUPERSEDED.json')
             record['superseded'] = marker is not None
             record['superseded_reason'] = marker['reason'] if marker else ''
+            record['committed'] = committed       # sweep: in the final dataset tree
             record['record_path'] = str(path)
             out.append(record)
         return out
 
     def catalog_folder(self, scope, build, decomposition):
+        if scope == 'sweep':
+            require(build == 'full', 'The sweep only uses the full build')
+            return self.layout.catalog_folder(decomposition)
         return self.root / 'catalogs' / scope / ('%s_%s' % (build, decomposition))
 
 
@@ -180,9 +204,13 @@ class Engine(object):
             catalog = R.verify_catalog_for(run, catalog, manifest['sha256'])
         else:
             require(catalog is None, 'Only precomputed runs take a catalog')
-        folder = c.run_dir(self.scope, run['run_id'])
-        folder.mkdir(parents=True, exist_ok=True)
-        attempt = folder / ('attempt_%03d' % (len(c.attempts(self.scope, run['run_id'])) + 1))
+        loc = c.layout.locate(run['run_id']) if self.scope == 'sweep' else None
+        if loc:
+            attempt = c.layout.new_attempt(loc)
+        else:
+            folder = c.run_dir(self.scope, run['run_id'])
+            folder.mkdir(parents=True, exist_ok=True)
+            attempt = folder / ('attempt_%03d' % (len(c.attempts(self.scope, run['run_id'])) + 1))
         (attempt / 'ranks').mkdir(parents=True)
         if run['mode'] == 'A':
             (attempt / 'rank_0').mkdir()
@@ -211,6 +239,9 @@ class Engine(object):
         statuses = {s['rank']: s for s in (read_json_or(p) for p in (attempt / 'ranks').glob('status_*.json')) if s}
         first, other = statuses.get(0, {}), statuses.get(1, {})
         cfg = c.config
+        autotune = self.freeze(run, attempt, result, manifest, loc) if run['mode'] == 'A' else None
+        good = result['valid'] and (autotune is None or autotune['status'] == 'FROZEN')
+        base = loc['final'] if loc and good else attempt     # where the run is kept from now on
         record = dict(
             record_version=1, campaign_id=c.id, plan_hash=self.plan_sha, seed=run['seed'], plan_position=run['position'],
             run_id=run['run_id'], scope=self.scope, attempt=attempt.name, stage=run['stage'],
@@ -228,7 +259,7 @@ class Engine(object):
                              cpu_bind='map_cpu:' + cfg['cpu_bind'], rank_0_cpu_affinity=first.get('cpu_affinity', [])),
             executable_sha256=manifest['sha256'], catalog_sha256=m['catalog_sha256'], catalog_rows=m['catalog_rows'],
             catalog_path=catalog['path'] if catalog else '',
-            package_commit=cfg['package']['commit'], ops_commit=cfg['ops_commit'], senga_commit=cfg['senga_commit'],
+            package_commit=c.package['commit'], ops_commit=cfg['ops_commit'], senga_commit=cfg['senga_commit'],
             module_list=self.env.get('LOADEDMODULES', ''), printed_grid=m['printed_grid'],
             total_ttime_s=m.get('total_ttime_s'), kernel_time_s=m['kernel_time_s'], halo_time_s=m['halo_time_s'],
             user_halo_time_s=m['user_halo_time_s'], kernel_times=m['kernel_times'], ranks=m['ranks'],
@@ -237,11 +268,22 @@ class Engine(object):
             fingerprint_reference=reference and reference.get('run_id'), fingerprint_tolerance=self.tolerance,
             fallback_kernel_ids_rank0=m.get('fallback_kernel_ids_rank0'),
             fallback_kernel_ids_other_ranks=m.get('fallback_kernel_ids_other_ranks'),
-            cont_dat=str(attempt / 'work/input/cont.dat'), verdict='VALID' if result['valid'] else 'INVALID',
+            total_ttime_text=m.get('total_ttime_text'), kernel_time_text=m.get('kernel_time_text'),
+            halo_time_text=m.get('halo_time_text'), user_halo_time_text=m.get('user_halo_time_text'),
+            gpu_arch=D.gpu_arch(manifest), attempt_dir=str(attempt), run_dir=str(base),
+            case_id=loc['case_id'] if loc else '',
+            cont_dat=str(base / 'work/input/cont.dat'), verdict='VALID' if result['valid'] else 'INVALID',
             category=result['category'], reason='; '.join(result['reasons']), reasons=result['reasons'])
-        if run['mode'] == 'A':
-            record['autotune'] = self.freeze(run, attempt, result, manifest)
+        if autotune is not None:
+            record['autotune'] = autotune
+        if loc:
+            # Dataset files first, the record last (it marks the attempt as finished), then the
+            # commit: a run enters its final folder only if it satisfies the commit rule.
+            c.layout.write_run_files(attempt, record, loc, good)
         atomic(attempt / 'record.json', record)
+        if loc and good:
+            c.layout.commit(loc, attempt)
+            c.layout.refresh()
         if result['valid']:
             self.log('  VALID  total_ttime=%.3f s  elapsed=%.0f s%s' % (
                 m['total_ttime_s'], elapsed,
@@ -249,6 +291,8 @@ class Engine(object):
         else:
             self.failures.append(run['run_id'])
             self.log('  INVALID [%s] %s\n         logs: %s' % (result['category'], record['reason'], attempt))
+        if loc:
+            self.log('  %s %s' % ('COMMITTED' if good else 'NOT COMMITTED (kept in _attempts)', base))
         if run['mode'] == 'A' and record['autotune']['status'] != 'FROZEN':
             if result['valid']:
                 self.failures.append(run['run_id'])
@@ -256,25 +300,35 @@ class Engine(object):
                      % (record['decomposition'], record['autotune']['reason']))
         return record
 
-    def freeze(self, run, attempt, result, manifest):
+    def freeze(self, run, attempt, result, manifest, loc=None):
         if not result['valid']:
             return dict(status='FAILED', reason='autotune run invalid: ' + '; '.join(result['reasons']))
         decomposition = shape_text(run['triple'])
         folder = self.c.catalog_folder(self.scope, run['build'], decomposition)
+        grid = self.c.config['builds'][run['build']]['grid']
+        context = dict(APP_NAME=D.APP, GRID_X=str(grid), GRID_Y=str(grid), GRID_Z=str(grid), GRID_CONFIG=D.GRID_CONFIG,
+                       DECOMPOSITION_MODE='1', ACTIVE_NUM_RANKS=str(run['ranks']), shape=decomposition, APP_ARGS='',
+                       GPU_ARCH=D.gpu_arch(manifest), EXECUTABLE_SHA256=manifest['sha256'], SAMPLED_AUTOTUNE='YES',
+                       AUTOTUNE_SAMPLE_RANKS='0')
         try:
             made = R.build_catalog(attempt, folder, dict(
                 decomposition=decomposition, scope=self.scope, build=run['build'], campaign_id=self.c.id,
                 executable_sha256=manifest['sha256'], source_run_id=run['run_id'], plan_hash=self.plan_sha,
-                slurm_job_id=self.env.get('SLURM_JOB_ID', '')))
+                slurm_job_id=self.env.get('SLURM_JOB_ID', ''), context=context, repetition=1,
+                app_wall_time_s=result['metrics'].get('total_ttime_s'),
+                source_run=str(loc['final']) if loc else str(attempt)))
         except R.CatalogError as error:
             return dict(status='FAILED', reason=str(error))
         return dict(status='FROZEN', reason='', catalog_sha256=made['sha256'], catalog_rows=made['rows'],
                     executed_kernels=len(made['executed_kernel_ids']), kernel_coverage=made['kernel_coverage'],
-                    folder=str(folder))
+                    folder=str(folder), set_id=made['set_id'])
 
     def current(self, run_id):
         """State of a run; attempts cut short by the end of an allocation are set aside."""
         state, record, attempt = self.c.state(self.scope, run_id)
+        if state == 'PENDING_COMMIT':
+            self.commit_pending(self.c.layout.locate(run_id), attempt)
+            state, record, attempt = self.c.state(self.scope, run_id)
         if state == 'INTERRUPTED':
             self.log('%s: attempt %s has no record (the allocation ended during the run); it is kept and marked superseded'
                      % (run_id, attempt.name))
@@ -286,6 +340,12 @@ class Engine(object):
             self.c.supersede(self.scope, run_id, 'explicit --retry-failed')
             return 'MISSING', None
         return state, record
+
+    def commit_pending(self, loc, attempt):
+        self.log('%s: valid attempt %s was not yet moved to its final folder (the job ended in between); committing it'
+                 % (loc['run_id'], attempt.name))
+        self.c.layout.commit(loc, attempt)
+        self.c.layout.refresh()
 
     def catalog_of(self, a_run, a_record):
         """Catalog frozen by the autotune run of the same decomposition, or (None, reason)."""
@@ -359,6 +419,10 @@ class Engine(object):
     def run_sweep(self):
         c = self.c
         self.check_identity(['full'])
+        c.layout.ensure(self.plan, self.plan_sha)
+        self.log('Dataset: %s' % c.layout.dataset)
+        for loc, attempt in c.layout.pending():
+            self.commit_pending(loc, attempt)
         abort = c.root / 'state/ABORTED.json'
         if abort.exists():
             if not self.retry_failed:
@@ -372,8 +436,9 @@ class Engine(object):
         grids = sorted({tuple(r['printed_grid']) for r in base if r and r['verdict'] == 'VALID'})
         if len(grids) != 1:
             raise StopJob(EXIT_RUN_FAILURES,
-                          'Cannot identify d0: the unforced baseline has %s. Inspect runs/sweep/baseline_unforced_r*/ and '
-                          'resubmit with --retry-failed.' % ('no valid run' if not grids else 'printed different grids %s' % grids))
+                          'Cannot identify d0: the unforced baseline has %s. Inspect %s/baseline_unforced/ and %s, and '
+                          'resubmit with --retry-failed.' % ('no valid run' if not grids else 'printed different grids %s' % grids,
+                                                             c.layout.grid_folder, c.layout.attempts_root))
         d0 = list(grids[0])
         atomic(c.root / 'state/d0.json', dict(d0=d0, source='processor grid printed by the unforced baseline runs',
                                               runs=[r['run_id'] for r in base if r['verdict'] == 'VALID']))

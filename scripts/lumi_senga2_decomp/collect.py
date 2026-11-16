@@ -14,7 +14,7 @@ RUN_FIELDS = ['scope', 'stage', 'run_id', 'attempt', 'plan_position', 'decomp_po
               'user_halo_time_s', 'total_ttime_minus_kernel_time_s', 'launcher_elapsed_s', 'printed_grid',
               'catalog_rows', 'catalog_sha256', 'fingerprint_tke', 'fingerprint_enstrophy', 'fingerprint_tmax',
               'fingerprint_difference', 'slurm_job_id', 'slurm_step_id', 'node_list', 'start_utc', 'end_utc',
-              'executable_sha256', 'plan_hash', 'seed', 'reason', 'record_path']
+              'executable_sha256', 'plan_hash', 'seed', 'reason', 'case_id', 'committed', 'run_dir', 'record_path']
 ESTIMATORS = {
     'T(d,m,i)': 'total_ttime printed by the root rank of run i of mode m (D default, A autotune, P precomputed)',
     'X_median/min/max_total_ttime_s': 'median, minimum and maximum of T over the repetitions of mode X; given only '
@@ -58,7 +58,8 @@ def collect(campaign):
     plan = read_json_or(c.root / 'plan.json')
     out = c.root / 'results'
     out.mkdir(exist_ok=True)
-    live = [r for r in records if not r['superseded'] and r['verdict'] == 'VALID']
+    # Sweep records count only when committed to the final dataset tree (commit rule satisfied).
+    live = [r for r in records if not r['superseded'] and r['verdict'] == 'VALID' and r['committed']]
     sweep = [r for r in live if r['scope'] == 'sweep']
     used_ids = set()
     dec_rows, incomplete = [], []
@@ -176,7 +177,9 @@ def collect(campaign):
     run_rows = [run_row(r, r['record_path'] in used_ids) for r in
                 sorted(records, key=lambda r: (r['scope'], r['plan_position'], r['run_id'], r['attempt']))]
     write_csv(out / 'runs.csv', run_rows, RUN_FIELDS)
-    package = c.config['package']
+    package = c.package
+    launcher_files = sorted(p.name for p in (c.root / 'launcher').iterdir() if p.is_file()) \
+        if (c.root / 'launcher').is_dir() else []
     summary = dict(
         collected_utc=now(), campaign_id=c.id, plan_hash=(c.root / 'plan.json.sha256').read_text().split()[0] if plan else None,
         seed=c.config['seed'], d0=shape_text(d0) if d0 else None,
@@ -192,12 +195,16 @@ def collect(campaign):
             superseded_records=sum(1 for r in records if r['superseded']),
             invalid_records=sum(1 for r in records if not r['superseded'] and r['verdict'] != 'VALID'),
             qualification_records=sum(1 for r in records if r['scope'] != 'sweep'),
-            rule='statistics use only valid, non-superseded sweep records; paired statistics only complete '
-                 'decompositions; qualification runs never enter; nothing is imputed'),
+            uncommitted_sweep_records=sum(1 for r in records if r['scope'] == 'sweep' and not r['committed']),
+            rule='statistics use only valid, non-superseded sweep records committed to the dataset tree; paired '
+                 'statistics only complete decompositions; qualification runs never enter; nothing is imputed'),
         input_records=[dict(path=r['record_path'], sha256=sha(r['record_path']), verdict=r['verdict'],
-                            superseded=r['superseded']) for r in records],
+                            superseded=r['superseded'], committed=r['committed']) for r in records],
+        dataset=str(c.layout.dataset),
         code_version=dict(package_commit=package['commit'], package_dirty=package['dirty'],
-                          launcher_sha256=package['files_sha256']),
+                          launcher_sha256=package['files_sha256'],
+                          launcher_sha256_now={n: sha(c.root / 'launcher' / n) for n in launcher_files},
+                          launcher_upgrades=(read_json_or(c.root / 'launcher_upgrades.json') or {}).get('upgrades', [])),
         outputs=['runs.csv', 'decompositions.csv', 'incomplete_decompositions.csv', 'sentinels.csv'],
         note='Tables only. The minimum over many three-sample medians is optimistically biased (no confirmation '
              'stage was run); catalog stability is unmeasured (one tuning run per decomposition).')
@@ -316,7 +323,8 @@ def gonogo(campaign, gpu_rate=None, remaining_gpu_hours=None, disk_available_gb=
         sizes = {}
         for mode in 'ADP':
             first = min(rid for rid, (s, rec, _, run) in q5.items() if run['mode'] == mode and s == 'VALID')
-            sizes[mode] = tree_bytes(q5[first][2])
+            # + the rank logs once more: a sweep run also keeps run.log (all rank logs concatenated)
+            sizes[mode] = tree_bytes(q5[first][2]) + sum(f.stat().st_size for f in (q5[first][2] / 'ranks').glob('rank_*.log'))
         disk_gb = (n_dec * (sizes['A'] + reps * sizes['D'] + reps * sizes['P']) + others * sizes['D']) / 1e9
         projection = dict(decompositions=n_dec, runs=n_runs, wall_hours=seconds / 3600.0, node_hours=node_hours,
                           launch_overhead_s=launch_overhead_s, disk_gb=disk_gb, bytes_per_run=sizes,
