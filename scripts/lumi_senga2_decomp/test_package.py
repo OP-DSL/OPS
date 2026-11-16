@@ -1,5 +1,6 @@
 """Package-level checks: syntax, no hardcoded identity, README commands, Slurm job scripts
 (criteria 1, 18, 22)."""
+import json
 import os
 from pathlib import Path
 import re
@@ -90,7 +91,20 @@ class PackageTests(unittest.TestCase):
                 for expected in ('build small sha256', 'qualification plan', 'sweep plan: not frozen', 'go/no-go: not evaluated',
                                  'job 4242 (smoke-small)', 'COMPLETED'):
                     self.assertIn(expected, text)
-            self.assertEqual([j['kind'] for j in read_json(campaign / 'submissions.json')['jobs']], ['smoke-small', 'smoke-full'])
+                # A campaign created with the old small-g default can send the one-node job elsewhere,
+                # for one submission, without editing campaign.json.
+                config = read_json(campaign / 'campaign.json')
+                config['smoke_partition'] = 'small-g'
+                (campaign / 'campaign.json').write_text(json.dumps(config))
+                status, text = T.quiet(L.main, ['smoke', '--campaign', str(campaign), '--submit', '--stage', 'small'])
+                self.assertEqual(status, 0, text)
+                self.assertIn('--partition=small-g --nodes=1', (Path(tmp) / 'sbatch_args').read_text().splitlines()[-1])
+                status, text = T.quiet(L.main, ['smoke', '--campaign', str(campaign), '--submit', '--stage', 'small',
+                                                '--smoke-partition', 'dev-g'])
+                self.assertEqual(status, 0, text)
+                self.assertIn('--partition=dev-g --nodes=1', (Path(tmp) / 'sbatch_args').read_text().splitlines()[-1])
+                self.assertEqual(read_json(campaign / 'campaign.json')['smoke_partition'], 'small-g')
+            self.assertEqual([j['kind'] for j in read_json(campaign / 'submissions.json')['jobs']][:2], ['smoke-small', 'smoke-full'])
 
     def test_no_command_prints_help_and_errors_are_clear(self):
         r = subprocess.run(['bash', str(HERE / 'run.sh')], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)

@@ -146,7 +146,9 @@ bash $C/launcher/run.sh smoke --campaign $C --submit      # two jobs: Q1-Q3, the
 
 The first job (Q1 to Q3) uses one whole node of `--smoke-partition` (default `standard-g`; it takes the full node, so it costs the same as in `small-g` and does not wait for a free node there); the second (Q4, Q5) uses
 the 20 nodes and starts only if the first ended with status 0. Use `--stage small` or
-`--stage full` to submit one of them, `--time-small` / `--time-full` for the wall times,
+`--stage full` to submit one of them, `--smoke-partition P` to send the one-node job to another
+partition for this submission only (for example `dev-g` when `standard-g` is full; the runs are
+identical), `--time-small` / `--time-full` for the wall times,
 and `--retry-failed` to rerun failed qualification runs (old attempts are kept).
 The time guard of section 1.7 also applies here, with fixed expected durations (small
 build: 1500 s autotune, 600 s default/precomputed; full build: 3600 s and 1200 s);

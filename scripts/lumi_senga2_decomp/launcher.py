@@ -282,7 +282,10 @@ def command_smoke(args):
     for name in stages:
         nodes = 1 if name == 'small' else c.config['nodes']
         walltime = check_time(args.time_small if name == 'small' else args.time_full)
-        partition = c.config['smoke_partition'] if name == 'small' else c.config['partition']
+        if name == 'small':
+            partition = args.smoke_partition or c.config['smoke_partition']
+        else:
+            partition = c.config['partition']
         job_args = ['--kind', 'smoke', '--builds', name] + (['--retry-failed'] if args.retry_failed else [])
         job_args += ['--no-time-guard'] if args.no_time_guard else []
         command = ['sbatch', '--parsable'] + resource_args(c, partition, nodes, walltime)
@@ -481,6 +484,8 @@ def parser():
     s.add_argument('--time-full', default='03:00:00')
     s.add_argument('--retry-failed', action='store_true', help='rerun qualification runs that failed (old attempts are kept)')
     s.add_argument('--no-time-guard', action='store_true', help='do not check the remaining allocation time before each run')
+    s.add_argument('--smoke-partition', help='partition of the one-node job for this submission only '
+                   '(default: the one stored in the campaign). Scheduling only: the runs are the same')
     s.set_defaults(func=command_smoke)
 
     s = sub.add_parser('gonogo', help='evaluate the qualification results; exit status 6 means NO-GO')
