@@ -442,8 +442,14 @@ def prepare_workdir(work, senga_inputs, grid, steps):
 def srun_command(run, launcher_dir, spec_path, cpu_bind):
     per_node = min(8, run['ranks'])
     cores = cpu_bind.split(',')[:per_node]
+    # A step only owns the cores it requests, and Slurm hands them out from the lowest
+    # core upwards. With fewer than 8 tasks per node and 7 cores each, the step would not
+    # own the cores of the map (49 for GCD 0), and srun refuses the binding ("CPU binding
+    # outside of job step allocation"). Each task therefore requests a share of all 56
+    # usable cores, so the step owns the whole node and the map stays GCD-local.
+    cpus_per_task = 56 // per_node
     return ['srun', '--nodes=%d' % run['nodes'], '--ntasks=%d' % run['ranks'], '--ntasks-per-node=%d' % per_node,
-            '--cpus-per-task=7', '--kill-on-bad-exit=1', '--cpu-bind=map_cpu:' + ','.join(cores),
+            '--cpus-per-task=%d' % cpus_per_task, '--kill-on-bad-exit=1', '--cpu-bind=map_cpu:' + ','.join(cores),
             'bash', str(Path(launcher_dir) / 'run.sh'), 'rank', '--spec', str(spec_path)]
 
 

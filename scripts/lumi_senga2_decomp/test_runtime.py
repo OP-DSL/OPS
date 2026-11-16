@@ -424,5 +424,30 @@ class WiringTests(unittest.TestCase):
                       '--cpu-bind=map_cpu:49,57,17,25,1,9,33,41', command)
 
 
+class SrunCommandTests(unittest.TestCase):
+    """The step must own the cores of the CPU map, also with fewer than 8 ranks per node."""
+
+    def options(self, ranks, nodes):
+        command = R.srun_command(dict(ranks=ranks, nodes=nodes), '/launcher', '/spec.json', R.CPU_BIND)
+        return {t.split('=', 1)[0]: t.split('=', 1)[1] for t in command if t.startswith('--') and '=' in t}
+
+    def test_full_nodes_keep_seven_cores_per_rank(self):
+        o = self.options(160, 20)
+        self.assertEqual(o['--cpus-per-task'], '7')
+        self.assertEqual(o['--cpu-bind'], 'map_cpu:49,57,17,25,1,9,33,41')
+
+    def test_single_rank_step_owns_the_whole_node(self):
+        # LUMI refused map_cpu:49 for a 1-task step of 7 cores (cores 1-7 were allocated).
+        o = self.options(1, 1)
+        self.assertEqual(o['--cpus-per-task'], '56')
+        self.assertEqual(o['--cpu-bind'], 'map_cpu:49')
+
+    def test_partial_node_steps_cover_all_usable_cores(self):
+        for per_node in (1, 2, 4, 8):
+            o = self.options(per_node, 1)
+            self.assertEqual(int(o['--cpus-per-task']) * per_node, 56)
+            self.assertEqual(len(o['--cpu-bind'].split(':')[1].split(',')), per_node)
+
+
 if __name__ == '__main__':
     unittest.main()
