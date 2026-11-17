@@ -93,7 +93,26 @@ def makefile_list(text, name):
     return found[0].split('#', 1)[0].split()
 
 
+LEGACY_INCLUDE = 'include $(OPS_INSTALL_PATH)/../makefiles/Makefile.c_app_legacy'
+MODERN_INCLUDE = 'include $(OPS_INSTALL_PATH)/../makefiles/Makefile.c_app'
+
+
+def modern_makefile(text):
+    """The application Makefile switched to the modern translator (Makefile.c_app), which emits the
+    block-size autotuning hooks. The committed CloverLeaf_3D Makefile includes Makefile.c_app_legacy and
+    keeps the modern include commented out. Returns (text, edited)."""
+    lines = text.split('\n')
+    edited = False
+    for i, line in enumerate(lines):
+        if line.rstrip() == LEGACY_INCLUDE:
+            lines[i], edited = '#' + LEGACY_INCLUDE, True
+        elif line.rstrip() == '#' + MODERN_INCLUDE:
+            lines[i], edited = MODERN_INCLUDE, True
+    return '\n'.join(lines), edited
+
+
 def check_app_makefile(text):
+    text = modern_makefile(text)[0]
     require(makefile_list(text, 'APP') == [APP], 'The application Makefile does not define APP=%s' % APP)
     require(re.search(r'^include \$\(OPS_INSTALL_PATH\)/\.\./makefiles/Makefile\.c_app[ \t]*$', text, re.M),
             'The application Makefile does not include makefiles/Makefile.c_app (the modern OPS translator)')
@@ -129,11 +148,17 @@ def snapshot_ops(ops, campaign):
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(str(source), str(dest))
         copied[rel] = sha(dest)
+    makefile = target / APP_DIR / 'Makefile'
+    text, makefile_edited = modern_makefile(makefile.read_text())
+    if makefile_edited:
+        makefile.write_text(text)
+        copied[APP_DIR + '/Makefile'] = sha(makefile)
     patch = git(ops, 'diff', 'HEAD', '--', *[p.rstrip('/') for p in OPS_PREFIXES])
     (campaign / 'source/ops_local_changes.patch').write_bytes(patch)
     return dict(root=str(ops), commit=git(ops, 'rev-parse', 'HEAD').decode().strip(),
                 uncommitted_changes_in_snapshot=bool(patch.strip()), files_sha256=copied,
-                application=APP_DIR)
+                application=APP_DIR,
+                app_makefile_edit=('switched to makefiles/Makefile.c_app (modern translator)' if makefile_edited else 'none'))
 
 
 def verify_snapshot(campaign):

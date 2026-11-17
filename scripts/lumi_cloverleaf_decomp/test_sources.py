@@ -144,10 +144,18 @@ class PrepareTests(Temp):
         self.assertEqual(ops_files, OPS_FILES)
         self.assertEqual(other, ['start.cpp', 'time_step.cpp', 'build_field.cpp', 'read_input.cpp', 'initialise.cpp',
                                  'advection.cpp'])
-        legacy = text.replace('#include $(OPS_INSTALL_PATH)/../makefiles/Makefile.c_app_legacy', '#legacy').replace(
-            'include $(OPS_INSTALL_PATH)/../makefiles/Makefile.c_app', 'include $(OPS_INSTALL_PATH)/../makefiles/Makefile.c_app_legacy')
+        # As committed on the branch: legacy include active, modern include commented out.
+        lines = [l for l in text.split('\n') if 'makefiles/Makefile.c_app' not in l]
+        legacy = '\n'.join(lines + [S.LEGACY_INCLUDE, '#' + S.MODERN_INCLUDE, ''])
+        self.assertEqual(S.check_app_makefile(legacy)[0], OPS_FILES)  # the committed Makefile (legacy include)
+        modern, edited = S.modern_makefile(legacy)
+        self.assertTrue(edited)
+        self.assertIn('\n' + S.MODERN_INCLUDE, modern)
+        self.assertIn('#' + S.LEGACY_INCLUDE, modern)
+        self.assertFalse(S.modern_makefile(modern)[1])
+        neither = '\n'.join(l for l in text.split('\n') if 'Makefile.c_app' not in l)
         with self.assertRaisesRegex(ValueError, 'does not include makefiles/Makefile.c_app'):
-            S.check_app_makefile(legacy)
+            S.check_app_makefile(neither)
         with self.assertRaisesRegex(ValueError, 'APP=cloverleaf'):
             S.check_app_makefile(text.replace('APP=cloverleaf', 'APP=other'))
 
