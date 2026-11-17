@@ -30,7 +30,7 @@ int main(int argc, char ** argv) {
     int NX = 2040;
     int NY = 2040;
     // Max iterations (default 4000, can be set with -iter=N)
-    int iter_max = 4000;
+    int iter_max = 400;
 
     // Parse command line arguments
     for (int i = 1; i < argc; i++) {

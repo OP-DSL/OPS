@@ -97,6 +97,9 @@ int main(int argc, const char** argv)
 
   ops_printf("Jacobi relaxation Calculation: %d x %d mesh\n", imax+2, jmax+2);
 
+  double ct0, ct1, et0, et1;
+  ops_timers(&ct0, &et0);
+
   int iter = 0;
 
   ops_par_loop(set_zero, "set zero", block, 2, bottom_range,
@@ -130,9 +133,13 @@ int main(int argc, const char** argv)
     iter++;
   }
 
-  ops_printf("%5d, %0.6f\n", iter, error);        
+  ops_printf("%5d, %0.6f\n", iter, error);
+
+  ops_timers(&ct1, &et1);
 
   ops_timing_output(std::cout);
+
+  ops_printf("\nTotal Wall time %lf\n", et1-et0);
 
   double err_diff = fabs((100.0*(error/2.421354960840227e-03))-100.0);
   printf("Total error is within %3.15E %% of the expected error\n",err_diff);

@@ -13,20 +13,27 @@
 #ifndef mult
 #define mult 1
 #endif
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
-// Initializing OPS 
+// Parse grid size from command line (before ops_init consumes -OPS_* args)
+if (argc >= 4) {
+  block0np0 = atoi(argv[1]);
+  block0np1 = atoi(argv[2]);
+  block0np2 = atoi(argv[3]);
+} else {
+  // Default values
+  block0np0 = mult*320+1;
+  block0np1 = 321;
+  block0np2 = 321;
+}
+Delta0block0 = M_PI/(block0np0-1);
+Delta1block0 = M_PI/(block0np1-1);
+Delta2block0 = M_PI/(block0np2-1);
+// Initializing OPS
 ops_init(argc,argv,2);
 // Set restart to 1 to restart the simulation from HDF5 file
 restart = 0;
-// User defined constant values
-block0np0 = mult*320+1;
-block0np1 = 321;
-block0np2 = 321;
-Delta0block0 = mult*M_PI/(block0np0-1);
-Delta1block0 = M_PI/(block0np1-1);
-Delta2block0 = M_PI/(block0np2-1);
-niter = 50;
+niter = 150;
 double rkold[] = {(1.0/4.0), (3.0/20.0), (3.0/5.0)};
 double rknew[] = {(2.0/3.0), (5.0/12.0), (3.0/5.0)};
 dt = 0.00125;
