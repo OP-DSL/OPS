@@ -374,20 +374,20 @@ __global__ void ops_{{lh.kernel}}({{signature[0]}}) {
     dim3 tblock(selected_block.x, selected_block.y, selected_block.z);
 
 {% if lh.ndim == 1 %}
-    dim3 grid( (x_size-1)/tblock.x + 1, 1, 1);
+    dim3 grid( (x_size-1)/(int)tblock.x + 1, 1, 1);
 {% elif lh.ndim == 2 %}
-    dim3 grid( (x_size-1)/tblock.x + 1, (y_size-1)/tblock.y + 1, 1);
+    dim3 grid( (x_size-1)/(int)tblock.x + 1, (y_size-1)/(int)tblock.y + 1, 1);
 {% elif lh.ndim == 3 %}
-    dim3 grid( (x_size-1)/tblock.x + 1, (y_size-1)/tblock.y + 1, (z_size-1)/tblock.z + 1);
+    dim3 grid( (x_size-1)/(int)tblock.x + 1, (y_size-1)/(int)tblock.y + 1, (z_size-1)/(int)tblock.z + 1);
 {% endif %}
 
 {% if lh.has_reduction %}
 {% if lh.ndim == 1 %}
-    int nblocks = ((x_size-1)/tblock.x + 1);
+    int nblocks = ((x_size-1)/(int)tblock.x + 1);
 {% elif lh.ndim == 2 %}
-    int nblocks = ((x_size-1)/tblock.x + 1)*((y_size-1)/tblock.y + 1);
+    int nblocks = ((x_size-1)/(int)tblock.x + 1)*((y_size-1)/(int)tblock.y + 1);
 {% elif lh.ndim == 3 %}
-    int nblocks = ((x_size-1)/tblock.x + 1)*((y_size-1)/tblock.y + 1)*((z_size-1)/tblock.z + 1);
+    int nblocks = ((x_size-1)/(int)tblock.x + 1)*((y_size-1)/(int)tblock.y + 1)*((z_size-1)/(int)tblock.z + 1);
 {% endif %}
 
     int maxblocks = nblocks;
