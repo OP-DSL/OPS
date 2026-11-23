@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 # One entry point for the LUMI campaigns of CloverLeaf_3D, SENGA2 and TGV.
 #
-#   bash campaign.sh <cloverleaf|senga2|tgv> <new|continue|retry|status|list> [options]
+#   bash campaign.sh <cloverleaf|senga2|tgv|tgv-top3> <new|continue|retry|status|list> [options]
+#
+#   cloverleaf, senga2, tgv   MPI-decomposition sweep: 1440^3 on 20 nodes, default / autotune / precomputed
+#                             runs for every decomposition (tgv is tgvstorenone, package lumi_tgv_decomp)
+#   tgv-top3                  the earlier TGV launcher (lumi_tgv_top3): replay of the TOP3 dataset at 2160^3
 #
 #   new       create a campaign, build only if needed, freeze the plan and submit
 #   continue  submit what is still missing in the latest campaign (or the one given with --campaign)
@@ -11,25 +15,28 @@
 #
 # Options (all optional):
 #   --campaign NAME   campaign to act on: full path, folder name or any part of it (e.g. 20261118_153312)
-#   --steps N         time steps per run            (default: cloverleaf 2250, senga2 100)
+#   --steps N         time steps per run            (default: cloverleaf 2250, senga2 100, tgv 2800)
 #   --grid N          cubic grid                    (default: 1440, the package default)
-#   --nodes N         nodes; for tgv a list 2,3,4   (default: 20; tgv 2,3,4,6,8,10,12,16,20,24,32,40)
+#   --nodes N         nodes; tgv-top3: a list 2,3,4 (default: 20; tgv-top3 2,3,4,6,8,10,12,16,20,24,32,40)
 #   --jobs N          chained allocations           (default: 2)
 #   --decompositions L  only these MPI decompositions, e.g. 8x5x4,10x2x8 (with new; default: the package set).
 #                     Include 8x5x4 (the default of OPS) when the result must be compared against it
-#   --time T          wall time of each allocation  (default: the package default; tgv 01:00:00)
+#   --time T          wall time of each allocation  (default: the package default; tgv-top3 01:00:00)
 #   --account A       Slurm project; otherwise $SLURM_ACCOUNT, otherwise ACCOUNT= in ~/.ops_campaign.conf
 #   --rebuild         compile even when an identical build of an earlier campaign could be reused
 #   --dry-run         print the commands without running them
 #
 # The executable of an earlier campaign is reused when the OPS commit, the environment file, the grids
 # and the build code of the package are the same and that checkout had no uncommitted changes.
+# tgv-top3 takes its cases from the dataset: --steps, --grid, --jobs, --decompositions and --rebuild do
+# not apply to it. The tgv default of 2800 steps is an estimate for runs of about 5 minutes (500 steps
+# at 2160^3 on 20 nodes took about 181 s; scaled by the number of grid points).
 set -euo pipefail
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 python_bin="${OPS_LAUNCHER_PYTHON:-python3}"
 
 die() { echo "ERROR: $*" >&2; exit 2; }
-usage() { sed -n '2,26p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
+usage() { sed -n '2,33p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
 
 [ $# -ge 1 ] || usage 2
 case "$1" in -h|--help) usage 0;; esac
@@ -55,13 +62,16 @@ done
 case "$app" in
   cloverleaf) package=lumi_cloverleaf_decomp; folder=ops-cloverleaf-decomp; prefix=CLOVERLEAF_DECOMP_; default_steps=2250;;
   senga2)     package=lumi_senga2_decomp;     folder=ops-senga2-decomp;     prefix=SENGA2_DECOMP_;     default_steps=100;;
-  tgv)        package=lumi_tgv_top3;          folder=ops-decomposition;     prefix=TGV_TOP3_;          default_steps='';;
-  *) die "Unknown application '$app': use cloverleaf, senga2 or tgv";;
+  tgv)        package=lumi_tgv_decomp;        folder=ops-tgv-decomp;        prefix=TGV_DECOMP_;        default_steps=2800;;
+  tgv-top3)   package=lumi_tgv_top3;          folder=ops-decomposition;     prefix=TGV_TOP3_;          default_steps='';;
+  *) die "Unknown application '$app': use cloverleaf, senga2, tgv or tgv-top3";;
 esac
+override='campaign.sh: qualified in earlier campaigns'
+[ "$app" != tgv ] || override='campaign.sh: submitted without the qualification stage of this campaign'
 case "$action" in new|continue|retry|status|list) ;; *) die "Unknown action '$action': use new, continue, retry, status or list";; esac
 [ -z "$steps" ] && steps=$default_steps
 if [ -n "$decomps" ]; then
-  [ "$app" != tgv ] || die "--decompositions does not apply to tgv (its cases come from the dataset)"
+  [ "$app" != tgv-top3 ] || die "--decompositions does not apply to tgv-top3 (its cases come from the dataset)"
   [ "$action" = new ] || die "--decompositions only applies to 'new': the plan of an existing campaign is frozen. \
 'continue' already runs only what is missing and 'retry' also repeats the failed runs."
 fi
@@ -102,7 +112,7 @@ $found"
 built() {                     # 0 when every build of the campaign has its manifest
   local c=$1 n
   case "$app" in
-    cloverleaf) [ -f "$c/build/hip/build_manifest.json" ];;
+    cloverleaf|tgv) [ -f "$c/build/hip/build_manifest.json" ];;
     senga2) for n in small full; do [ -f "$c/build/$n/build_manifest.json" ] || return 1; done;;
   esac
 }
@@ -154,7 +164,7 @@ submitted() { [ -f "$1/submissions.json" ] && grep -q '"kind": *"sweep"' "$1/sub
 
 submit() {
   local c=$1; shift
-  local args=(submit --campaign "$c" --jobs "$jobs" --override-gonogo "campaign.sh: qualified in earlier campaigns")
+  local args=(submit --campaign "$c" --jobs "$jobs" --override-gonogo "$override")
   [ -n "$walltime" ] && args+=(--time "$walltime")
   run bash "$c/launcher/run.sh" "${args[@]}" "$@"
 }
@@ -168,8 +178,8 @@ if [ "$action" = list ]; then
   exit 0
 fi
 
-# ------------------------------------------------------------------ TGV (one script with options)
-if [ "$app" = tgv ]; then
+# ------------------------------------------------------------------ TGV top-3 (one script with options)
+if [ "$app" = tgv-top3 ]; then
   tgv="$here/$package/run.sh"
   case "$action" in
     new)
@@ -192,14 +202,14 @@ print(c["stamp"], ",".join(map(str, c["nodes"])), c["time"])' "$c")
   exit 0
 fi
 
-# ------------------------------------------------------------------ CloverLeaf / SENGA2
+# ------------------------------------------------------------------ CloverLeaf / SENGA2 / TGV
 case "$action" in
   new)
     prepare=(prepare --account "$account")
     [ -n "$grid" ] && prepare+=(--grid "$grid")
     [ -n "$nodes" ] && prepare+=(--nodes "$nodes")
     plan_extra=()
-    if [ -n "$decomps" ] && [ "$app" = cloverleaf ]; then prepare+=(--decompositions "$decomps"); fi
+    if [ -n "$decomps" ] && [ "$app" != senga2 ]; then prepare+=(--decompositions "$decomps"); fi
     if [ -n "$decomps" ] && [ "$app" = senga2 ]; then      # SENGA2 selects by exclusion: leave out the rest
       scratch=$(mktemp -d)
       dry_plan=(plan --output-dir "$scratch")

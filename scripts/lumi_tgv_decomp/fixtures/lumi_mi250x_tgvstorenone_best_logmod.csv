@@ -1,0 +1,34 @@
+kernel_id,bx,by,bz,best_time,default_time,points,gpoints_per_s,nargs,nstencil_args,widest_radius,widest_radius_x,widest_radius_y,widest_radius_z,stencil_sig,max_threads_per_block
+2,1,64,4,0.000325918,0.00037384,161604,0.495842,5,5,2,2,0,0,"stencil_0_07temp;stencil_0_07temp;stencil_0_07temp;stencil_0_07temp;stencil_0_07temp",1024
+3,1,64,1,9.53674e-07,3.09944e-06,161604,169.454,5,5,2,2,0,0,"stencil_0_07temp;stencil_0_07temp;stencil_0_07temp;stencil_0_07temp;stencil_0_07temp",1024
+4,64,1,4,5.19753e-05,7.9155e-05,161604,3.10925,5,5,2,0,2,0,"stencil_0_09temp;stencil_0_09temp;stencil_0_09temp;stencil_0_09temp;stencil_0_09temp",1024
+5,64,1,1,9.53674e-07,1.19209e-06,161604,169.454,5,5,2,0,2,0,"stencil_0_09temp;stencil_0_09temp;stencil_0_09temp;stencil_0_09temp;stencil_0_09temp",1024
+6,32,2,1,4.79221e-05,4.98295e-05,161604,3.37222,5,5,2,0,0,2,"stencil_0_08temp;stencil_0_08temp;stencil_0_08temp;stencil_0_08temp;stencil_0_08temp",1024
+7,64,1,1,9.53674e-07,9.53674e-07,161604,169.454,5,5,2,0,0,2,"stencil_0_08temp;stencil_0_08temp;stencil_0_08temp;stencil_0_08temp;stencil_0_08temp",1024
+9,64,2,1,0.00130391,0.00135612,64964808,49.823,3,3,0,0,0,0,"stencil_0_03temp;stencil_0_03temp;stencil_0_03temp",1024
+10,64,2,1,0.00130081,0.00133801,64964808,49.9417,3,3,0,0,0,0,"stencil_0_03temp;stencil_0_03temp;stencil_0_03temp",1024
+11,64,4,1,0.00130701,0.00134802,64964808,49.7049,3,3,0,0,0,0,"stencil_0_03temp;stencil_0_03temp;stencil_0_03temp",1024
+12,32,32,1,0.00387788,0.00444794,64964808,16.7527,6,6,0,0,0,0,"stencil_0_03temp;stencil_0_03temp;stencil_0_03temp;stencil_0_03temp;stencil_0_03temp;stencil_0_03temp",1024
+13,32,4,2,0.00172591,0.00175095,64964808,37.6409,3,3,0,0,0,0,"stencil_0_03temp;stencil_0_03temp;stencil_0_03temp",1024
+14,64,2,1,0.000959158,0.000972986,64641600,67.3941,2,2,2,2,0,0,"stencil_0_07temp;stencil_0_03temp",1024
+15,16,1,16,0.00147295,0.00184894,64000000,43.4502,2,2,2,0,0,2,"stencil_0_08temp;stencil_0_03temp",1024
+16,64,4,1,0.000986814,0.00100493,64000000,64.8551,2,2,2,0,2,0,"stencil_0_09temp;stencil_0_03temp",1024
+17,64,2,1,0.000952005,0.000967026,64320000,67.5626,2,2,2,2,0,0,"stencil_0_07temp;stencil_0_03temp",1024
+18,16,1,16,0.00147891,0.00183988,64000000,43.2751,2,2,2,0,0,2,"stencil_0_08temp;stencil_0_03temp",1024
+19,64,4,1,0.000983,0.00102305,64320000,65.4324,2,2,2,0,2,0,"stencil_0_09temp;stencil_0_03temp",1024
+20,64,2,1,0.000937939,0.00096488,64320000,68.5759,2,2,2,2,0,0,"stencil_0_07temp;stencil_0_03temp",1024
+21,16,1,16,0.00147915,0.00183892,64000000,43.2681,2,2,2,0,0,2,"stencil_0_08temp;stencil_0_03temp",1024
+22,64,4,1,0.000998974,0.00101399,64320000,64.3861,2,2,2,0,2,0,"stencil_0_09temp;stencil_0_03temp",1024
+23,64,1,8,0.0354331,0.043443,64000000,1.80622,17,17,2,2,2,2,"stencil_0_00temp;stencil_0_04temp;stencil_0_05temp;stencil_0_02temp;stencil_0_03temp;stencil_0_01temp;stencil_0_00temp;stencil_0_03temp;stencil_0_00temp;stencil_0_03temp;stencil_0_00temp;stencil_0_00temp;stencil_0_03temp;stencil_0_03temp;stencil_0_03temp;stencil_0_03temp;stencil_0_03temp",1024
+24,128,1,8,0.0265551,0.039428,64000000,2.41009,17,17,2,2,2,2,"stencil_0_05temp;stencil_0_02temp;stencil_0_03temp;stencil_0_00temp;stencil_0_03temp;stencil_0_00temp;stencil_0_03temp;stencil_0_03temp;stencil_0_00temp;stencil_0_00temp;stencil_0_05temp;stencil_0_06temp;stencil_0_05temp;stencil_0_03temp;stencil_0_03temp;stencil_0_03temp;stencil_0_03temp",1024
+25,256,1,1,0.00963402,0.015336,64000000,6.64313,16,15,0,0,0,0,"stencil_0_03temp;stencil_0_03temp;stencil_0_03temp;stencil_0_03temp;stencil_0_03temp;stencil_0_03temp;stencil_0_03temp;stencil_0_03temp;stencil_0_03temp;stencil_0_03temp;stencil_0_03temp;stencil_0_03temp;stencil_0_03temp;stencil_0_03temp;stencil_0_03temp;none",1024
+26,64,16,1,0.00815392,0.0088141,64000000,7.84899,11,10,0,0,0,0,"stencil_0_03temp;stencil_0_03temp;stencil_0_03temp;stencil_0_03temp;stencil_0_03temp;stencil_0_03temp;stencil_0_03temp;stencil_0_03temp;stencil_0_03temp;stencil_0_03temp;none",1024
+8,64,1,1,0.00452399,0.00480986,64000000,14.1468,10,10,0,0,0,0,"stencil_0_03temp;stencil_0_03temp;stencil_0_03temp;stencil_0_03temp;stencil_0_03temp;stencil_0_03temp;stencil_0_03temp;stencil_0_03temp;stencil_0_03temp;stencil_0_03temp",1024
+
+
+
+Autotune -- 1
+total of rows -- 25
+app name -- tgvstorenone_mpi_hip
+default total time -- 196.526
+best total time -- 150.991
