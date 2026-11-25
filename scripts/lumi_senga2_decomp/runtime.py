@@ -27,6 +27,10 @@ RE_KERNEL = re.compile(r'^(\S+)\s+(\d+)\s+(\d+)\s+([0-9.eE+-]+) \(', re.M)
 RE_KERNEL_LINE = re.compile(r'^\S+[ \t]+\d+[ \t]+\d+[ \t]+\S+ \(.*$', re.M)
 TOTALS = (('kernel_time_s', 'Total kernel time'), ('halo_time_s', 'Total halo exchange time'),
           ('user_halo_time_s', 'Total user halo exchange time'))
+# Per-rank halo phase timers printed by OPS (ops_mpi_halo_timers_output, OPS_diags > 1), one line per rank:
+# OPS_HALO_TIMERS version=1 rank=N gather=.. sendrecv=.. scatter=.. sum=.. calls=.. gather_x=.. ... bytes_z=..
+RE_HALO_TIMERS = re.compile(r'^OPS_HALO_TIMERS version=(\d+) ([^\r\n]*)$', re.M)
+HALO_PHASES = ('gather', 'sendrecv', 'scatter')
 FAILURE_PATTERNS = (('OOM', re.compile(r'out of memory|OutOfMemory', re.I)),
                     ('OVERPARTITION', re.compile(r'overpartitioning', re.I)),
                     ('OTHER', re.compile(r'(?<![A-Za-z0-9_])nan(?![A-Za-z0-9_])', re.I)),
@@ -43,11 +47,38 @@ RECORD_FIELDS = (
     'order_in_pair', 'stage', 'slurm_job_id', 'slurm_step_id', 'node_list', 'start_utc', 'end_utc', 'argv',
     'argv_other_ranks', 'environment', 'executable_sha256', 'catalog_sha256', 'catalog_rows', 'package_commit',
     'ops_commit', 'senga_commit', 'module_list', 'printed_grid', 'total_ttime_s', 'kernel_time_s', 'halo_time_s',
-    'user_halo_time_s', 'ranks', 'verdict', 'reason')
+    'user_halo_time_s', 'halo_timers', 'ranks', 'verdict', 'reason')
 
 
 class CatalogError(ValueError):
     pass
+
+
+def parse_halo_timers(logs, nranks):
+    """Halo phase timers of every rank (the last OPS_HALO_TIMERS line of each rank log).
+
+    status: OK (all ranks), PARTIAL (some) or MISSING (none, e.g. an OPS build without the timers).
+    Missing timers never invalidate a run. per_rank maps the rank (as a string, for JSON) to its numeric fields."""
+    per_rank, versions = {}, set()
+    for rank, text in sorted(logs.items()):
+        found = RE_HALO_TIMERS.findall(text or '')
+        if not found:
+            continue
+        version, body = found[-1]
+        fields = {}
+        for token in body.split():
+            key, sep, value = token.partition('=')
+            if sep:
+                try:
+                    fields[key] = float(value)
+                except ValueError:
+                    pass
+        if all(p in fields for p in HALO_PHASES):
+            per_rank[str(rank)] = fields
+            versions.add(int(version))
+    status = 'MISSING' if not per_rank else ('OK' if len(per_rank) == nranks else 'PARTIAL')
+    return dict(status=status, version=max(versions) if versions else None, ranks_reported=len(per_rank),
+                per_rank=per_rank)
 
 
 # --------------------------------------------------------------------------- per-rank worker
@@ -370,6 +401,7 @@ def validate_run(attempt, run, expect):
     if any(m[key] is None for key, _ in TOTALS):
         fail('OTHER', 'OPS timing totals missing from the root log (is -OPS_DIAGS=2 in effect?)')
     m['kernel_times'] = kernel_table(root)
+    m['halo_timers'] = parse_halo_timers(logs, run['ranks'])
     enabled = 'GPU Direct enabled' in root
     m['gpu_direct'] = enabled
     if run['gpudirect'] and not enabled:

@@ -22,7 +22,7 @@ LAYOUT_VERSION = 1
 APP = 'cloverleaf'
 GRID_CONFIG = 'cfg1'
 GPUS_PER_NODE = 8
-TIMING_PARSER_VERSION = 'cloverleaf_total_wall_time_v1'
+TIMING_PARSER_VERSION = 'cloverleaf_total_wall_time_v2'   # v2: + OPS_HALO_TIMERS (halo phase timers)
 SWEEP_POLICY = 'listed_v1'
 VARIANT = {'D': 'autotune_off', 'A': 'autotune_on', 'P': 'autotune_precomputed'}
 VARIANT_ORDER = ('autotune_off', 'autotune_on', 'autotune_precomputed')
@@ -31,6 +31,18 @@ BLOCK_SELECTION = {'D': ('default', '32', '4', '1'), 'A': ('dynamic', 'dynamic',
                    'P': ('precomputed', 'per_kernel', 'per_kernel', 'per_kernel')}
 COMMIT_RULE = 'RUN_STATUS=OK, RUN_EXIT_CODE=0, VALIDATION_STATUS=PASS, COMMIT_STATUS=COMMITTED'
 COMMITTED = dict(RUN_STATUS='OK', RUN_EXIT_CODE='0', VALIDATION_STATUS='PASS', COMMIT_STATUS='COMMITTED')
+# Halo phase timers (OPS_HALO_TIMERS, one line per rank; see halo_timer_values). Empty when OPS did not print
+# them (HALO_TIMERS_STATUS=MISSING); never 0. Times in seconds, statistics over ranks.
+HALO_PHASE_KEYS = (('gather', 'GATHER'), ('sendrecv', 'SENDRECV'), ('scatter', 'SCATTER'), ('sum', 'PHASES_SUM'))
+HALO_AXES = ('x', 'y', 'z')
+HALO_TIMER_KEYS = (('HALO_TIMERS_STATUS', 'HALO_TIMERS_VERSION', 'HALO_TIMERS_RANKS') +
+                   tuple('HALO_%s_TIME_%s' % (k, s) for _, k in HALO_PHASE_KEYS for s in ('MIN', 'MEAN', 'MAX')) +
+                   ('HALO_UNACCOUNTED_TIME_MEAN', 'HALO_SLOWEST_RANK_SENDRECV', 'HALO_SLOWEST_RANK_SCATTER',
+                    'HALO_EXCHANGE_CALLS') +
+                   tuple('HALO_%s_TIME_%s_MEAN' % (k, a.upper()) for _, k in HALO_PHASE_KEYS[:3] for a in HALO_AXES) +
+                   tuple('HALO_BYTES_SENT_%s_MEAN' % a.upper() for a in HALO_AXES))
+RANK_HALO_FIELDS = (('rank_gather_time_s', 'gather'), ('rank_sendrecv_time_s', 'sendrecv'),
+                    ('rank_scatter_time_s', 'scatter'), ('rank_halo_phase_sum_s', 'sum'), ('rank_halo_calls', 'calls'))
 # Keys of a run config.txt, in the order of the TGV campaign files (OPS_LOGS_20260928_161749_n006).
 # The two PRECOMPUTED_* keys are written only in precomputed runs. Extra keys follow COMMIT_STATUS.
 CONFIG_KEYS = (
@@ -47,7 +59,8 @@ EXTRA_KEYS = (
     'DATASET_LAYOUT_VERSION', 'LAUNCHER_CAMPAIGN_ID', 'RUN_ID', 'STAGE', 'SENTINEL_KIND', 'PLAN_SHA256',
     'PLAN_POSITION', 'DECOMP_POSITION', 'SEED', 'PAIR_INDEX', 'ORDER_IN_PAIR', 'DECOMPOSITION_FORCED', 'PRINTED_GRID',
     'GPU_DIRECT', 'GPU_DIRECT_REQUESTED', 'GPU_DIRECT_REPORTED', 'MPICH_GPU_SUPPORT_ENABLED',
-    'KERNEL_TOTAL_TIME', 'HALO_TOTAL_TIME', 'USER_HALO_TOTAL_TIME', 'MPI_COMM_VOLUME_MB', 'AUTOTUNE_CATALOG_STATUS',
+    'KERNEL_TOTAL_TIME', 'HALO_TOTAL_TIME', 'USER_HALO_TOTAL_TIME', 'MPI_COMM_VOLUME_MB') + HALO_TIMER_KEYS + (
+    'AUTOTUNE_CATALOG_STATUS',
     'CATALOG_ROWS', 'CATALOG_SHA256', 'EXECUTED_KERNELS', 'KERNEL_COVERAGE', 'FALLBACK_KERNEL_IDS_RANK0',
     'FALLBACK_KERNEL_IDS_OTHER_RANKS', 'FIELD_SUMMARY_STEP', 'FIELD_SUMMARY_VOLUME', 'FIELD_SUMMARY_MASS',
     'FIELD_SUMMARY_DENSITY', 'FIELD_SUMMARY_PRESSURE', 'FIELD_SUMMARY_INTERNAL_ENERGY',
@@ -57,7 +70,8 @@ EXTRA_KEYS = (
     'OPS_COMMIT', 'VERDICT', 'FAILURE_CATEGORY', 'FAILURE_REASON', 'RECORD_FILE')
 RANK_FIELDS = ['run_id', 'rank_id', 'local_rank', 'gpu_id', 'hostname', 'coord_x', 'coord_y', 'coord_z', 'coord_source',
                'local_nx', 'local_ny', 'local_nz', 'rank_wall_time_s', 'app_reported_wall_time_s',
-               'rank_compute_time_s', 'rank_mpi_time_s', 'rank_halo_time_s', 'rank_wait_time_s', 'rank_status']
+               'rank_compute_time_s', 'rank_mpi_time_s', 'rank_halo_time_s', 'rank_wait_time_s', 'rank_status'] + \
+             [name for name, _ in RANK_HALO_FIELDS]   # halo phase timers of the rank (empty if OPS did not print them)
 COORD_SOURCE = 'not_measured'      # OPS does not print the rank -> coordinate map; nothing is assumed
 RE_WALL = re.compile(r'^[ \t]*Total Wall time[ \t]+([0-9.Ee+-]+)[ \t]*$', re.M)
 RE_HALO = re.compile(r'^[ \t]*Total halo exchange time:[ \t]*([0-9.eE+-]+)[ \t]*$', re.M)
@@ -99,6 +113,52 @@ def committed(values):
 
 def fmt(value):
     return '' if value is None else '%.6f' % value
+
+
+def halo_timer_values(record):
+    """config.txt values of the halo phase timers (record['halo_timers'], parsed by runtime.parse_halo_timers).
+
+    HALO_UNACCOUNTED_TIME_MEAN = HALO_TOTAL_TIME - HALO_PHASES_SUM_TIME_MEAN: both are means over ranks (OPS prints
+    "Total halo exchange time" as the mean of the per-kernel MPI times); the difference is the halo-related time
+    outside gather/sendrecv/scatter (host-device exchanges, dirty-bit bookkeeping)."""
+    timers = record.get('halo_timers') or {}
+    per = timers.get('per_rank') or {}
+    values = dict((key, '') for key in HALO_TIMER_KEYS)
+    values.update(HALO_TIMERS_STATUS=timers.get('status') or 'MISSING', HALO_TIMERS_RANKS=len(per),
+                  HALO_TIMERS_VERSION=timers.get('version') if timers.get('version') is not None else '')
+    if not per:
+        return values
+    ranks = sorted(per, key=int)
+
+    def column(name):
+        return [(per[r][name], r) for r in ranks if name in per[r]]
+
+    for field, key in HALO_PHASE_KEYS:
+        col = column(field)
+        if col:
+            numbers = [v for v, _ in col]
+            values.update({'HALO_%s_TIME_MIN' % key: fmt(min(numbers)), 'HALO_%s_TIME_MAX' % key: fmt(max(numbers)),
+                           'HALO_%s_TIME_MEAN' % key: fmt(sum(numbers) / len(numbers))})
+    for field in ('sendrecv', 'scatter'):
+        col = column(field)
+        if col:
+            values['HALO_SLOWEST_RANK_%s' % field.upper()] = max(col, key=lambda c: (c[0], int(c[1])))[1]
+    calls = column('calls')
+    if calls:
+        values['HALO_EXCHANGE_CALLS'] = '%d' % max(v for v, _ in calls)
+    sums = [v for v, _ in column('sum')]
+    if sums and record.get('halo_time_s') is not None:
+        values['HALO_UNACCOUNTED_TIME_MEAN'] = fmt(record['halo_time_s'] - sum(sums) / len(sums))
+    for field, key in HALO_PHASE_KEYS[:3]:
+        for axis in HALO_AXES:
+            col = [v for v, _ in column('%s_%s' % (field, axis))]
+            if col:
+                values['HALO_%s_TIME_%s_MEAN' % (key, axis.upper())] = fmt(sum(col) / len(col))
+    for axis in HALO_AXES:
+        col = [v for v, _ in column('bytes_%s' % axis)]
+        if col:
+            values['HALO_BYTES_SENT_%s_MEAN' % axis.upper()] = '%.0f' % (sum(col) / len(col))
+    return values
 
 
 def attempt_number(path):
@@ -336,6 +396,7 @@ class Layout(object):
             if not iteration.is_dir():
                 continue
             pairs = [('AUTOTUNE_MODES', '0 1 2'), ('RUN_ITERATION', iteration.name.split('_', 1)[1])]
+            halo = []   # after the TGV keys, so the TGV key order is kept as a prefix
             for variant in VARIANT_ORDER:
                 path = iteration / variant / 'config.txt'
                 if path.is_file():
@@ -343,7 +404,11 @@ class Layout(object):
                     if committed(values):
                         pairs += [('WALL_TIME_' + VARIANT_TIME_KEY[variant], values['APP_WALL_TIME']),
                                   ('JOB_WALL_TIME_' + VARIANT_TIME_KEY[variant], values['JOB_WALL_TIME'])]
-            atomic_bytes(iteration / 'config.txt', config_text(pairs).encode())
+                        if values.get('HALO_TIMERS_STATUS'):   # runs written before the halo timers have no key
+                            halo += [('HALO_TIMERS_STATUS_' + VARIANT_TIME_KEY[variant], values['HALO_TIMERS_STATUS'])]
+                            halo += [('HALO_%s_TIME_MEAN_%s' % (key, VARIANT_TIME_KEY[variant]),
+                                      values.get('HALO_%s_TIME_MEAN' % key, '')) for _, key in HALO_PHASE_KEYS]
+            atomic_bytes(iteration / 'config.txt', config_text(pairs + halo).encode())
 
     # ----- per-run files
     def run_config(self, loc, record, good, catalog_manifest=None):
@@ -419,6 +484,7 @@ class Layout(object):
             VERDICT=record['verdict'], FAILURE_CATEGORY=record.get('category', ''),
             FAILURE_REASON=record.get('reason', '') or (autotune.get('reason', '') if mode == 'A' else ''),
             RECORD_FILE='record.json')
+        values.update(halo_timer_values(record))
         pairs = []
         for key in CONFIG_KEYS + EXTRA_KEYS:
             if key in ('PRECOMPUTED_CATALOG', 'PRECOMPUTED_SET_ID') and mode != 'P':
@@ -432,6 +498,7 @@ class Layout(object):
         if triple and all(self.grid[i] % int(triple[i]) == 0 for i in range(3)):
             local = [self.grid[i] // int(triple[i]) for i in range(3)]
         statuses = {r['rank']: r for r in record.get('ranks') or []}
+        halo_timers = (record.get('halo_timers') or {}).get('per_rank') or {}
         rows = []
         for rank in range(record['nranks']):
             log = attempt / 'ranks' / ('rank_%d.log' % rank)
@@ -443,6 +510,10 @@ class Layout(object):
                        app_reported_wall_time_s=ttime[0] if len(ttime) == 1 else '',
                        rank_compute_time_s='', rank_mpi_time_s='', rank_halo_time_s=halo[-1] if halo else '',
                        rank_wait_time_s='')
+            timers = halo_timers.get(str(rank)) or {}
+            for name, field in RANK_HALO_FIELDS:
+                value = timers.get(field)
+                row[name] = '' if value is None else ('%d' % value if field == 'calls' else fmt(value))
             if s is None:
                 row.update(local_rank='', gpu_id='', hostname='', rank_wall_time_s='', rank_status='MISSING')
             else:

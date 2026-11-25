@@ -32,6 +32,10 @@ STEP_KERNEL = 'opensbliblock00Kernel033'
 # total is printed only when it is positive.
 TOTALS = (('kernel_time_s', 'Total kernel time'), ('halo_time_s', 'Total halo exchange time'),
           ('user_halo_time_s', 'Total user halo exchange time'))
+# Per-rank halo phase timers printed by OPS (ops_mpi_halo_timers_output, OPS_diags > 1), one line per rank:
+# OPS_HALO_TIMERS version=1 rank=N gather=.. sendrecv=.. scatter=.. sum=.. calls=.. gather_x=.. ... bytes_z=..
+RE_HALO_TIMERS = re.compile(r'^OPS_HALO_TIMERS version=(\d+) ([^\r\n]*)$', re.M)
+HALO_PHASES = ('gather', 'sendrecv', 'scatter')
 RE_MPI_VOLUME = re.compile(r'^[ \t]*Average volume of MPI communications per process:[ \t]*([0-9.eE+-]+) MB', re.M)
 # Quantities compared across decompositions: all the application prints that does not depend on the
 # decomposition (integers: number of kernels in the table and total number of loop calls on rank 0).
@@ -52,11 +56,38 @@ RECORD_FIELDS = (
     'order_in_pair', 'stage', 'slurm_job_id', 'slurm_step_id', 'node_list', 'start_utc', 'end_utc', 'argv',
     'argv_other_ranks', 'environment', 'executable_sha256', 'catalog_sha256', 'catalog_rows', 'package_commit',
     'ops_commit', 'app_args', 'module_list', 'printed_grid', 'wall_time_s', 'kernel_time_s', 'halo_time_s',
-    'user_halo_time_s', 'mpi_comm_volume_mb', 'diagnostics', 'ranks', 'verdict', 'reason')
+    'user_halo_time_s', 'mpi_comm_volume_mb', 'diagnostics', 'halo_timers', 'ranks', 'verdict', 'reason')
 
 
 class CatalogError(ValueError):
     pass
+
+
+def parse_halo_timers(logs, nranks):
+    """Halo phase timers of every rank (the last OPS_HALO_TIMERS line of each rank log).
+
+    status: OK (all ranks), PARTIAL (some) or MISSING (none, e.g. an OPS build without the timers).
+    Missing timers never invalidate a run. per_rank maps the rank (as a string, for JSON) to its numeric fields."""
+    per_rank, versions = {}, set()
+    for rank, text in sorted(logs.items()):
+        found = RE_HALO_TIMERS.findall(text or '')
+        if not found:
+            continue
+        version, body = found[-1]
+        fields = {}
+        for token in body.split():
+            key, sep, value = token.partition('=')
+            if sep:
+                try:
+                    fields[key] = float(value)
+                except ValueError:
+                    pass
+        if all(p in fields for p in HALO_PHASES):
+            per_rank[str(rank)] = fields
+            versions.add(int(version))
+    status = 'MISSING' if not per_rank else ('OK' if len(per_rank) == nranks else 'PARTIAL')
+    return dict(status=status, version=max(versions) if versions else None, ranks_reported=len(per_rank),
+                per_rank=per_rank)
 
 
 # --------------------------------------------------------------------------- per-rank worker
@@ -395,6 +426,7 @@ def validate_run(attempt, run, expect):
     m['mpi_comm_volume_mb'] = float(volume[-1]) if volume else None
     m['mpi_comm_volume_text'] = volume[-1] if volume else None
     m['kernel_times'] = kernel_table(root)
+    m['halo_timers'] = parse_halo_timers(logs, run['ranks'])
     enabled = 'GPU Direct enabled' in root
     m['gpu_direct'] = enabled
     if run['gpudirect'] and not enabled:

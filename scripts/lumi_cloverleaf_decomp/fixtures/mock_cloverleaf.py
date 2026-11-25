@@ -162,3 +162,12 @@ if root:
     if 'no_wall' not in kinds:
         print('\nTotal Wall time %f' % seconds)
     out.close()
+
+if cfg.get('halo_timers', True):
+    # same format as ops_mpi_halo_timers_output (OPS); phase sum stays below "Total halo exchange time"
+    g, r, c = 0.002 * seconds * (1 + 0.01 * rank), 0.010 * seconds * (1 + 0.02 * rank), 0.003 * seconds
+    axes = ' '.join('gather_%s=%.6f sendrecv_%s=%.6f scatter_%s=%.6f exchanges_%s=%d bytes_%s=%d'
+                    % (a, g / 3, a, r / 3, a, c / 3, a, 10 * steps, a, 1000 * steps) for a in 'xyz')
+    print('OPS_HALO_TIMERS version=1 rank=%d gather=%.6f sendrecv=%.6f scatter=%.6f sum=%.6f calls=%d %s '
+          'gather_other=0.000000 sendrecv_other=0.000000 scatter_other=0.000000'
+          % (rank, g, r, c, g + r + c, 30 * steps, axes))

@@ -429,7 +429,37 @@ OPS kernel and halo totals, `MPI_COMM_VOLUME_MB`, the final field summary `FIELD
 `CLOVER_IN_SHA256`, Slurm job and node list, pair index and order, plan position and seed, catalog rows
 and fallback kernels, failure reason). `APP_WALL_TIME` is `Total Wall time` of the root rank (digits as
 printed), `NITER` the steps, `APP_ARGS` empty (the input is `clover.in`), `TIMING_PARSER_VERSION`
-`cloverleaf_total_wall_time_v1`, `COORD_SOURCE` `not_measured`.
+`cloverleaf_total_wall_time_v2`, `COORD_SOURCE` `not_measured`.
+
+### 6.2 Halo phase timers (`TIMING_PARSER_VERSION` `*_v2`)
+
+With an OPS build that has the halo phase timers (`ops_mpi_halo_timers_output`, branch
+`feature/gpu_block_size`) and `-OPS_DIAGS=2`, every rank prints at exit one line, kept in its
+`ranks/rank_<r>.log` (and therefore in `run.log`); rank 0 also prints a summary:
+
+```
+OPS_HALO_TIMERS version=1 rank=N gather=.. sendrecv=.. scatter=.. sum=.. calls=..
+  gather_x=.. sendrecv_x=.. scatter_x=.. exchanges_x=.. bytes_x=..  (and y, z)  gather_other=.. ..
+OPS_HALO_TIMERS_SUMMARY version=1 ranks=R gather_min=.. gather_mean=.. gather_max=.. gather_max_rank=.. ..
+```
+
+`gather` packs the halo faces into the send buffers, `sendrecv` is `MPI_Isend/Irecv` plus the wait for the
+receives (it includes waiting for the slowest neighbour), `scatter` unpacks the received buffers, synchronises
+the GPU (the unpack kernels are asynchronous) and waits for the sends. `exchanges_<axis>` counts only the
+exchanges that sent bytes; `*_other` holds OPS dimensions beyond z, so that x + y + z + other equals each total.
+
+The launcher parses the line of every rank (`runtime.parse_halo_timers`, kept in `record.json` as
+`halo_timers`) and writes:
+
+| Where | Keys / columns |
+|---|---|
+| run `config.txt` | `HALO_TIMERS_STATUS` (`OK` all ranks, `PARTIAL`, `MISSING`), `HALO_TIMERS_VERSION`, `HALO_TIMERS_RANKS`; `HALO_{GATHER,SENDRECV,SCATTER,PHASES_SUM}_TIME_{MIN,MEAN,MAX}` over ranks; `HALO_UNACCOUNTED_TIME_MEAN` = `HALO_TOTAL_TIME` - mean phase sum (both are means over ranks); `HALO_SLOWEST_RANK_{SENDRECV,SCATTER}`; `HALO_EXCHANGE_CALLS`; `HALO_{GATHER,SENDRECV,SCATTER}_TIME_{X,Y,Z}_MEAN`; `HALO_BYTES_SENT_{X,Y,Z}_MEAN` |
+| `iter_<r>/config.txt` | after the TGV keys: `HALO_TIMERS_STATUS_<V>` and `HALO_{GATHER,SENDRECV,SCATTER,PHASES_SUM}_TIME_MEAN_<V>` per variant (`NO_AUTOTUNE`, `AUTOTUNE`, `PRECOMPUTED`) |
+| `mpi_rank_metrics.csv`, `ranks/metric_<r>.csv` | after the methodology columns: `rank_gather_time_s`, `rank_sendrecv_time_s`, `rank_scatter_time_s`, `rank_halo_phase_sum_s`, `rank_halo_calls`, for every rank |
+
+Missing timers (an OPS build without them) never invalidate a run: the values are left empty, never 0, and
+`HALO_TIMERS_STATUS=MISSING`. Runs written before `*_v2` have none of these keys. `rank_halo_time_s` is
+unchanged: it is the `Total halo exchange time` printed by rank 0, which OPS reports as a mean over ranks.
 
 ## 7. Exit statuses
 

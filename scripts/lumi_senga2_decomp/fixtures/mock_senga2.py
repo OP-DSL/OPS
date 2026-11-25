@@ -2,7 +2,8 @@
 """Test double of senga2_f2c_mpi_hip: prints the lines the launcher parses.
 
 It is not SENGA2 and computes nothing. Behaviour is steered by the JSON file named in
-MOCK_SENGA_CONFIG: unforced_grid, executed_ids, best_csv, fail (rules applied by rank 0)."""
+MOCK_SENGA_CONFIG: unforced_grid, executed_ids, best_csv, fail (rules applied by rank 0),
+halo_timers (default true: every rank prints an OPS_HALO_TIMERS line, as OPS does with OPS_DIAGS > 1)."""
 import json
 import os
 from pathlib import Path
@@ -130,3 +131,11 @@ if root:
     print('Total user halo exchange time: %g' % (0.1 * seconds))
     if 'no_ttime' not in kinds:
         print('IPROC: %5d total_ttime   =%16.7f seconds' % (0, seconds))
+if cfg.get('halo_timers', True):
+    # same format as ops_mpi_halo_timers_output (OPS); phase sum stays below "Total halo exchange time"
+    g, r, c = 0.002 * seconds * (1 + 0.01 * rank), 0.010 * seconds * (1 + 0.02 * rank), 0.003 * seconds
+    axes = ' '.join('gather_%s=%.6f sendrecv_%s=%.6f scatter_%s=%.6f exchanges_%s=%d bytes_%s=%d'
+                    % (a, g / 3, a, r / 3, a, c / 3, a, 10 * steps, a, 1000 * steps) for a in 'xyz')
+    print('OPS_HALO_TIMERS version=1 rank=%d gather=%.6f sendrecv=%.6f scatter=%.6f sum=%.6f calls=%d %s '
+          'gather_other=0.000000 sendrecv_other=0.000000 scatter_other=0.000000'
+          % (rank, g, r, c, g + r + c, 30 * steps, axes))

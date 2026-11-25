@@ -39,6 +39,10 @@ TGV_ITER_KEYS = ['AUTOTUNE_MODES', 'RUN_ITERATION', 'WALL_TIME_NO_AUTOTUNE', 'JO
 RANK_HEADER = ('run_id,rank_id,local_rank,gpu_id,hostname,coord_x,coord_y,coord_z,coord_source,local_nx,local_ny,local_nz,'
                'rank_wall_time_s,app_reported_wall_time_s,rank_compute_time_s,rank_mpi_time_s,rank_halo_time_s,'
                'rank_wait_time_s,rank_status')
+# halo phase timer columns, appended after the methodology.md 4.3 header (which stays a verbatim prefix)
+RANK_HALO_HEADER = 'rank_gather_time_s,rank_sendrecv_time_s,rank_scatter_time_s,rank_halo_phase_sum_s,rank_halo_calls'
+HALO_ITER_KEYS = ['HALO_TIMERS_STATUS_%s', 'HALO_GATHER_TIME_MEAN_%s', 'HALO_SENDRECV_TIME_MEAN_%s',
+                  'HALO_SCATTER_TIME_MEAN_%s', 'HALO_PHASES_SUM_TIME_MEAN_%s']
 SUMMARY_LINE = re.compile(r'^WALL_TIME_DECOMPOSITION_\d+x\d+x\d+_ITER_\d+_S=[0-9.]+$')
 
 
@@ -194,7 +198,14 @@ class Sweep(unittest.TestCase):
             values = D.parse_config(iteration / 'config.txt')
             want = TGV_ITER_KEYS if iteration.name == 'iter_1' else \
                 [k for k in TGV_ITER_KEYS if k not in ('WALL_TIME_AUTOTUNE', 'JOB_WALL_TIME_AUTOTUNE')]
-            self.assertEqual(keys(iteration / 'config.txt'), want, iteration)
+            halo = [k % D.VARIANT_TIME_KEY[v] for v in D.VARIANT_ORDER if (iteration / v).is_dir() for k in HALO_ITER_KEYS]
+            self.assertEqual(keys(iteration / 'config.txt'), want + halo, iteration)   # TGV keys first, unchanged
+            for variant, key in D.VARIANT_TIME_KEY.items():
+                if (iteration / variant).is_dir():
+                    run = D.parse_config(iteration / variant / 'config.txt')
+                    self.assertEqual(values['HALO_TIMERS_STATUS_' + key], 'OK')
+                    for phase in ('GATHER', 'SENDRECV', 'SCATTER', 'PHASES_SUM'):
+                        self.assertEqual(values['HALO_%s_TIME_MEAN_%s' % (phase, key)], run['HALO_%s_TIME_MEAN' % phase])
             self.assertEqual(values['RUN_ITERATION'], iteration.name.split('_')[1])
             for variant, key in D.VARIANT_TIME_KEY.items():
                 if (iteration / variant).is_dir():
@@ -216,7 +227,7 @@ class Sweep(unittest.TestCase):
     def test_mpi_rank_metrics(self):
         for folder in self.finals():
             text = (folder / 'mpi_rank_metrics.csv').read_text()
-            self.assertEqual(text.splitlines()[0], RANK_HEADER)
+            self.assertEqual(text.splitlines()[0], RANK_HEADER + ',' + RANK_HALO_HEADER)
             rows = list(csv.DictReader(text.splitlines()))
             record = read_json(folder / 'record.json')
             self.assertEqual([int(r['rank_id']) for r in rows], list(range(8)))
@@ -237,9 +248,39 @@ class Sweep(unittest.TestCase):
             self.assertEqual(float(rows[0]['app_reported_wall_time_s']), record['wall_time_s'])
             self.assertEqual(float(rows[0]['rank_halo_time_s']), record['halo_time_s'])
             self.assertTrue(all(r['app_reported_wall_time_s'] == '' and r['rank_halo_time_s'] == '' for r in rows[1:]))
+            timers = record['halo_timers']['per_rank']
+            for row in rows:                                   # halo phase timers: every rank, from its own log
+                mine = timers[row['rank_id']]
+                self.assertAlmostEqual(float(row['rank_gather_time_s']), mine['gather'], places=5)
+                self.assertAlmostEqual(float(row['rank_sendrecv_time_s']), mine['sendrecv'], places=5)
+                self.assertAlmostEqual(float(row['rank_scatter_time_s']), mine['scatter'], places=5)
+                self.assertAlmostEqual(float(row['rank_halo_phase_sum_s']), mine['sum'], places=5)
+                self.assertEqual(int(row['rank_halo_calls']), int(mine['calls']))
             log = (folder / 'run.log').read_text()
             self.assertEqual(re.findall(r'^===== (rank_\d+\.log) =====$', log, re.M),
                              sorted('rank_%d.log' % r for r in range(8)))
+
+    def test_halo_timers_in_run_config(self):
+        for folder in self.finals():
+            c = D.parse_config(folder / 'config.txt')
+            record = read_json(folder / 'record.json')
+            per = record['halo_timers']['per_rank']
+            self.assertEqual((c['HALO_TIMERS_STATUS'], c['HALO_TIMERS_VERSION'], c['HALO_TIMERS_RANKS']), ('OK', '1', '8'))
+            self.assertEqual(sorted(per, key=int), [str(r) for r in range(8)])
+            for field, key in (('gather', 'GATHER'), ('sendrecv', 'SENDRECV'), ('scatter', 'SCATTER'), ('sum', 'PHASES_SUM')):
+                numbers = [per[r][field] for r in per]
+                self.assertAlmostEqual(float(c['HALO_%s_TIME_MIN' % key]), min(numbers), places=5)
+                self.assertAlmostEqual(float(c['HALO_%s_TIME_MAX' % key]), max(numbers), places=5)
+                self.assertAlmostEqual(float(c['HALO_%s_TIME_MEAN' % key]), sum(numbers) / 8, places=5)
+            self.assertEqual(c['HALO_SLOWEST_RANK_SENDRECV'], max(per, key=lambda r: (per[r]['sendrecv'], int(r))))
+            mean_sum = sum(per[r]['sum'] for r in per) / 8
+            self.assertAlmostEqual(float(c['HALO_UNACCOUNTED_TIME_MEAN']), record['halo_time_s'] - mean_sum, places=5)
+            self.assertGreater(float(c['HALO_UNACCOUNTED_TIME_MEAN']), 0)    # phases are part of the halo total
+            self.assertEqual(int(c['HALO_EXCHANGE_CALLS']), int(per['0']['calls']))
+            for axis in 'XYZ':
+                for phase in ('GATHER', 'SENDRECV', 'SCATTER'):
+                    self.assertNotEqual(c['HALO_%s_TIME_%s_MEAN' % (phase, axis)], '')
+                self.assertNotEqual(c['HALO_BYTES_SENT_%s_MEAN' % axis], '')
 
     # ----- criterion 5: commit rule, _attempts, resume
     def test_commit_rule_and_attempts(self):
@@ -593,3 +634,24 @@ class StampTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+class HaloTimerValues(unittest.TestCase):
+    """Runs without the OPS halo timers (older OPS builds) or with only some ranks reporting."""
+
+    def test_missing_gives_empty_values_never_zero(self):
+        values = D.halo_timer_values(dict(halo_time_s=2.0, halo_timers=R.parse_halo_timers({0: 'x', 1: ''}, 2)))
+        self.assertEqual(values['HALO_TIMERS_STATUS'], 'MISSING')
+        self.assertEqual(values['HALO_TIMERS_RANKS'], 0)
+        self.assertTrue(all(values[k] == '' for k in D.HALO_TIMER_KEYS
+                            if k not in ('HALO_TIMERS_STATUS', 'HALO_TIMERS_RANKS')))
+        self.assertEqual(D.halo_timer_values({})['HALO_TIMERS_STATUS'], 'MISSING')    # record written before v2
+
+    def test_partial_uses_the_ranks_that_reported(self):
+        line = 'OPS_HALO_TIMERS version=1 rank=%d gather=%s sendrecv=1.0 scatter=0.5 sum=%s calls=10'
+        logs = {0: line % (0, '0.1', '1.6'), 1: 'no timers here', 2: 'noise\n' + line % (2, '0.3', '1.8')}
+        timers = R.parse_halo_timers(logs, 3)
+        self.assertEqual((timers['status'], timers['ranks_reported'], sorted(timers['per_rank'])), ('PARTIAL', 2, ['0', '2']))
+        values = D.halo_timer_values(dict(halo_time_s=2.0, halo_timers=timers))
+        self.assertEqual((values['HALO_GATHER_TIME_MIN'], values['HALO_GATHER_TIME_MAX']), ('0.100000', '0.300000'))
+        self.assertEqual(values['HALO_UNACCOUNTED_TIME_MEAN'], '0.300000')
+        self.assertEqual(values['HALO_GATHER_TIME_X_MEAN'], '')                       # axis fields absent: empty

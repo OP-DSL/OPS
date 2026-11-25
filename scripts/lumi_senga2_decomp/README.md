@@ -546,12 +546,43 @@ differs from the TGV campaigns, and why:
 | `APP_ARGS` | empty | SENGA2 takes no positional arguments (the grid is compiled in, the steps are in `cont.dat`); the OPS arguments are in `OPS_ARGS_RANK0` / `OPS_ARGS_OTHER_RANKS` |
 | `NITER` | the time steps (100) | |
 | `AUTOTUNE_SAMPLE_RANKS` | `0` | tuning on rank 0 only (section 8) |
-| `TIMING_PARSER_VERSION` | `senga2_total_ttime_v1` | another parser than the TGV one (`5`) |
+| `TIMING_PARSER_VERSION` | `senga2_total_ttime_v2` | another parser than the TGV one (`5`) |
 | `COORD_SOURCE`, `coord_x/y/z` | `not_measured`, empty | OPS does not print the rank-to-coordinate map; nothing is assumed |
 | `rank_compute_time_s`, `rank_mpi_time_s`, `rank_wait_time_s` | empty | not measured |
 | `rank_halo_time_s`, `app_reported_wall_time_s` | filled only for ranks whose log prints them (rank 0) | |
+| `rank_gather_time_s`, `rank_sendrecv_time_s`, `rank_scatter_time_s`, `rank_halo_phase_sum_s`, `rank_halo_calls` | every rank, from its own `OPS_HALO_TIMERS` line (section 6.2) | empty if OPS did not print them |
 | `GPU_DIRECT` | `YES` only if `-gpudirect` was passed, `GPU Direct enabled` was printed and `MPICH_GPU_SUPPORT_ENABLED=1` | |
 | `PRECOMPUTED_SET_ID` | `set_id` of the catalog manifest: sha256 of the manifest without `set_id` (as in the TGV campaigns) | |
+
+### 6.2 Halo phase timers (`TIMING_PARSER_VERSION` `*_v2`)
+
+With an OPS build that has the halo phase timers (`ops_mpi_halo_timers_output`, branch
+`feature/gpu_block_size`) and `-OPS_DIAGS=2`, every rank prints at exit one line, kept in its
+`ranks/rank_<r>.log` (and therefore in `run.log`); rank 0 also prints a summary:
+
+```
+OPS_HALO_TIMERS version=1 rank=N gather=.. sendrecv=.. scatter=.. sum=.. calls=..
+  gather_x=.. sendrecv_x=.. scatter_x=.. exchanges_x=.. bytes_x=..  (and y, z)  gather_other=.. ..
+OPS_HALO_TIMERS_SUMMARY version=1 ranks=R gather_min=.. gather_mean=.. gather_max=.. gather_max_rank=.. ..
+```
+
+`gather` packs the halo faces into the send buffers, `sendrecv` is `MPI_Isend/Irecv` plus the wait for the
+receives (it includes waiting for the slowest neighbour), `scatter` unpacks the received buffers, synchronises
+the GPU (the unpack kernels are asynchronous) and waits for the sends. `exchanges_<axis>` counts only the
+exchanges that sent bytes; `*_other` holds OPS dimensions beyond z, so that x + y + z + other equals each total.
+
+The launcher parses the line of every rank (`runtime.parse_halo_timers`, kept in `record.json` as
+`halo_timers`) and writes:
+
+| Where | Keys / columns |
+|---|---|
+| run `config.txt` | `HALO_TIMERS_STATUS` (`OK` all ranks, `PARTIAL`, `MISSING`), `HALO_TIMERS_VERSION`, `HALO_TIMERS_RANKS`; `HALO_{GATHER,SENDRECV,SCATTER,PHASES_SUM}_TIME_{MIN,MEAN,MAX}` over ranks; `HALO_UNACCOUNTED_TIME_MEAN` = `HALO_TOTAL_TIME` - mean phase sum (both are means over ranks); `HALO_SLOWEST_RANK_{SENDRECV,SCATTER}`; `HALO_EXCHANGE_CALLS`; `HALO_{GATHER,SENDRECV,SCATTER}_TIME_{X,Y,Z}_MEAN`; `HALO_BYTES_SENT_{X,Y,Z}_MEAN` |
+| `iter_<r>/config.txt` | after the TGV keys: `HALO_TIMERS_STATUS_<V>` and `HALO_{GATHER,SENDRECV,SCATTER,PHASES_SUM}_TIME_MEAN_<V>` per variant (`NO_AUTOTUNE`, `AUTOTUNE`, `PRECOMPUTED`) |
+| `mpi_rank_metrics.csv`, `ranks/metric_<r>.csv` | after the methodology columns: `rank_gather_time_s`, `rank_sendrecv_time_s`, `rank_scatter_time_s`, `rank_halo_phase_sum_s`, `rank_halo_calls`, for every rank |
+
+Missing timers (an OPS build without them) never invalidate a run: the values are left empty, never 0, and
+`HALO_TIMERS_STATUS=MISSING`. Runs written before `*_v2` have none of these keys. `rank_halo_time_s` is
+unchanged: it is the `Total halo exchange time` printed by rank 0, which OPS reports as a mean over ranks.
 
 ## 7. Exit statuses
 
