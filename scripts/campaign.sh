@@ -25,7 +25,8 @@
 #   --account A       Slurm project; otherwise $SLURM_ACCOUNT, otherwise ACCOUNT= in ~/.ops_campaign.conf
 #   --rebuild         compile even when an identical build of an earlier campaign could be reused
 #   --no-build        never compile: reuse the executable of the newest earlier campaign with the same
-#                     application and grids, even if its OPS commit, environment or checkout differ.
+#                     application and grids (cloverleaf: any grid, its executable reads the grid at run
+#                     time), even if its OPS commit, environment or checkout differ.
 #                     The differences are printed and saved in <campaign>/build_reused.json
 #   --dry-run         print the commands without running them
 #
@@ -128,7 +129,7 @@ donor_build() {               # newest earlier campaign whose build is valid for
   for other in $(campaigns); do
     [ "$other" = "$c" ] && continue
     built "$other" || continue
-    if "$python_bin" - "$c" "$other" "$mode" <<'PY'
+    if "$python_bin" - "$c" "$other" "$mode" "$app" <<'PY'
 import hashlib, json, sys
 from pathlib import Path
 new, old = (Path(p) for p in sys.argv[1:3])
@@ -138,6 +139,10 @@ keys = ('ops_commit', 'environment_sha256', 'builds', 'translator_python', 'appl
         'senga_modified_files')
 if loose:
     keys = ('builds', 'application')
+# CloverLeaf reads the grid from clover.in at run time: one executable serves every grid, so the grids
+# ('builds') do not decide whether an earlier build can be reused.
+if sys.argv[4] == 'cloverleaf':
+    keys = tuple(k for k in keys if k != 'builds')
 same = all(a.get(k) == b.get(k) for k in keys)
 clean = loose or (a.get('ops_uncommitted_changes') is False and b.get('ops_uncommitted_changes') is False)
 code = (a.get('package') or {}).get('files_sha256', {}).get('sources.py')
@@ -162,7 +167,7 @@ ensure_build() {
   if [ "$nobuild" = 1 ]; then
     if [ "$dry" = 1 ]; then echo "Build: --no-build (dry run: no executable copied)."; return; fi
     donor=$(donor_build "$c" strict) || donor=$(donor_build "$c" loose) \
-      || die "--no-build: no earlier $app campaign has an intact build with the same grids. Run without --no-build."
+      || die "--no-build: no earlier $app campaign has an intact build$([ "$app" = cloverleaf ] || echo ' with the same grids'). Run without --no-build."
     rm -rf "$c/build"
     cp -a "$donor/build" "$c/build"
     "$python_bin" - "$c" "$donor" <<'PY'
