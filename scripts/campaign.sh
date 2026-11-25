@@ -24,6 +24,9 @@
 #   --time T          wall time of each allocation  (default: the package default; tgv-top3 01:00:00)
 #   --account A       Slurm project; otherwise $SLURM_ACCOUNT, otherwise ACCOUNT= in ~/.ops_campaign.conf
 #   --rebuild         compile even when an identical build of an earlier campaign could be reused
+#   --no-build        never compile: reuse the executable of the newest earlier campaign with the same
+#                     application and grids, even if its OPS commit, environment or checkout differ.
+#                     The differences are printed and saved in <campaign>/build_reused.json
 #   --dry-run         print the commands without running them
 #
 # The executable of an earlier campaign is reused when the OPS commit, the environment file, the grids
@@ -36,13 +39,13 @@ here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 python_bin="${OPS_LAUNCHER_PYTHON:-python3}"
 
 die() { echo "ERROR: $*" >&2; exit 2; }
-usage() { sed -n '2,33p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
+usage() { sed -n '2,36p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
 
 [ $# -ge 1 ] || usage 2
 case "$1" in -h|--help) usage 0;; esac
 [ $# -ge 2 ] || usage 2
 app=$1; action=$2; shift 2
-campaign_arg=''; steps=''; grid=''; nodes=''; jobs=2; walltime=''; account=''; rebuild=0; dry=0; decomps=''
+campaign_arg=''; steps=''; grid=''; nodes=''; jobs=2; walltime=''; account=''; rebuild=0; nobuild=0; dry=0; decomps=''
 while [ $# -gt 0 ]; do
   case "$1" in
     --campaign|--steps|--grid|--nodes|--jobs|--time|--account|--decompositions)
@@ -53,6 +56,7 @@ while [ $# -gt 0 ]; do
       esac
       shift 2;;
     --rebuild) rebuild=1; shift;;
+    --no-build) nobuild=1; shift;;
     --dry-run) dry=1; shift;;
     -h|--help) usage 0;;
     *) die "Unknown option $1 (see: bash $0 --help)";;
@@ -68,6 +72,8 @@ case "$app" in
 esac
 override='campaign.sh: qualified in earlier campaigns'
 [ "$app" != tgv ] || override='campaign.sh: submitted without the qualification stage of this campaign'
+[ "$rebuild" = 0 ] || [ "$nobuild" = 0 ] || die "--rebuild and --no-build exclude each other"
+[ "$app" != tgv-top3 ] || [ "$nobuild" = 0 ] || die "--no-build does not apply to tgv-top3"
 case "$action" in new|continue|retry|status|list) ;; *) die "Unknown action '$action': use new, continue, retry, status or list";; esac
 [ -z "$steps" ] && steps=$default_steps
 if [ -n "$decomps" ]; then
@@ -118,21 +124,24 @@ built() {                     # 0 when every build of the campaign has its manif
 }
 
 donor_build() {               # newest earlier campaign whose build is valid for campaign $1 (prints its path)
-  local c=$1 other
+  local c=$1 mode=${2:-strict} other   # mode loose (--no-build): same application and grids, intact executable
   for other in $(campaigns); do
     [ "$other" = "$c" ] && continue
     built "$other" || continue
-    if "$python_bin" - "$c" "$other" <<'PY'
+    if "$python_bin" - "$c" "$other" "$mode" <<'PY'
 import hashlib, json, sys
 from pathlib import Path
 new, old = (Path(p) for p in sys.argv[1:3])
+loose = sys.argv[3] == 'loose'
 a, b = (json.loads((p / 'campaign.json').read_text()) for p in (new, old))
 keys = ('ops_commit', 'environment_sha256', 'builds', 'translator_python', 'application', 'senga_commit', 'hdf5',
         'senga_modified_files')
+if loose:
+    keys = ('builds', 'application')
 same = all(a.get(k) == b.get(k) for k in keys)
-clean = a.get('ops_uncommitted_changes') is False and b.get('ops_uncommitted_changes') is False
+clean = loose or (a.get('ops_uncommitted_changes') is False and b.get('ops_uncommitted_changes') is False)
 code = (a.get('package') or {}).get('files_sha256', {}).get('sources.py')
-same_code = code and code == (b.get('package') or {}).get('files_sha256', {}).get('sources.py')
+same_code = loose or (code and code == (b.get('package') or {}).get('files_sha256', {}).get('sources.py'))
 intact = True
 for manifest in sorted((old / 'build').glob('*/build_manifest.json')):
     m = json.loads(manifest.read_text())
@@ -150,7 +159,34 @@ ensure_build() {
   local build_args=(build --campaign "$c")
   [ "$app" = senga2 ] && build_args+=(--build all)
   if built "$c"; then echo "Build: already complete in this campaign."; return; fi
-  if [ "$rebuild" = 0 ] && [ "$dry" = 0 ] && donor=$(donor_build "$c"); then
+  if [ "$nobuild" = 1 ]; then
+    if [ "$dry" = 1 ]; then echo "Build: --no-build (dry run: no executable copied)."; return; fi
+    donor=$(donor_build "$c" strict) || donor=$(donor_build "$c" loose) \
+      || die "--no-build: no earlier $app campaign has an intact build with the same grids. Run without --no-build."
+    rm -rf "$c/build"
+    cp -a "$donor/build" "$c/build"
+    "$python_bin" - "$c" "$donor" <<'PY'
+import datetime, json, sys
+from pathlib import Path
+new, old = (Path(p) for p in sys.argv[1:3])
+a, b = (json.loads((p / 'campaign.json').read_text()) for p in (new, old))
+keys = ('ops_commit', 'ops_uncommitted_changes', 'environment_sha256', 'translator_python', 'senga_commit', 'hdf5',
+        'senga_modified_files')
+diff = {k: dict(this_campaign=a.get(k), executable_from=b.get(k)) for k in keys if a.get(k) != b.get(k)}
+code = lambda c: (c.get('package') or {}).get('files_sha256', {}).get('sources.py')
+if code(a) != code(b):
+    diff['package_sources_py_sha256'] = dict(this_campaign=code(a), executable_from=code(b))
+record = dict(reused_from=str(old), reason='--no-build', time=datetime.datetime.now(datetime.timezone.utc).isoformat(),
+              identical=not diff, differences=diff)
+(new / 'build_reused.json').write_text(json.dumps(record, indent=2, sort_keys=True) + '\n')
+print('Build: --no-build, reusing the executable of %s' % old.name)
+if diff:
+    print('WARNING: the executable was NOT built from the sources of this campaign. Differences:')
+    for k, v in sorted(diff.items()):
+        print('  %-26s this campaign=%s  executable=%s' % (k, v['this_campaign'], v['executable_from']))
+    print('  (saved in %s)' % (new / 'build_reused.json'))
+PY
+  elif [ "$rebuild" = 0 ] && [ "$dry" = 0 ] && donor=$(donor_build "$c"); then
     echo "Build: reusing the executable of $(basename "$donor") (same OPS commit, environment and grids)."
     rm -rf "$c/build"
     cp -a "$donor/build" "$c/build"
