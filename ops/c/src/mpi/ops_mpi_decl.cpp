@@ -108,7 +108,8 @@ void _ops_exit(OPS_instance *instance) {
     ops_free(instance->OPS_reduct_h);
     if (instance->OPS_reduct_d!=NULL) ops_device_free(instance, (void**)&instance->OPS_reduct_d);
   }
-  
+
+  ops_mpi_halo_timers_output(instance);  // collective; prints only with OPS_diags > 1
   ops_mpi_exit(instance);
 
   if (instance->OPS_hybrid_gpu) {

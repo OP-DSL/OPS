@@ -181,6 +181,15 @@ extern ops_mpi_halo_group *OPS_mpi_halo_group_list;
 extern double ops_gather_time;
 extern double ops_scatter_time;
 extern double ops_sendrecv_time;
+extern double ops_gather_time_dim[OPS_MAX_DIM];
+extern double ops_sendrecv_time_dim[OPS_MAX_DIM];
+extern double ops_scatter_time_dim[OPS_MAX_DIM];
+extern long long ops_halo_exchange_calls;
+extern long long ops_halo_exchange_dim_count[OPS_MAX_DIM];
+extern double ops_halo_bytes_sent_dim[OPS_MAX_DIM];
+
+/** Print per-rank and min/mean/max halo phase timers (OPS_diags > 1). Collective; call before MPI_Finalize. */
+void ops_mpi_halo_timers_output(OPS_instance *instance);
 
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 #endif /*__OPS_MPI_CORE_H*/

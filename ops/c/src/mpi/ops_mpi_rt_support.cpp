@@ -55,9 +55,20 @@ int ops_buffer_send_2_size = 0;
 int ops_buffer_recv_2_size = 0;
 int *mpi_neigh_size = NULL;
 
-extern double ops_gather_time;
-extern double ops_scatter_time;
-extern double ops_sendrecv_time;
+// Halo exchange phase timers (seconds, this rank), accumulated only when OPS_diags > 1.
+// gather   = pack of all send buffers for one dimension (device is synchronised by the pack routines)
+// sendrecv = MPI_Isend/Irecv + wait for the receives
+// scatter  = unpack of the receive buffers + device sync + wait for the sends
+// Per-dimension values are kept for the first OPS_MAX_DIM dimensions; the totals are their sums.
+double ops_gather_time = 0.0;
+double ops_scatter_time = 0.0;
+double ops_sendrecv_time = 0.0;
+double ops_gather_time_dim[OPS_MAX_DIM] = {0.0};
+double ops_sendrecv_time_dim[OPS_MAX_DIM] = {0.0};
+double ops_scatter_time_dim[OPS_MAX_DIM] = {0.0};
+long long ops_halo_exchange_calls = 0;                  // calls to ops_halo_exchanges
+long long ops_halo_exchange_dim_count[OPS_MAX_DIM] = {0}; // exchanges that sent >0 bytes, per dimension
+double ops_halo_bytes_sent_dim[OPS_MAX_DIM] = {0.0};      // bytes sent, per dimension
 
 int intersection(int range1_beg, int range1_end, int range2_beg,
                  int range2_end) {
@@ -680,7 +691,9 @@ void ops_exchange_halo_unpacker_given(ops_dat dat, int *depths, int dim,
 }
 
 void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
-  double c,t1,t2;
+  double c1 = 0.0, c2 = 0.0, t1 = 0.0, t2 = 0.0;
+  const bool halo_timed = OPS_instance::getOPSInstance()->OPS_diags > 1;
+  if (halo_timed) ops_halo_exchange_calls++;
   // printf("*************** range[i] %d %d %d %d\n",range[0],range[1],range[2],
   // range[3]);
   int send_recv_offsets[4]; //{send_1, recv_1, send_2, recv_2}, for the two
@@ -688,7 +701,7 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
   MPI_Comm comm = MPI_COMM_NULL;
 
   for (int dim = 0; dim < OPS_MAX_DIM; dim++) {
-    // ops_timers_core(&c1,&t1);
+    if (halo_timed) ops_timers_core(&c1, &t1);
     int id_m = -1, id_p = -1;
     int other_dims = 1;
     for (int i = 0; i < 4; i++)
@@ -765,8 +778,12 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
                                  send_recv_offsets);
 
     }
-    //  ops_timers_core(&c2,&t2);
-    //  ops_gather_time += t2-t1;
+    if (halo_timed) {
+      // pack routines already synchronise the device (hipMemcpy D2H or hipDeviceSynchronize with -gpudirect)
+      ops_timers_core(&c2, &t2);
+      ops_gather_time += t2 - t1;
+      ops_gather_time_dim[dim] += t2 - t1;
+    }
 
     // early exit - if one of the args does not have an intersection in other
     // dims
@@ -797,10 +814,17 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
       (send_recv_offsets[0] > 0) + (send_recv_offsets[2] > 0);
     OPS_instance::getOPSInstance()->ops_message_size +=
       send_recv_offsets[0] + send_recv_offsets[2];
-    
 
-    //  ops_timers_core(&c1,&t1);
-    //  ops_sendrecv_time += t1-t2;
+
+    if (halo_timed) {
+      // OPS also enters this MPI phase with empty sends to MPI_PROC_NULL (dims beyond the block dimension or
+      // without neighbours): only exchanges that move data are counted
+      if (send_recv_offsets[0] + send_recv_offsets[2] > 0) ops_halo_exchange_dim_count[dim]++;
+      ops_halo_bytes_sent_dim[dim] += send_recv_offsets[0] + send_recv_offsets[2];
+      ops_timers_core(&c1, &t1);
+      ops_sendrecv_time += t1 - t2;
+      ops_sendrecv_time_dim[dim] += t1 - t2;
+    }
 
     for (int i = 0; i < 4; i++)
       send_recv_offsets[i] = 0;
@@ -840,8 +864,63 @@ void ops_halo_exchanges(ops_arg* args, int nargs, int *range_in) {
     }
 
     MPI_Waitall(2, &request[0], &status[0]);
-    //  ops_timers_core(&c2,&t2);
-    //  ops_scatter_time += t2-t1;
+    if (halo_timed) {
+      // unpack kernels are launched asynchronously: wait for them so their cost is charged to scatter
+      ops_device_sync(OPS_instance::getOPSInstance());
+      ops_timers_core(&c2, &t2);
+      ops_scatter_time += t2 - t1;
+      ops_scatter_time_dim[dim] += t2 - t1;
+    }
+  }
+}
+
+/** Print the halo phase timers (only when OPS_diags > 1).
+ *  Every rank prints one line to its own stdout; rank 0 also prints min/mean/max over ranks.
+ *  Collective over OPS_MPI_GLOBAL: must be called by all ranks before MPI_Finalize. */
+void ops_mpi_halo_timers_output(OPS_instance *instance) {
+  if (instance->OPS_diags <= 1) return;
+  int flag = 0;
+  MPI_Finalized(&flag);
+  if (flag) return;
+  int rank = 0, size = 1;
+  MPI_Comm_rank(OPS_MPI_GLOBAL, &rank);
+  MPI_Comm_size(OPS_MPI_GLOBAL, &size);
+
+  const int nd = OPS_MAX_DIM < 3 ? OPS_MAX_DIM : 3;
+  double halo_sum = ops_gather_time + ops_sendrecv_time + ops_scatter_time;
+  printf("OPS_HALO_TIMERS version=1 rank=%d gather=%.6f sendrecv=%.6f scatter=%.6f sum=%.6f calls=%lld",
+         rank, ops_gather_time, ops_sendrecv_time, ops_scatter_time, halo_sum, ops_halo_exchange_calls);
+  const char axis[3] = {'x', 'y', 'z'};
+  for (int d = 0; d < nd; d++)
+    printf(" gather_%c=%.6f sendrecv_%c=%.6f scatter_%c=%.6f exchanges_%c=%lld bytes_%c=%.0f", axis[d],
+           ops_gather_time_dim[d], axis[d], ops_sendrecv_time_dim[d], axis[d], ops_scatter_time_dim[d], axis[d],
+           ops_halo_exchange_dim_count[d], axis[d], ops_halo_bytes_sent_dim[d]);
+  // dimensions beyond z (OPS loops over OPS_MAX_DIM): kept so that x + y + z + other == totals
+  double g_other = 0.0, s_other = 0.0, c_other = 0.0;
+  for (int d = nd; d < OPS_MAX_DIM; d++) {
+    g_other += ops_gather_time_dim[d];
+    s_other += ops_sendrecv_time_dim[d];
+    c_other += ops_scatter_time_dim[d];
+  }
+  printf(" gather_other=%.6f sendrecv_other=%.6f scatter_other=%.6f\n", g_other, s_other, c_other);
+  fflush(stdout);
+
+  // min / sum / max over ranks for gather, sendrecv, scatter, sum (+ which rank holds the max)
+  double local[4] = {ops_gather_time, ops_sendrecv_time, ops_scatter_time, halo_sum};
+  double vmin[4], vsum[4];
+  struct { double v; int r; } in[4], vmax[4];
+  for (int i = 0; i < 4; i++) { in[i].v = local[i]; in[i].r = rank; }
+  MPI_Reduce(local, vmin, 4, MPI_DOUBLE, MPI_MIN, 0, OPS_MPI_GLOBAL);
+  MPI_Reduce(local, vsum, 4, MPI_DOUBLE, MPI_SUM, 0, OPS_MPI_GLOBAL);
+  MPI_Reduce(in, vmax, 4, MPI_DOUBLE_INT, MPI_MAXLOC, 0, OPS_MPI_GLOBAL);
+  if (rank == 0) {
+    const char *name[4] = {"gather", "sendrecv", "scatter", "sum"};
+    printf("OPS_HALO_TIMERS_SUMMARY version=1 ranks=%d", size);
+    for (int i = 0; i < 4; i++)
+      printf(" %s_min=%.6f %s_mean=%.6f %s_max=%.6f %s_max_rank=%d", name[i], vmin[i], name[i], vsum[i] / size,
+             name[i], vmax[i].v, name[i], vmax[i].r);
+    printf("\n");
+    fflush(stdout);
   }
 }
 
